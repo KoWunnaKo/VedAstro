@@ -143,7 +143,7 @@ namespace API
         /// <summary>
         /// Reads data stamped build version, if "beta" is found in that name, return true
         /// </summary>
-        public static bool GetIsBetaRuntime() => VedAstro.Library.ThisAssembly.BranchName.Contains("beta");
+        public static bool GetIsBetaRuntime() => ThisAssembly.BranchName.Contains("beta");
 
         /// <summary>
         /// Overwrites new XML data to a blob file

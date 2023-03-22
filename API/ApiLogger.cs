@@ -5,7 +5,14 @@ using VedAstro.Library;
 using Microsoft.Azure.Functions.Worker.Http;
 
 namespace API;
-
+public record ThisAssembly
+{
+    //HARD CODED DEFAULTS
+    public const string CommitHash = "d4e6327";
+    public const string CommitNumber = "000";
+    public const string BranchName = "stable";
+    public const string Version = "d4e6327-000-stable";
+}
 /// <summary>
 /// Custom simple logger for API, auto log to AppLog.xml file
 /// </summary>
@@ -17,7 +24,6 @@ public static class APILogger
 
     private static readonly XElement SourceXml = new("Source", "APILogger");
     private static XElement BranchXml = new XElement("Branch", ThisAssembly.Version);
-
 
 
     //PUBLIC FUNCTIONS
