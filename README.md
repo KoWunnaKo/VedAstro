@@ -1,4 +1,4 @@
-
+﻿
 <a href="https://www.vedastro.org">
 <img
   src="https://www.vedastro.org/images/website-header-screenshot.png"
@@ -12,7 +12,8 @@
 [![Docker](https://img.shields.io/static/v1?style=for-the-badge&message=Docker&color=2496ED&logo=Docker&logoColor=FFFFFF&label=)](https://hub.docker.com/r/vedastro/api)
 [![Ko-fi](https://img.shields.io/static/v1?style=for-the-badge&message=Ko-fi&color=FF5E5B&logo=Ko-fi&logoColor=FFFFFF&label=)](https://ko-fi.com/vedastro)
 [![Patreon](https://img.shields.io/static/v1?style=for-the-badge&message=Patreon&color=FF424D&logo=Patreon&logoColor=FFFFFF&label=)](https://www.patreon.com/vedastro)
-  
+[![Slack](https://img.shields.io/static/v1?style=for-the-badge&message=Slack&color=4A154B&logo=Slack&logoColor=FFFFFF&label=)](https://join.slack.com/t/vedastro/shared_invite/zt-1rqkyn0vm-A7YncrN4PFPolVxCEBA37Q)  
+
 </span>
 <span align="center">
 
@@ -33,15 +34,14 @@
 
 
 
-# Links
+# Links 🌍
 - [Quick Guide](https://vedastro.org/Docs/QuickGuide) learn how to use
 - [Open API](https://vedastro.org/Docs/API) easily get astrology data for your app or website
-- [Swiss Ephemris API](https://vedastro.org/Docs/API/SwissEphemeris) easily get astrology data for your app or website
+- [Swiss Ephemris API](https://vedastro.org/Docs/API/SwissEphemeris) access powerful astronomical library with a simple `HTTP GET`
 - [Calculators](https://vedastro.org/Calculator) each calculator shows an aspect of vedic astrology
 - [Docker](https://github.com/orgs/VedAstro/discussions/8) supported for easy deployement anywhere
 - [Contact](https://www.vedastro.org/Contact) us and we'll get back to you ASAP.
 - [Donate](https://www.vedastro.org/Donate) to keep this project going
-- [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/S6S0ELZGR)
 
 <!--
 
@@ -57,12 +57,14 @@ The chart takes alot of computational power to generate, so please be patient af
  -->
 
 
-# About : reason and goal for this project
-Anybody who has studied Vedic Astrology knows well how accurate it can be.
-But also how complex it can get to make accurate predictions.
-It takes **decades of experience** to be able make accurate prediction.
-As such this knowledge only reaches a limited people.
-This project is an effort to change that.
+# About 📜
+
+Using modern computational technologies &amp; methods we can simplify the
+complexity of Vedic Astrology. For example, calculating planet strength (Bhava Bala)
+used to take hours, now with computers we can calculate it in milliseconds.
+And using databases &amp; innovative programming methods, there is no need to remember
+thousands of planetary combinations, allowing you to make accurate predictions
+with little to no knowledge.
 </br>
 
 Our goal is to make Vedic Astrology easily accessible to anybody.
@@ -72,26 +74,33 @@ It lights our future so we can change it.
 And it lights our past, to understand our mistakes.
 </br>
 
-By using modern computational technologies &amp; methods we can simplify the
-complexity of Vedic Astrology. For example, calculating planet strength (Bhava Bala)
-used to take hours, now with computers we can calculate it in milliseconds.
-And using databases &amp; innovative programming methods, there is no need to remember
-thousands of planetary combinations, allowing you to make accurate predictions
-with little to no knowledge.
-    
-# 8 Years Old
+Anybody who has studied Vedic Astrology knows well how accurate it can be.
+But also how complex it can get to make accurate predictions.
+It takes **decades of experience** to be able make accurate prediction.
+As such this knowledge only reaches a limited people.
+This project is an effort to change that.
+
+# 9 Years Old 🎂
 The first line of code for this project was written in 2014.
 Back then it was a simple desktop software, with no UI and only text display.
-With continued support from investors &amp; users, this project has steadily developed to what it is today.
+With continued support from users, this project has steadily developed to what it is today.
 Helping people from all over the world.
     
-# Credits &amp; Reference
+# Credits &amp; Reference 📚
 ![bv-raman-rao](https://user-images.githubusercontent.com/43817262/226793913-493ca156-cb69-4109-bbe4-3007f57a3941.png)
 
 Thanks to [B.V. Raman](https://en.wikipedia.org/wiki/B._V._Raman) and his grandfather B. Suryanarain Rao. Information from their books is the source
 material & inspiration for this project. Please buy their books to show your support.
 Astronomical calculation was made possible by "SwissEphNet" &amp; "SWISS EPHEMERIS".
 Last but not least, we thank users like you who keep this project going.
+
+### Special Thanks :pray:
+@Ceeper00 @razukc @kristaps.bunts
+
+<hr>
+
+[![image](https://user-images.githubusercontent.com/43817262/227275627-609ceb21-025a-4902-b552-6e12f62f2f9d.png)](https://join.slack.com/t/vedastro/shared_invite/zt-1rqkyn0vm-A7YncrN4PFPolVxCEBA37Q)
+
 <!--
 # Help us and get paid!
 Complete tasks for this project and get paid instantly! Each task has a different value based on complexity.
@@ -104,14 +113,20 @@ Show name of planet state in Horoscope page (combust, exalted, debilited) | $2 |
 Generate traditional Rasi, Navamsa South/North style chart | $5 | ![](https://img.shields.io/static/v1?label=&message=Open&color=blue)
 Find a spelling mistake in VedAstro.org content | $1 | ![](https://img.shields.io/static/v1?label=&message=Open&color=blue)
 Show name of planet motion in Horoscope page (retrograde, direct, stationary) | $1.5 | ![](https://img.shields.io/static/v1?label=&message=Done&color=green)
+
+
+- Clear browser cache & reload WebApp
+- Switch to Beta version
  -->
 
- # Unexpected errors?
-- Clear browser cache & reload webapp
-- Switch to Beta version
 
-# Project Architecture : For Coders
-Key design notes to understand the internals of the program better.
+# Other Cool Projects 😎
+- [VedicFeed](https://ask.vedicfeed.com) : AI Powered Astrologer
+
+<hr>
+
+# Project Architecture 🔩
+Key design notes to understand the internals of the program better during development
 
 
 ## Core Function Explained

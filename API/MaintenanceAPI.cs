@@ -32,5 +32,22 @@ namespace API
             return APITools.PassMessage(holder, incomingRequest);
         }
 
+        /// <summary>
+        /// Build to be pinged by Render server for live build, but can be used by any for checking health
+        /// </summary>
+        [Function("health")]
+        public static HttpResponseData GetHealth([HttpTrigger(AuthorizationLevel.Anonymous, "get", "post", Route = null)] HttpRequestData incomingRequest)
+        {
+            //so long as respond as OK 200, then will pass
+            //todo real health check please
+            //check if all data files are accessible
+
+            var holder = new XElement("Root");
+            var versionNumberXml = new XElement("Version", ThisAssembly.Version);
+            holder.Add(versionNumberXml, Tools.TimeStampServerXml);
+
+            return APITools.PassMessage(holder, incomingRequest);
+        }
+
     }
 }
