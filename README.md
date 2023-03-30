@@ -34,7 +34,7 @@
 
 
 
-# Links 🌍
+# 🌍 Links
 - [Quick Guide](https://vedastro.org/Docs/QuickGuide) learn how to use
 - [Open API](https://vedastro.org/Docs/API) easily get astrology data for your app or website
 - [Swiss Ephemris API](https://vedastro.org/Docs/API/SwissEphemeris) access powerful astronomical library with a simple `HTTP GET`
@@ -57,7 +57,7 @@ The chart takes alot of computational power to generate, so please be patient af
  -->
 
 
-# About 📜
+# 📜 About
 
 Using modern computational technologies &amp; methods we can simplify the
 complexity of Vedic Astrology. For example, calculating planet strength (Bhava Bala)
@@ -80,13 +80,13 @@ It takes **decades of experience** to be able make accurate prediction.
 As such this knowledge only reaches a limited people.
 This project is an effort to change that.
 
-# 9 Years Old 🎂
+# 🎂 9 Years Old 
 The first line of code for this project was written in 2014.
 Back then it was a simple desktop software, with no UI and only text display.
 With continued support from users, this project has steadily developed to what it is today.
 Helping people from all over the world.
     
-# Credits &amp; Reference 📚
+# 📚 Credits &amp; Reference 
 ![bv-raman-rao](https://user-images.githubusercontent.com/43817262/226793913-493ca156-cb69-4109-bbe4-3007f57a3941.png)
 
 Thanks to [B.V. Raman](https://en.wikipedia.org/wiki/B._V._Raman) and his grandfather B. Suryanarain Rao. Information from their books is the source
@@ -94,7 +94,7 @@ material & inspiration for this project. Please buy their books to show your sup
 Astronomical calculation was made possible by "SwissEphNet" &amp; "SWISS EPHEMERIS".
 Last but not least, we thank users like you who keep this project going.
 
-### Special Thanks :pray:
+### :pray: Special Thanks
 @Ceeper00 @razukc @kristaps.bunts
 
 <hr>
@@ -202,6 +202,11 @@ throughout the progam.
 ```
 
 # Code Edit Guide
+
+### Internal Project Linking
+all 3 independent, only linked in VS for easy access
+don't commit local referenced .csproj to Git as it'll be used by CI/CD
+
 ### To add a new prediction/event
 1. Create a method in EventCalculatorMethods.cs
 2. Add the name in EventNames.cs
@@ -230,12 +235,12 @@ rules also make sure not to redirect file & api access only page access
 
 ## Domain redirection #06/03/2023
 web : vedastro.org -> domain registra -> azure DNS -> azure cdn -> web blob storage
-api **stable** : vedastro.org/api -> domain registra -> azure DNS -> azure cdn -> stable api server (render)
-api **beta** : beta.vedastro.org/api -> domain registra -> azure DNS -> azure cdn -> beta api server (azure)
+api **stable** : api.vedastro.org -> domain registra -> azure DNS -> azure cdn -> stable api server (render)
+api **beta** : beta.api.vedastro.org -> domain registra -> azure DNS -> azure cdn -> beta api server (azure)
 domain cert managed by lets encyrpt acme bot azure func
 
 ## API domain is routed # MAR 2023
-via Azure CDN Rules Engine, this allows the use of ```vedastro.org/api/...``` & ```vedastro.org/api/nlp/...```
+via Azure CDN Rules Engine, this allows the use of ```api.vedastro.org/...``` & ```api.vedastro.org/nlp/...```
 
 ## Antaram > Sukshma > Prana > Avi Prana > Viprana  # FEB 2023
 Since not documented by BV. Raman, code here is created through experimentation by

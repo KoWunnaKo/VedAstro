@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -26,6 +27,10 @@ namespace API
 
     public static class EventsChartAPI
     {
+        private static Dictionary<double, string> _cacheList;
+
+
+
         //▄▀█ █▀█ █   █▀▀ █░█ █▄░█ █▀▀ ▀█▀ █ █▀█ █▄░█ █▀
         //█▀█ █▀▀ █   █▀░ █▄█ █░▀█ █▄▄ ░█░ █ █▄█ █░▀█ ▄█
 
@@ -64,7 +69,7 @@ namespace API
             try
             {
                 //get dasa report for sending
-                var chart = await GetEventReportSvgForIncomingRequest(incomingRequest);
+                var chart = await GetEventReportSvgForIncomingRequest(incomingRequest, false);
 
                 return SendSvgToCaller(chart.ContentSvg, incomingRequest);
 
@@ -86,24 +91,6 @@ namespace API
 
         }
 
-        private static HttpResponseData SendSvgToCaller(string chartContentSvg, HttpRequestData incomingRequest)
-        {
-            //send image back to caller
-            var response = incomingRequest.CreateResponse(HttpStatusCode.OK);
-            response.Headers.Add("Content-Type", "image/svg+xml");
-            //place in response body
-            response.WriteString(chartContentSvg);
-            return response;
-        }
-        private static HttpResponseData SendHtmlToCaller(string chartContentSvg, HttpRequestData incomingRequest)
-        {
-            //send image back to caller
-            var response = incomingRequest.CreateResponse(HttpStatusCode.OK);
-            response.Headers.Add("Content-Type", "text/html");
-            //place in response body
-            response.WriteString(chartContentSvg);
-            return response;
-        }
 
         [Function("findbirthtimedasa")]
         public static async Task<HttpResponseData> FindBirthTimeDasa([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] HttpRequestData incomingRequest)
@@ -343,7 +330,7 @@ namespace API
 
                 //get chart index.html and send that to caller
                 //get data list from Static Website storage
-                var htmlTemplate = await APITools.GetStringFileHttp(APITools.Url.UrlEventsChartViewerHtml);
+                var htmlTemplate = await APITools.GetStringFileHttp(APITools.Url.EventsChartViewerHtml);
 
                 //insert person name into page, to show ready page faster
                 //TODO NEEDS TO BE UPDATED
@@ -356,7 +343,7 @@ namespace API
                 //insert SVG into html place holder page
                 htmlTemplate = htmlTemplate.Replace("<!--INSERT SVG-->", svgString);
 
-                return SendHtmlToCaller(htmlTemplate, incomingRequest);
+                return APITools.SendHtmlToCaller(htmlTemplate, incomingRequest);
 
             }
             catch (Exception e)
@@ -384,8 +371,7 @@ namespace API
             try
             {
                 //get chart index.html and send that to caller
-                var eventsChartViewerHtml = await APITools.GetStringFileHttp(APITools.Url.UrlEventsChartViewerHtml);
-
+                var eventsChartViewerHtml = await APITools.GetStringFileHttp(APITools.Url.EventsChartViewerHtml);
 
                 //insert person name into page, to show ready page faster
                 var personName = (await APITools.GetPersonById(personId)).Name;
@@ -394,8 +380,7 @@ namespace API
                 jsVariables += $@"window.PersonId = ""{personId}"";";
                 var finalHtml = eventsChartViewerHtml.Replace("/*INSERT-JS-VAR-HERE*/", jsVariables);
 
-                return SendHtmlToCaller(finalHtml, incomingRequest);
-
+                return APITools.SendHtmlToCaller(finalHtml, incomingRequest);
 
             }
             catch (Exception e)
@@ -455,7 +440,7 @@ namespace API
             try
             {
                 //generate report
-                var chart = await GetEventReportSvgForIncomingRequest(incomingRequest);
+                var chart = await GetEventReportSvgForIncomingRequest(incomingRequest, false);
 
                 //save chart into storage
                 //note: do not wait to speed things up, beware! failure will go undetected on client
@@ -476,6 +461,7 @@ namespace API
 
 
         }
+
 
         /// <summary>
         /// make a name & id only xml list of saved charts
@@ -569,11 +555,21 @@ namespace API
         //█▀█ █▀█ █ █░█ ▄▀█ ▀█▀ █▀▀   █▀▄▀█ █▀▀ ▀█▀ █░█ █▀█ █▀▄ █▀
         //█▀▀ █▀▄ █ ▀▄▀ █▀█ ░█░ ██▄   █░▀░█ ██▄ ░█░ █▀█ █▄█ █▄▀ ▄█
 
+        private static HttpResponseData SendSvgToCaller(string chartContentSvg, HttpRequestData incomingRequest)
+        {
+            //send image back to caller
+            var response = incomingRequest.CreateResponse(HttpStatusCode.OK);
+            response.Headers.Add("Content-Type", "image/svg+xml");
+            //place in response body
+            response.WriteString(chartContentSvg);
+            return response;
+        }
+
 
         /// <summary>
         /// processes incoming xml request and outputs events svg report
         /// </summary>
-        private static async Task<Chart> GetEventReportSvgForIncomingRequest(HttpRequestData req)
+        private static async Task<Chart> GetEventReportSvgForIncomingRequest(HttpRequestData req, bool cacheEnable)
         {
             //get all the data needed out of the incoming request
             var rootXml = await APITools.ExtractDataFromRequest(req);
@@ -586,11 +582,24 @@ namespace API
             var endTime = Time.FromXml(endTimeXml);
             var daysPerPixel = double.Parse(rootXml.Element("DaysPerPixel")?.Value ?? "0");
 
-
             //get the person instance by id
             var foundPerson = await APITools.GetPersonById(personId);
 
-            return await GetChart(foundPerson, startTime, endTime, daysPerPixel, eventTags);
+            Chart chart;
+
+            if (cacheEnable)
+            {
+                //todo needs testing
+                //based on mode set by caller use cache
+                chart = await GetChartCached(foundPerson, startTime, endTime, daysPerPixel, eventTags);
+            }
+            else
+            {
+                //based on mode set by caller use cache
+                chart = await GetChart(foundPerson, startTime, endTime, daysPerPixel, eventTags);
+            }
+
+            return chart;
         }
 
         private static async Task<Chart> GetEventReportSvgForIncomingRequestEasy(HttpRequestData req)
@@ -631,6 +640,37 @@ namespace API
 
 
             return await GetChart(foundPerson, startTime, endTime, daysPerPixel, eventTags);
+        }
+
+        private static async Task<Chart> GetChartCached(Person foundPerson, Time startTime, Time endTime,
+            double daysPerPixel, List<EventTag> eventTags)
+        {
+
+            //convert events into 1 signature
+            var eventTagsHash = 0;
+            foreach (var eventTag in eventTags) { eventTagsHash += eventTag.GetHashCode(); }
+
+            //convert input data into a signature
+            var dataSignature = foundPerson.Hash + startTime.GetHashCode() + endTime.GetHashCode() + daysPerPixel + eventTagsHash;
+
+            //use cache if exist else use new one
+            var result = _cacheList.TryGetValue(dataSignature, out var cachedChartXml);
+
+            if (string.IsNullOrEmpty(cachedChartXml))
+            {
+                //a new chart is born
+                var newChart = await GetChart(foundPerson, startTime, endTime, daysPerPixel, eventTags);
+
+                //add new chart into cache for future use
+                _cacheList[dataSignature] = newChart.ToXml().ToString();
+
+                return newChart;
+            }
+
+            //if available use cached chart
+            var oldChart = Chart.FromXml(XElement.Parse(cachedChartXml ?? "<Empty/>"));
+            return oldChart;
+
         }
 
         private static async Task<Chart> GetChart(Person foundPerson, Time startTime, Time endTime, double daysPerPixel, List<EventTag> eventTags)
@@ -777,7 +817,6 @@ namespace API
 
             }
         }
-
 
         private static byte[] StreamToByteArray(Stream input)
         {

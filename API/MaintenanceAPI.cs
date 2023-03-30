@@ -12,6 +12,22 @@ namespace API
     public static class MaintenanceAPI
     {
         /// <summary>
+        /// API Home page
+        /// </summary>
+        [Function(nameof(Home))]
+        public static async Task<HttpResponseData> Home([HttpTrigger(AuthorizationLevel.Anonymous, "get", "put", "delete", "post", "head", "trace", "patch", "connect", "options", Route = "Home")] HttpRequestData incomingRequest)
+        {
+
+            //get chart special API home page and send that to caller
+            var APIHomePageTxt = await APITools.GetStringFileHttp(APITools.Url.APIHomePageTxt);
+
+            return APITools.SendTextToCaller(APIHomePageTxt, incomingRequest);
+
+        }
+
+
+
+        /// <summary>
         /// Function for debugging purposes
         /// Call to see if return correct IP
         /// </summary>
