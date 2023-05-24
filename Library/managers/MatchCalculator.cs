@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using VedAstro.Library.Compatibility;
 
 
 namespace VedAstro.Library
@@ -16,46 +15,73 @@ namespace VedAstro.Library
         /// Gets the compatibility report for a male & female
         /// The place where compatibility report gets generated
         /// </summary>
-        public static CompatibilityReport GetCompatibilityReport(Person male, Person female)
+        public static MatchReport GetNewMatchReport(Person male, Person female, string userId)
         {
+            //calculators are designed to fail 1st,
+            //as such if they fail don't shut down the whole show!
 
-            var report = new CompatibilityReport
+            //list all calculators here, to be processed one by one
+            List<Func<Person, Person, MatchPrediction>> calculatorList = new List<Func<Person, Person, MatchPrediction>>()
             {
-                Male = male,
-                Female = female,
-                //do the calculations & add results to a list
-                PredictionList = new List<CompatibilityPrediction>(){
-                    MatchCalculator.GrahaMaitram(male, female), //5
-                    MatchCalculator.Rajju(male, female),
-                    MatchCalculator.NadiKuta(male, female), //8
-                    MatchCalculator.VasyaKuta(male, female), //2
-                    MatchCalculator.DinaKuta(male, female), //3
-                    MatchCalculator.GunaKuta(male, female),//6
-                    MatchCalculator.Mahendra(male, female),
-                    MatchCalculator.StreeDeergha(male, female),
-                    MatchCalculator.RasiKuta(male, female),//7
-                    MatchCalculator.VedhaKuta(male, female),
-                    MatchCalculator.Varna(male, female), //1
-                    MatchCalculator.YoniKuta(male, female),//4
-                    MatchCalculator.LagnaAndHouse7Good(male, female),
-                    MatchCalculator.KujaDosa(male, female),
-                    MatchCalculator.BadConstellations(male, female),
-                    MatchCalculator.SexEnergyCompatibility(male, female)
-                }
+                MatchCalculator.GrahaMaitram, //5
+                MatchCalculator.Rajju,
+                MatchCalculator.NadiKuta, //8
+                MatchCalculator.VasyaKuta, //2
+                MatchCalculator.DinaKuta, //3
+                MatchCalculator.GunaKuta,//6
+                MatchCalculator.Mahendra,
+                MatchCalculator.StreeDeergha,
+                MatchCalculator.RasiKuta,//7
+                MatchCalculator.VedhaKuta,
+                MatchCalculator.Varna, //1
+                MatchCalculator.YoniKuta,//4
+                MatchCalculator.LagnaAndHouse7Good,
+                MatchCalculator.KujaDosa,
+                MatchCalculator.BadConstellations,
+                MatchCalculator.SexEnergyCompatibility
             };
 
+            //place to put results
+            List<MatchPrediction> compatibilityPredictions = new List<MatchPrediction>();
+
+            //now calculate one by one safely
+            foreach (var calculator in calculatorList)
+            {
+                MatchPrediction prediction;
+
+                try
+                {
+                    prediction = calculator(male, female);
+                }
+                catch (Exception e)
+                {
+                    //log error
+                    LibLogger.Error(e, $"Male:{male.Name} Female:{female.Name}");
+
+                    //return empty
+                    prediction = MatchPrediction.Empty; //default empty
+                }
+
+                //add to return list
+                compatibilityPredictions.Add(prediction);
+            }
+
+            //parse data
+            //note KUTA score added below
+            var report = new MatchReport(Tools.GenerateId(), male, female, 0, "...", compatibilityPredictions, new[] { userId }); //at creation only 1 user
+
             //count the total points
-            calculateTotalPoints(ref report);
+            report.KutaScore = CalculateTotalPoints(report);
 
             //check results for exceptions
-            handleExceptions(ref report);
+            HandleExceptions(ref report);
 
             return report;
 
-            //FUNCTIONS
+            //-------------------------LOCAL FUNCTIONS
 
             //checks & modifies results for exceptions 
-            void handleExceptions(ref CompatibilityReport report)
+            void HandleExceptions(ref MatchReport report)
             {
 
                 var list = report.PredictionList;
@@ -72,7 +98,7 @@ namespace VedAstro.Library
 
                 //FUNCTIONS
 
-                void streeDeerghaException(List<CompatibilityPrediction> list)
+                void streeDeerghaException(List<MatchPrediction> list)
                 {
                     //1.The absence of Stree-Deerga may be ignored if
                     //  Rasi Kuta add Graha Maitri are present.
@@ -90,7 +116,7 @@ namespace VedAstro.Library
                     if (streeDeergaIsBad && rasiKutaIsGood && grahaMaitramIsGood)
                     {
                         //create new prediction
-                        var newPrediction = new CompatibilityPrediction()
+                        var newPrediction = new MatchPrediction()
                         {
                             Name = streeDeerga.Name,
                             Description = streeDeerga.Description,
@@ -108,7 +134,7 @@ namespace VedAstro.Library
 
                 }
 
-                void rajjuException(List<CompatibilityPrediction> list)
+                void rajjuException(List<MatchPrediction> list)
                 {
                     //2.Rajju Kuta need not be considered in case Graha Maitri, Rasi, Dina
                     //  and Mahendra Kuta are present.
@@ -132,7 +158,7 @@ namespace VedAstro.Library
                     if (rajjuIsBad && grahaMaitramIsGood && rasiKutaIsGood && dinaKutaIsGood && mahendraIsGood)
                     {
                         //create new prediction
-                        var newPrediction = new CompatibilityPrediction()
+                        var newPrediction = new MatchPrediction()
                         {
                             Name = rajju.Name,
                             Description = rajju.Description,
@@ -150,7 +176,7 @@ namespace VedAstro.Library
 
                 }
 
-                void nadiKutaException(List<CompatibilityPrediction> list)
+                void nadiKutaException(List<MatchPrediction> list)
                 {
                     //The evil due to Nadi Kuta can be ignored subject to the following
                     // conditions: -
@@ -169,7 +195,7 @@ namespace VedAstro.Library
                     if (nadiKutaIsBad && rasiKutaIsGood && rajjuIsGood)
                     {
                         //create new prediction
-                        var newPrediction = new CompatibilityPrediction()
+                        var newPrediction = new MatchPrediction()
                         {
                             Name = nadiKuta.Name,
                             Description = nadiKuta.Description,
@@ -191,8 +217,10 @@ namespace VedAstro.Library
 
             //Kutas analysis consist of analyzing 12 Factors.Every factor contributes
             //some points, toward a maximum total score of 36 points.
-            void calculateTotalPoints(ref CompatibilityReport report)
+            double CalculateTotalPoints(MatchReport report)
             {
+
+                double totalPoints = 0; //this is over 36
 
                 //count points total 36 points
                 foreach (var prediction in report.PredictionList)
@@ -206,50 +234,54 @@ namespace VedAstro.Library
                     {
                         //Dina Kuta (3 pts)
                         case MatchPredictionName.DinaKuta:
-                            report.KutaScore += 3;
+                            totalPoints += 3;
                             break;
                         //Gana Kuta: (6 pts)
                         case MatchPredictionName.GunaKuta:
-                            report.KutaScore += 6;
+                            totalPoints += 6;
                             break;
                         //Nadi Kuta: (8 pts)
                         case MatchPredictionName.NadiKuta:
-                            report.KutaScore += 8;
+                            totalPoints += 8;
                             break;
                         //Rashi Kuta - (7 pts)
                         case MatchPredictionName.RasiKuta:
-                            report.KutaScore += 7;
+                            totalPoints += 7;
                             break;
                         //Graha Maitram - (5 pts)
                         case MatchPredictionName.GrahaMaitram:
-                            report.KutaScore += 5;
+                            totalPoints += 5;
                             break;
                         // Vasyu Kuta - (2 pts).
                         case MatchPredictionName.VasyaKuta:
-                            report.KutaScore += 2;
+                            totalPoints += 2;
                             break;
                         // Varna Kuta - (1 pt)
                         case MatchPredictionName.Varna:
-                            report.KutaScore += 1;
+                            totalPoints += 1;
                             break;
                         //Yoni Kuta - (4 pts)
                         case MatchPredictionName.YoniKuta:
-                            report.KutaScore += 4;
+                            totalPoints += 4;
                             break;
                     }
                 }
 
                 //convert score to percentage of 36
-                report.KutaScore = Math.Round((report.KutaScore / 36) * 100);
+                //note : should look like this here 42.4444444
+                var rawKutaPercentage = (totalPoints / 36.0) * 100.0;
 
+                //round to nearest for best accuracy
+                var rounded = Math.Round(rawKutaPercentage / 5.0) * 5;
+
+                return rounded;
             }
 
         }
 
-
-        public static CompatibilityPrediction Mahendra(Person male, Person female)
+        public static MatchPrediction Mahendra(Person male, Person female)
         {
-            var prediction = new CompatibilityPrediction
+            var prediction = new MatchPrediction
             {
                 Name = MatchPredictionName.Mahendra,
                 Description = "well-being and longevity"
@@ -284,9 +316,9 @@ namespace VedAstro.Library
             return prediction;
         }
 
-        public static CompatibilityPrediction NadiKuta(Person male, Person female)
+        public static MatchPrediction NadiKuta(Person male, Person female)
         {
-            var prediction = new CompatibilityPrediction
+            var prediction = new MatchPrediction
             {
                 Name = MatchPredictionName.NadiKuta,
                 Description = "nervous energy compatibility (important)"
@@ -388,9 +420,9 @@ namespace VedAstro.Library
             }
         }
 
-        public static CompatibilityPrediction GunaKuta(Person male, Person female)
+        public static MatchPrediction GunaKuta(Person male, Person female)
         {
-            var prediction = new CompatibilityPrediction
+            var prediction = new MatchPrediction
             {
                 Name = MatchPredictionName.GunaKuta,
                 Description = "temperament and character compatibility"
@@ -459,7 +491,7 @@ namespace VedAstro.Library
             if (maleToFemale > 14 && prediction.Nature == EventNature.Bad)
             {
                 //create new prediction
-                var newPrediction = new CompatibilityPrediction()
+                var newPrediction = new MatchPrediction()
                 {
                     Name = prediction.Name,
                     Description = prediction.Description,
@@ -526,9 +558,9 @@ namespace VedAstro.Library
 
         }
 
-        public static CompatibilityPrediction Varna(Person male, Person female)
+        public static MatchPrediction Varna(Person male, Person female)
         {
-            var prediction = new CompatibilityPrediction
+            var prediction = new MatchPrediction
             {
                 Name = MatchPredictionName.Varna,
                 Description = "spiritual/ego compatibility"
@@ -615,10 +647,10 @@ namespace VedAstro.Library
             }
         }
 
-        public static CompatibilityPrediction YoniKuta(Person male, Person female)
+        public static MatchPrediction YoniKuta(Person male, Person female)
         {
 
-            var prediction = new CompatibilityPrediction
+            var prediction = new MatchPrediction
             {
                 Name = MatchPredictionName.YoniKuta,
                 Description = "sex compatibility"
@@ -674,7 +706,7 @@ namespace VedAstro.Library
                     prediction.Nature = EventNature.Good;
                     prediction.Info = "favourable results to the fullest extent, harmony and progeny";
                 }
-                else if(sameAnimal && sameGender) //same animal same gender 
+                else if (sameAnimal && sameGender) //same animal same gender 
                 {
                     prediction.Nature = EventNature.Good;
                     prediction.Info = "not perfect, better than normal."; //(not 100% known)
@@ -826,9 +858,9 @@ namespace VedAstro.Library
             }
         }
 
-        public static CompatibilityPrediction VedhaKuta(Person male, Person female)
+        public static MatchPrediction VedhaKuta(Person male, Person female)
         {
-            var prediction = new CompatibilityPrediction
+            var prediction = new MatchPrediction
             {
                 Name = MatchPredictionName.Vedha,
                 Description = "birth constellations compatibility"
@@ -911,9 +943,9 @@ namespace VedAstro.Library
             }
         }
 
-        public static CompatibilityPrediction Rajju(Person male, Person female)
+        public static MatchPrediction Rajju(Person male, Person female)
         {
-            var prediction = new CompatibilityPrediction
+            var prediction = new MatchPrediction
             {
                 Name = MatchPredictionName.Rajju,
                 Description = "strength/duration of married life (important)"
@@ -969,7 +1001,7 @@ namespace VedAstro.Library
             else
             {
                 prediction.Nature = EventNature.Good;
-                prediction.Info = "male and female constellations in different groups";
+                prediction.Info = "both constellations are in different groups";
             }
 
             //Rajju Kuta need not be considered in case Graha Maitri, Rasi, Dina and Mahendra Kutas are present.
@@ -1037,9 +1069,9 @@ namespace VedAstro.Library
 
         }
 
-        public static CompatibilityPrediction VasyaKuta(Person male, Person female)
+        public static MatchPrediction VasyaKuta(Person male, Person female)
         {
-            var prediction = new CompatibilityPrediction
+            var prediction = new MatchPrediction
             {
                 Name = MatchPredictionName.VasyaKuta,
                 Description = "degree of magnetic control"
@@ -1222,9 +1254,9 @@ namespace VedAstro.Library
             return prediction;
         }
 
-        public static CompatibilityPrediction GrahaMaitram(Person male, Person female)
+        public static MatchPrediction GrahaMaitram(Person male, Person female)
         {
-            var prediction = new CompatibilityPrediction
+            var prediction = new MatchPrediction
             {
                 Name = MatchPredictionName.GrahaMaitram,
                 Description = "happiness, mental compatibility (important)"
@@ -1300,15 +1332,15 @@ namespace VedAstro.Library
             else
             {
                 prediction.Nature = EventNature.Bad;
-                prediction.Info = "no good connection between male and female";
+                prediction.Info = "no good connection between these horoscopes";
             }
 
             return prediction;
         }
 
-        public static CompatibilityPrediction RasiKuta(Person male, Person female)
+        public static MatchPrediction RasiKuta(Person male, Person female)
         {
-            var prediction = new CompatibilityPrediction
+            var prediction = new MatchPrediction
             {
                 Name = MatchPredictionName.RasiKuta,
                 Description = "rasi compatibility"
@@ -1477,7 +1509,7 @@ namespace VedAstro.Library
                 if (sameJanmaLord || janmaIsFriend)
                 {
                     //create new prediction
-                    var newPrediction = new CompatibilityPrediction()
+                    var newPrediction = new MatchPrediction()
                     {
                         Name = prediction.Name,
                         Description = prediction.Description,
@@ -1500,9 +1532,9 @@ namespace VedAstro.Library
 
         }
 
-        public static CompatibilityPrediction StreeDeergha(Person male, Person female)
+        public static MatchPrediction StreeDeergha(Person male, Person female)
         {
-            var prediction = new CompatibilityPrediction
+            var prediction = new MatchPrediction
             {
                 Name = MatchPredictionName.StreeDeergha,
                 Description = "husband well being, longevity and prosperity"
@@ -1537,9 +1569,9 @@ namespace VedAstro.Library
             return prediction;
         }
 
-        public static CompatibilityPrediction DinaKuta(Person male, Person female)
+        public static MatchPrediction DinaKuta(Person male, Person female)
         {
-            var prediction = new CompatibilityPrediction
+            var prediction = new MatchPrediction
             {
                 Name = MatchPredictionName.DinaKuta,
                 Description = "day to day living compatibility"
@@ -1580,7 +1612,7 @@ namespace VedAstro.Library
 
         }
 
-        public static CompatibilityPrediction LagnaAndHouse7Good(Person male, Person female)
+        public static MatchPrediction LagnaAndHouse7Good(Person male, Person female)
         {
 
             //get birth moon sign & lagna, details needed for prediction
@@ -1609,7 +1641,7 @@ namespace VedAstro.Library
 
 
             //fill details to show user if occuring, else nothing
-            var prediction = new CompatibilityPrediction();
+            var prediction = new MatchPrediction();
             if (occuring)
             {
                 prediction.Name = MatchPredictionName.LagnaAnd7thGood;
@@ -1624,7 +1656,7 @@ namespace VedAstro.Library
 
         }
 
-        public static CompatibilityPrediction KujaDosa(Person male, Person female)
+        public static MatchPrediction KujaDosa(Person male, Person female)
         {
 
             //get kuja dosha score for male & female
@@ -1888,9 +1920,9 @@ namespace VedAstro.Library
             }
 
             //interpret kuja dosa & creates the prediction
-            CompatibilityPrediction interpretScore(double scoreMale, double scoreFemale)
+            MatchPrediction interpretScore(double scoreMale, double scoreFemale)
             {
-                var prediction = new CompatibilityPrediction
+                var prediction = new MatchPrediction
                 {
                     Name = MatchPredictionName.KujaDosa,
                     Description = "if bad, may cause death/bad health to spouse"
@@ -1953,7 +1985,7 @@ namespace VedAstro.Library
             }
         }
 
-        public static CompatibilityPrediction BadConstellations(Person male, Person female)
+        public static MatchPrediction BadConstellations(Person male, Person female)
         {
             // Almost all authors agree that certain parts of Moola, Astesha, Jyeshta and Visakha are destructive
             // constellations -
@@ -1962,7 +1994,7 @@ namespace VedAstro.Library
             // and Visakha (last quarter) for husband's younger brother.
 
 
-            var prediction = new CompatibilityPrediction
+            var prediction = new MatchPrediction
             {
                 Name = MatchPredictionName.BadConstellation,
                 Description = "checks if evil constellation is in chart"
@@ -2023,14 +2055,14 @@ namespace VedAstro.Library
 
         }
 
-        public static CompatibilityPrediction SexEnergyCompatibility(Person male, Person female)
+        public static MatchPrediction SexEnergyCompatibility(Person male, Person female)
         {
             //When Mars and Venus are in the 7th, the boy or girl concerned will have strong sex instincts and
             //such an individual should be mated to one who has similar instincts and not a person having Mercury or Jupiter in the 7th,
             //as this makes one under-sexed. When sexual incompatibility sets in marriage,
             //life proves charmless and friction arises between the couple.
 
-            var prediction = new CompatibilityPrediction
+            var prediction = new MatchPrediction
             {
                 Name = MatchPredictionName.SexEnergyCompatibility,
                 Description = "sexual compatibility based on planets in 7th house"

@@ -1,0 +1,57 @@
+﻿@*SIMPLE TEXT NEXT TO AN ICON*@
+@*EXP:Warning Slow, Build ML model*@
+
+@namespace Website.Pages
+@using VedAstro.Library;
+@using System.Xml.Linq
+
+
+<div class="@ExtraClass hstack gap-2" style="@(ShowLine?lineStyle:"")">
+    <Icon IconName="@IconName" Size="25" />
+    <span style="font-size: @(FontSize)px; color: @FontColor;">@ChildContent</span>
+</div>
+@if (ShowLine)
+{
+    <hr class="my-0" />
+}
+
+
+@code {
+
+    /// <summary>
+    /// style only used with line below, move closer to line
+    /// </summary>
+    private string lineStyle = "margin-bottom: -10px;";
+
+    [Parameter]
+    public string IconName { get; set; } = "";
+
+    /// <summary>
+    /// Defaults to black
+    /// </summary>
+    [Parameter]
+    public string FontColor { get; set; } = "#000";
+
+    /// <summary>
+    /// default 13px
+    /// </summary>
+    [Parameter]
+    public int FontSize { get; set; } = 13;
+
+    /// <summary>
+    /// Title can be HTML also
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+    
+    [Parameter]
+    public string ExtraClass { get; set; } = "";
+
+    /// <summary>
+    /// If true show horizontal line below text, default false
+    /// </summary>
+    [Parameter]
+    public bool ShowLine { get; set; } = false;
+
+
+}

@@ -1,77 +1,143 @@
-﻿@attribute [Route(PageRoute.About)]
+﻿
+@using VedAstro.Library
+@attribute [Route(PageRoute.About)]
 
 <PageTitle>About</PageTitle>
 
-<PageTop Title="About" IconName="akar-icons:info" >
-    <Description>The reason and goal behind this project.</Description>
-</PageTop>
+@*<IconTitle IconName="emojione:shinto-shrine" IconSize="50" TitleHolder="h1" Title="About">
+    <ButtonRow>
+        <IconButton ButtonText="Join Us" IconName="carbon:pedestrian-family" ClickUrl="@PageRoute.JoinOurFamily" />
+    </ButtonRow>
+</IconTitle>
+*@
 
 
-<div class="container gap-3">
+<IconTitle Title="About" TitleHolder="h1" MaxWidthPx="@((int)GR.W667)">
+    <ButtonRow>
+        <IconButton PlaceBottom="true" ExtraClass="mb-2" ButtonText="Join Us" IconName="carbon:pedestrian-family" ClickUrl="@PageRoute.JoinOurFamily" />
+    </ButtonRow>
+</IconTitle>
 
+<div class="vstack gap-2" style="max-width:@GR.W667px">
 
-    <h4 class="fw-bold">Reason</h4>
-    <p class="text-justify" style="max-width:@AppData.MaxContentWidthPx">
-        Anybody who has studied Vedic Astrology knows well how accurate it can be.
+    <p class="text-justify">
+        <DropCap Alphabet="A" />nybody who has studied Vedic Astrology knows well how accurate it can be.
         But also how complex it can get to make accurate predictions.
         It takes decades of experience to be able make accurate prediction.
         As such this knowledge only reaches a limited people.
         This project is an effort to change that.
     </p>
 
-    <h4 class="fw-bold">Goal</h4>
-    <p class="text-justify" style="max-width:@AppData.MaxContentWidthPx;">
-        Our goal is to make Vedic Astrology easily accessible to anybody.
-        So that people can use it in their daily lives for their benefit.
-        Vedic Astrology in Sanskrit mean "Light". And that is exactly what it is.
-        It lights our future so we can change it.
-        And it lights our past, to understand our mistakes.
-    </p>
+    <ArticleBlock Title="Goal" IconName="emojione:basketball">
+        <TextHTML>
+            Our goal is to make Vedic Astrology easily accessible to anybody.
+            So that people can use it in their daily lives for their benefit.
+            Vedic Astrology in Sanskrit mean <strong>"Light"</strong> And that is exactly what it is.
+            It lights our future so we can change it. And it lights our past, to understand our mistakes.
+        </TextHTML>
+    </ArticleBlock>
+    <ArticleBlock Title="How" IconName="flat-color-icons:electronics">
+        <TextHTML>
+            Using modern computational technologies &amp; methods we can <strong>simplify the complexity</strong> of Vedic Astrology.
+            For example, calculating planet strength (Bhava Bala) used to take hours, now with computers we can calculate it in
+            <strong>milliseconds</strong>. Combining databases &amp; innovative programming methods. There's no need to remember thousands of planetary combinations,
+            allowing you to make <strong>accurate predictions</strong> with little to no knowledge.
+        </TextHTML>
+    </ArticleBlock>
 
-    <h4 class="fw-bold">How</h4>
-    <p class="text-justify" style="max-width:@AppData.MaxContentWidthPx;">
-        By using modern computational technologies &amp; methods we can simplify the
-        complexity of Vedic Astrology. For example, calculating planet strength (Bhava Bala)
-        used to take hours, now with computers we can calculate it in milliseconds.
-        And using databases &amp; innovative programming methods, there is no need to remember
-        thousands of planetary combinations, allowing you to make accurate predictions
-        with little to no knowledge.
-    </p>
+    <ArticleBlock Title="9 Years Old" IconName="emojione:birthday-cake">
+        <TextHTML>
+            The first line of code for this project was written in late <strong>2014</strong> at Itä-Pasila. Back then it was a simple desktop software,
+            with no UI and only text display. With continued support from users, this project has steadily developed to what it is today.
+            Helping people from all over the world.
+        </TextHTML>
+    </ArticleBlock>
 
-    <h4 class="fw-bold">9 Years Old</h4>
-    <p class="text-justify" style="max-width:@AppData.MaxContentWidthPx;">
-        The first line of code for this project was written in 2014.
-        Back then it was a simple desktop software, with no UI and only text display.
-        With continued support from users, this project has steadily developed to what it is today.
-        Helping people from all over the world.
-    </p>
-@*    <h4 class="fw-bold">Project Future</h4>
-    <p class="text-justify" style="max-width:@AppData.MaxContentWidthPx;">
-        Assume the virtune if you have it not - William Shakespear
-        We have a clear goal on where is this project is headed, though it be little lofty.
-        It has been done before.
-    </p>
+
+    <ArticleBlock Title="Credits &amp; Reference" IconName="emojione:books">
+        <TextHTML>
+            <p class="text-justify">
+                Thanks to B.V. Raman and his grandfather B. Suryanarain Rao. Information from their books is the source
+                material & inspiration for this project. Please buy their books to show your <strong>support</strong>
+            </p>
+            <img src="images/bv-raman-rao.png" class="img-thumbnail my-1" alt="...">
+            <p class="text-justify mt-3">
+                Astronomical calculation was made possible by <BoldLink URL="@URL.NasaJplSource">NASA JPL</BoldLink> data via "SWISS EPHEMERIS" ported by "SwissEphNet".
+                Last but not least, we thank users like you who keep this project going.
+            </p>
+        </TextHTML>
+    </ArticleBlock>
+
+    <ArticleBlock Title="Myth &amp; Philosophy" IconName="emojione:scroll">
+        <TextHTML>
+            <p class="text-justify">
+                It is told in the stories of old, that a heathen god moved by the plight of a
+                child. Gave onto him the knowledge of the stars as compensation for the tears.
+                The child in turn passed that gift to every soul he knew,
+                with no check on price or pedigree. And so astrology was born.
+            </p>
+            <p class="text-justify">
+                As such this knowledge stands as an opportunity for every soul to realize that even though
+                we play a role in the world, we are not made of it. That we are <strong>souls</strong> first!
+                And the planets do no have a say on it.
+            </p>
+            <p class="text-justify" style="margin-bottom: 150px;">
+                A means of escape from the thraldom of cosmic illusion, is what it really is.
+                And so for this reason the masters have continued to bring this out in every age.
+                <br />
+                It's their gift to us, the <strong>"world folk"</strong>.
+            </p>
+
+           @* <div style="cursor: pointer;" @onclick="() => _jsRuntime.OpenNewTab(URL.YukteswarWiki)">
+                <figure class="text-center mt-4">
+                    <blockquote class="blockquote">
+                        <p>
+                            birth is not meant
+                            to emphasize fate, but to arouse man's will to escape
+                            from his universal thralldom
+                        </p>
+                    </blockquote>
+                    <figcaption class="blockquote-footer">
+                        Yukteswar <cite title="Source Title">Sage</cite>
+                    </figcaption>
+                </figure>
+            </div>*@
+            <div style="cursor: pointer;" @onclick="() => _jsRuntime.OpenNewTab(URL.YukteswarWiki)">
+                <figure class="text-center mt-4">
+                    <blockquote class="blockquote">
+                        <p>Mechanical features in the law of karma,<br> can be skillfully adjusted by the fingers of wisdom.</p>
+                    </blockquote>
+                    <figcaption class="blockquote-footer">
+                        Yukteswar
+                    </figcaption>
+                </figure>
+            </div>
+@*            <div style="cursor: pointer;" @onclick="() => _jsRuntime.OpenNewTab(URL.YukteswarWiki)">
+                <figure class="text-center mt-4">
+                    <blockquote class="blockquote">
+                        <p>he has spiritual resources which are not subject to planetary pressure</p>
+                    </blockquote>
+                    <figcaption class="blockquote-footer">
+                        Yukteswar <cite title="Source Title">Sage</cite>
+                    </figcaption>
+                </figure>
+            </div>
 *@
-
-    @*
-    <h4 class="fw-bold">Myths &amp; Legend</h4>
-    <p class="text-justify" style="max-width:@AppData.MaxContentWidthPx;">
-    It is believed that Vedic Astrology was given to man as a means of escape
-    from the thraldom of cosmic illusion (maya).
-
-    </p>
-
-    *@
-    <h4 class="fw-bold">Credits &amp; Reference</h4>
-    <p class="text-justify" style="max-width:@AppData.MaxContentWidthPx;">
-        Thanks to B.V. Raman and his grandfather B. Suryanarain Rao. Information from their books is the source
-        material & inspiration for this project. Please buy their books to show your support.
-        Astronomical calculation was made possible by "SwissEphNet" &amp; "SWISS EPHEMERIS".
-        Last but not least, we thank users like you who keep this project going.
-    </p>
+        </TextHTML>
+    </ArticleBlock>
 
 </div>
 
+@*    <h4 class="fw-bold">Project Future</h4>
+    <p class="text-justify" style="max-width:@AppData.ComponentWidth;">
+    Assume the virtue if you have it not! - William Shakespeare
+
+    We have a clear goal on where this project is headed,
+    though it be little lofty. It has been done before, we hear.
+    So we dare to do it again!
+
+   </p>
+*@
 
 
 @code {

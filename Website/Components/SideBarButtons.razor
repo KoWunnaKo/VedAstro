@@ -1,4 +1,5 @@
 ﻿@using VedAstro.Library
+@using Library.API
 @namespace Website.Pages
 
 @*
@@ -8,52 +9,61 @@
 
 <IconButton FullWidth="true" SmallSize="true" Outline="true" ButtonText="Home" IconName="ant-design:home-twotone" ClickUrl="@PageRoute.Home" />
 <IconButton FullWidth="true" SmallSize="true" Outline="true" ButtonText="Match Checker" IconName="bi:arrow-through-heart-fill" ClickUrl="@PageRoute.Match" />
-<IconButton FullWidth="true" SmallSize="true" Outline="true" ButtonText="Life Predictor" IconName="gis:map-time" ClickUrl="@PageRoute.Dasa" />
-<IconButton FullWidth="true" SmallSize="true" Outline="true" ButtonText="Horoscope" IconName="fluent:book-star-20-filled" ClickUrl="@PageRoute.Horoscope" />
-<IconButton FullWidth="true" SmallSize="true" Outline="true" ButtonText="Journal" IconName="game-icons:secret-book">
-    <DropDownList>
-        <li><a class="dropdown-item" href="@PageRoute.Journal">View Journal</a></li>
-        <li><a class="dropdown-item" href="@PageRoute.JournalAdd">Add Life Event</a></li>
-    </DropDownList>
-</IconButton>
-<IconButton FullWidth="true" SmallSize="true" Outline="true" ButtonText="Muhurtha" IconName="ic:twotone-event" ClickUrl="@PageRoute.Muhurtha" />
-<IconButton FullWidth="true" SmallSize="true" Outline="true" ButtonText="Birth Time Finder" IconName="fa-solid:history" ClickUrl="@PageRoute.BirthTimeFinder" />
+<IconButton FullWidth="true" SmallSize="true" Outline="true" ButtonText="Life Predictor" IconName="gis:map-time" ClickUrl="@PageRoute.LifePredictor" />
 <IconButton FullWidth="true" SmallSize="true" Outline="true" ButtonText="Match Finder" IconName="game-icons:lovers" ClickUrl="@PageRoute.MatchFinder" />
-<IconButton FullWidth="true" SmallSize="true" Outline="true" ButtonText="Time Tools" IconName="mdi:tool-time">
+<IconButton FullWidth="true" SmallSize="true" Outline="true" ButtonText="Horoscope" IconName="fluent:book-star-20-filled" ClickUrl="@PageRoute.Horoscope" />
+<IconButton FullWidth="true" SmallSize="true" Outline="true" ButtonText="Stars Above Me" IconName="solar:moon-stars-bold" ClickUrl="@PageRoute.StarsAboveMe" />
+<IconButton FullWidth="true" SmallSize="true" Outline="true" ButtonText="API Builder" IconName="mdi:cloud-tags" ClickUrl="@PageRoute.APIBuilder" />
+
+<IconButton FullWidth="true" SmallSize="true" Outline="true" ButtonText="Top Secret" IconName="mdi:treasure-chest">
     <DropDownList>
+@*        <IconButton FullWidth="true" SmallSize="true" Outline="true" ButtonText="Journal" IconName="game-icons:secret-book" ClickUrl="@PageRoute.Journal"/>
+        <IconButton FullWidth="true" SmallSize="true" Outline="true" ButtonText="Muhurtha" IconName="ic:twotone-event" ClickUrl="@PageRoute.Muhurtha"/>
+        <IconButton FullWidth="true" SmallSize="true" Outline="true" ButtonText="Birth Time Finder" IconName="fa-solid:history" ClickUrl="@PageRoute.BirthTimeFinder"/>
+*@        <li><a class="dropdown-item" href="@PageRoute.Journal">Journal</a></li>
+        <li><a class="dropdown-item" href="@PageRoute.Muhurtha">Muhurtha</a></li>
+        <li><a class="dropdown-item" href="@PageRoute.BirthTimeFinder">Birth Time Finder</a></li>
         <li><a class="dropdown-item" href="@PageRoute.LocalMeanTime">Local Mean Time</a></li>
         <li><a class="dropdown-item" href="@PageRoute.SunRiseSetTime">Sunrise/Sunset Time</a></li>
     </DropDownList>
 </IconButton>
-<IconButton FullWidth="true" SmallSize="true" Outline="true" ButtonText="API Builder" IconName="mdi:cloud-tags" ClickUrl="@PageRoute.APIBuilder" />
 
 <!--ACCOUNT OR LOGIN-->
 @*User already signed in show account button else show login button*@
-@if (AppData.CurrentUser != UserData.Empty)
+@if (AppData.IsGuestUser)
 {
-    <IconButton FullWidth="true" SmallSize="true" Outline="true" ButtonText="Account" IconName="ic:round-account-box">
-        <DropDownList>
-            <li><a class="dropdown-item" href="@PageRoute.PersonList">Person List</a></li>
-            <li><a class="dropdown-item" href="@PageRoute.AddPerson">Add Person</a></li>
-            <li><a class="dropdown-item" href="@PageRoute.SavedCharts">Saved Charts</a></li>
-            <li><a class="dropdown-item" href="#" @onclick="OnClickSignOutButton"><Icon IconName="icon-park-outline:logout" /> Logout</a></li>
-        </DropDownList>
-    </IconButton>
+    <IconButton ButtonText="Log In"
+                Color="warning"
+                FullWidth="true"
+                IconName="mdi:user-circle" OnClickCallback="OnClickNavBarLoginButton" SmallSize="true" TooltipText="Login to save your data" />
 }
 else
 {
-    <IconButton FullWidth="true" SmallSize="true" Outline="true" ButtonText="Log In" Color="warning" IconName="mdi:user-circle" OnClickCallback="OnClickNavBarLoginButton" TooltipText="Login to save your data" />
+    <IconButton FullWidth="true" SmallSize="true" ButtonText="Account" IconName="ic:round-account-box">
+        <DropDownList>
+            <li><a class="dropdown-item" href="@PageRoute.UserAccount">Account Info</a></li>
+            <li><a class="dropdown-item" href="@PageRoute.PersonList">Person List</a></li>
+            <li><a class="dropdown-item" href="@PageRoute.AddPerson">Add Person</a></li>
+            <li><a class="dropdown-item" href="@PageRoute.SavedCharts">Saved Charts</a></li>
+            <li><a class="dropdown-item" href="#" @onclick="OnClickSignOutButton">Logout</a></li>
+        </DropDownList>
+    </IconButton>
 }
 
 
 @code {
 
-    private void OnClickNavBarLoginButton()
+
+    private async Task OnClickSignOutButton() => await InvokeAsync(async () => await _OnClickSignOutButton()).Try(_jsRuntime);
+
+
+    private async Task OnClickNavBarLoginButton()
     {
 
         //remember previous page to come back to after login
         //saved in browser, so doesn't get deleted by refresh
-        _jsRuntime.SetProperty("PreviousPage", _navigation.Uri);
+        var afterLoginPage = _navigation.Uri;
+        await _jsRuntime.SetProperty("PreviousPage", afterLoginPage);
 
         //goto page
         _navigation.NavigateTo(PageRoute.Login);
@@ -61,24 +71,27 @@ else
     }
 
 
-    private async Task OnClickSignOutButton()
+    private async Task _OnClickSignOutButton()
     {
+        //NOTE: don't use show loading box here, for some reason breaks the whole thing
+
         //log this
-        await WebLogger.Click("Sign Out");
+        WebLogger.Click("Sign Out");
 
         //clear local storage of user data
         //since login status is basically the existence of user data in localstorage
         //removing it removes user's login
         await _jsRuntime.RemoveProperty("UserData");
 
-        //reset person's list
-        AppData.ClearPersonList();
+        //put api access back in guest mode
+        AppData.CurrentUser = UserData.Guest;
+        AppData.API = new VedAstroAPI(AppData.CurrentUser.Id, AppData.VisitorId, _jsRuntime, AppData.URL);
 
-        //reset app data
-        AppData.CurrentUser = UserData.Empty;
+        //before reload page let user know log out went well
+        await _jsRuntime.ShowAlert("success", "Logged out, we hope you come back", false, 3000);
 
         //refresh page
-        WebsiteTools.ReloadPage(_navigation);
+        await _jsRuntime.LoadPage(PageRoute.Home);
 
     }
 

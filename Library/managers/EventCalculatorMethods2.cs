@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Google.Apis.Testing;
+﻿using System.Collections.Generic;
 
 namespace VedAstro.Library
 {
@@ -15,13 +10,11 @@ namespace VedAstro.Library
     /// </summary>
     public static partial class EventCalculatorMethods
     {
-
         #region GOCHARA
 
         [EventCalculator(EventName.GocharaSummary)]
         public static CalculatorResult GocharaSummary(Time time, Person person)
         {
-
             return CalculatorResult.NotOccuring();
             //get all gochara ocured att time
             var occuringGocharaList = new List<CalculatorResult>() { };
@@ -31,12 +24,10 @@ namespace VedAstro.Library
             var badCount = 0;
             foreach (var result in occuringGocharaList)
             {
-
                 //result.
             }
 
             //summarize good & bad count to final value
-
 
             //Occuring = AstronomicalCalculator.IsGocharaOccurring(person.BirthTime, time, PlanetName.Sun, 1)
         }
@@ -114,7 +105,6 @@ namespace VedAstro.Library
         [EventCalculator(EventName.MoonGocharaInHouse12)]
         public static CalculatorResult MoonGocharaInHouse12(Time time, Person person) => new() { Occuring = AstronomicalCalculator.IsGocharaOccurring(person.BirthTime, time, PlanetName.Moon, 12) };
 
-
         //MARS
         [EventCalculator(EventName.MarsGocharaInHouse1)]
         public static CalculatorResult MarsGocharaInHouse1(Time time, Person person) => new() { Occuring = AstronomicalCalculator.IsGocharaOccurring(person.BirthTime, time, PlanetName.Mars, 1) };
@@ -151,8 +141,6 @@ namespace VedAstro.Library
 
         [EventCalculator(EventName.MarsGocharaInHouse12)]
         public static CalculatorResult MarsGocharaInHouse12(Time time, Person person) => new() { Occuring = AstronomicalCalculator.IsGocharaOccurring(person.BirthTime, time, PlanetName.Mars, 12) };
-
-
 
         //MERCURY
         [EventCalculator(EventName.MercuryGocharaInHouse1)]
@@ -191,7 +179,6 @@ namespace VedAstro.Library
         [EventCalculator(EventName.MercuryGocharaInHouse12)]
         public static CalculatorResult MercuryGocharaInHouse12(Time time, Person person) => new() { Occuring = AstronomicalCalculator.IsGocharaOccurring(person.BirthTime, time, PlanetName.Mercury, 12) };
 
-
         //JUPITER
         [EventCalculator(EventName.JupiterGocharaInHouse1)]
         public static CalculatorResult JupiterGocharaInHouse1(Time time, Person person) => new() { Occuring = AstronomicalCalculator.IsGocharaOccurring(person.BirthTime, time, PlanetName.Jupiter, 1) };
@@ -228,7 +215,6 @@ namespace VedAstro.Library
 
         [EventCalculator(EventName.JupiterGocharaInHouse12)]
         public static CalculatorResult JupiterGocharaInHouse12(Time time, Person person) => new() { Occuring = AstronomicalCalculator.IsGocharaOccurring(person.BirthTime, time, PlanetName.Jupiter, 12) };
-
 
         //VENUS
         [EventCalculator(EventName.VenusGocharaInHouse1)]
@@ -267,7 +253,6 @@ namespace VedAstro.Library
         [EventCalculator(EventName.VenusGocharaInHouse12)]
         public static CalculatorResult VenusGocharaInHouse12(Time time, Person person) => new() { Occuring = AstronomicalCalculator.IsGocharaOccurring(person.BirthTime, time, PlanetName.Venus, 12) };
 
-
         //SATURN
         [EventCalculator(EventName.SaturnGocharaInHouse1)]
         public static CalculatorResult SaturnGocharaInHouse1(Time time, Person person) => new() { Occuring = AstronomicalCalculator.IsGocharaOccurring(person.BirthTime, time, PlanetName.Saturn, 1) };
@@ -304,7 +289,6 @@ namespace VedAstro.Library
 
         [EventCalculator(EventName.SaturnGocharaInHouse12)]
         public static CalculatorResult SaturnGocharaInHouse12(Time time, Person person) => new() { Occuring = AstronomicalCalculator.IsGocharaOccurring(person.BirthTime, time, PlanetName.Saturn, 12) };
-
 
         //RAHU
         [EventCalculator(EventName.RahuGocharaInHouse1)]
@@ -343,7 +327,6 @@ namespace VedAstro.Library
         [EventCalculator(EventName.RahuGocharaInHouse12)]
         public static CalculatorResult RahuGocharaInHouse12(Time time, Person person) => new() { Occuring = AstronomicalCalculator.IsGocharaOccurring(person.BirthTime, time, PlanetName.Rahu, 12) };
 
-
         //KETU
         [EventCalculator(EventName.KetuGocharaInHouse1)]
         public static CalculatorResult KetuGocharaInHouse1(Time time, Person person) => new() { Occuring = AstronomicalCalculator.IsGocharaOccurring(person.BirthTime, time, PlanetName.Ketu, 1) };
@@ -381,7 +364,7 @@ namespace VedAstro.Library
         [EventCalculator(EventName.KetuGocharaInHouse12)]
         public static CalculatorResult KetuGocharaInHouse12(Time time, Person person) => new() { Occuring = AstronomicalCalculator.IsGocharaOccurring(person.BirthTime, time, PlanetName.Ketu, 12) };
 
-        #endregion
+        #endregion GOCHARA
 
         #region DASAS
 
@@ -567,8 +550,7 @@ namespace VedAstro.Library
             return new() { Occuring = occuring };
         }
 
-
-        #endregion
+        #endregion SUN DASA
 
         #region MOON DASA
 
@@ -752,8 +734,7 @@ namespace VedAstro.Library
             return new() { Occuring = occuring };
         }
 
-
-        #endregion
+        #endregion MOON DASA
 
         #region MARS DASA
 
@@ -937,7 +918,7 @@ namespace VedAstro.Library
             return new() { Occuring = occuring };
         }
 
-        #endregion
+        #endregion MARS DASA
 
         #region RAHU DASA
 
@@ -1121,8 +1102,7 @@ namespace VedAstro.Library
             return new() { Occuring = occuring };
         }
 
-
-        #endregion
+        #endregion RAHU DASA
 
         #region JUPITER DASA
 
@@ -1306,9 +1286,7 @@ namespace VedAstro.Library
             return new() { Occuring = occuring };
         }
 
-
-
-        #endregion
+        #endregion JUPITER DASA
 
         #region SATURN DASA
 
@@ -1492,7 +1470,7 @@ namespace VedAstro.Library
             return new() { Occuring = occuring };
         }
 
-        #endregion
+        #endregion SATURN DASA
 
         #region MERCURY DASA
 
@@ -1676,10 +1654,10 @@ namespace VedAstro.Library
             return new() { Occuring = occuring };
         }
 
-
-        #endregion
+        #endregion MERCURY DASA
 
         #region KETU DASA
+
         [EventCalculator(EventName.AriesKetuDasa)]
         public static CalculatorResult AriesKetuDasa(Time time, Person person)
         {
@@ -1860,9 +1838,7 @@ namespace VedAstro.Library
             return new() { Occuring = occuring };
         }
 
-
-
-        #endregion
+        #endregion KETU DASA
 
         #region VENUS DASA
 
@@ -2046,9 +2022,11 @@ namespace VedAstro.Library
             return new() { Occuring = occuring };
         }
 
-        #endregion
+        #endregion VENUS DASA
 
-        #endregion
+        #endregion DASAS
+
+        //BHUKTI
 
         #region SUN BHUKTI
 
@@ -2082,7 +2060,6 @@ namespace VedAstro.Library
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Moon;
 
-
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
 
@@ -2100,7 +2077,6 @@ namespace VedAstro.Library
 
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Mars;
-
 
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
@@ -2120,7 +2096,6 @@ namespace VedAstro.Library
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Rahu;
 
-
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
 
@@ -2138,7 +2113,6 @@ namespace VedAstro.Library
 
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Jupiter;
-
 
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
@@ -2158,7 +2132,6 @@ namespace VedAstro.Library
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Saturn;
 
-
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
 
@@ -2176,7 +2149,6 @@ namespace VedAstro.Library
 
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Mercury;
-
 
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
@@ -2196,7 +2168,6 @@ namespace VedAstro.Library
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Ketu;
 
-
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
 
@@ -2215,15 +2186,13 @@ namespace VedAstro.Library
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Venus;
 
-
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
 
             return new() { Occuring = occuring };
         }
 
-
-        #endregion
+        #endregion SUN BHUKTI
 
         #region MOON BHUKTI
 
@@ -2238,7 +2207,6 @@ namespace VedAstro.Library
 
             //check bhukti
             var bhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Sun;
-
 
             //occuring if all conditions met
             var occuring = dasa && bhukti;
@@ -2258,7 +2226,6 @@ namespace VedAstro.Library
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Moon;
 
-
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
 
@@ -2276,7 +2243,6 @@ namespace VedAstro.Library
 
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Mars;
-
 
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
@@ -2296,7 +2262,6 @@ namespace VedAstro.Library
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Rahu;
 
-
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
 
@@ -2314,7 +2279,6 @@ namespace VedAstro.Library
 
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Jupiter;
-
 
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
@@ -2334,7 +2298,6 @@ namespace VedAstro.Library
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Saturn;
 
-
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
 
@@ -2352,7 +2315,6 @@ namespace VedAstro.Library
 
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Mercury;
-
 
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
@@ -2372,7 +2334,6 @@ namespace VedAstro.Library
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Ketu;
 
-
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
 
@@ -2391,15 +2352,13 @@ namespace VedAstro.Library
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Venus;
 
-
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
 
             return new() { Occuring = occuring };
         }
 
-
-        #endregion
+        #endregion MOON BHUKTI
 
         #region MARS BHUKTI
 
@@ -2414,7 +2373,6 @@ namespace VedAstro.Library
 
             //check bhukti
             var bhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Sun;
-
 
             //occuring if all conditions met
             var occuring = dasa && bhukti;
@@ -2434,7 +2392,6 @@ namespace VedAstro.Library
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Moon;
 
-
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
 
@@ -2452,7 +2409,6 @@ namespace VedAstro.Library
 
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Mars;
-
 
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
@@ -2472,7 +2428,6 @@ namespace VedAstro.Library
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Rahu;
 
-
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
 
@@ -2490,7 +2445,6 @@ namespace VedAstro.Library
 
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Jupiter;
-
 
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
@@ -2510,7 +2464,6 @@ namespace VedAstro.Library
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Saturn;
 
-
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
 
@@ -2528,7 +2481,6 @@ namespace VedAstro.Library
 
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Mercury;
-
 
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
@@ -2548,7 +2500,6 @@ namespace VedAstro.Library
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Ketu;
 
-
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
 
@@ -2567,16 +2518,13 @@ namespace VedAstro.Library
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Venus;
 
-
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
 
             return new() { Occuring = occuring };
         }
 
-
-
-        #endregion
+        #endregion MARS BHUKTI
 
         #region RAHU BHUKTI
 
@@ -2591,7 +2539,6 @@ namespace VedAstro.Library
 
             //check bhukti
             var bhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Sun;
-
 
             //occuring if all conditions met
             var occuring = dasa && bhukti;
@@ -2611,7 +2558,6 @@ namespace VedAstro.Library
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Moon;
 
-
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
 
@@ -2629,7 +2575,6 @@ namespace VedAstro.Library
 
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Mars;
-
 
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
@@ -2649,7 +2594,6 @@ namespace VedAstro.Library
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Rahu;
 
-
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
 
@@ -2667,7 +2611,6 @@ namespace VedAstro.Library
 
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Jupiter;
-
 
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
@@ -2687,7 +2630,6 @@ namespace VedAstro.Library
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Saturn;
 
-
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
 
@@ -2705,7 +2647,6 @@ namespace VedAstro.Library
 
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Mercury;
-
 
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
@@ -2725,7 +2666,6 @@ namespace VedAstro.Library
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Ketu;
 
-
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
 
@@ -2744,15 +2684,13 @@ namespace VedAstro.Library
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Venus;
 
-
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
 
             return new() { Occuring = occuring };
         }
 
-
-        #endregion
+        #endregion RAHU BHUKTI
 
         #region JUPITER BHUKTI
 
@@ -2767,7 +2705,6 @@ namespace VedAstro.Library
 
             //check bhukti
             var bhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Sun;
-
 
             //occuring if all conditions met
             var occuring = dasa && bhukti;
@@ -2787,7 +2724,6 @@ namespace VedAstro.Library
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Moon;
 
-
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
 
@@ -2805,7 +2741,6 @@ namespace VedAstro.Library
 
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Mars;
-
 
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
@@ -2825,7 +2760,6 @@ namespace VedAstro.Library
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Rahu;
 
-
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
 
@@ -2843,7 +2777,6 @@ namespace VedAstro.Library
 
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Jupiter;
-
 
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
@@ -2863,7 +2796,6 @@ namespace VedAstro.Library
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Saturn;
 
-
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
 
@@ -2881,7 +2813,6 @@ namespace VedAstro.Library
 
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Mercury;
-
 
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
@@ -2901,7 +2832,6 @@ namespace VedAstro.Library
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Ketu;
 
-
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
 
@@ -2920,15 +2850,13 @@ namespace VedAstro.Library
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Venus;
 
-
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
 
             return new() { Occuring = occuring };
         }
 
-
-        #endregion
+        #endregion JUPITER BHUKTI
 
         #region SATURN BHUKTI
 
@@ -2943,7 +2871,6 @@ namespace VedAstro.Library
 
             //check bhukti
             var bhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Sun;
-
 
             //occuring if all conditions met
             var occuring = dasa && bhukti;
@@ -2963,7 +2890,6 @@ namespace VedAstro.Library
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Moon;
 
-
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
 
@@ -2981,7 +2907,6 @@ namespace VedAstro.Library
 
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Mars;
-
 
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
@@ -3001,7 +2926,6 @@ namespace VedAstro.Library
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Rahu;
 
-
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
 
@@ -3019,7 +2943,6 @@ namespace VedAstro.Library
 
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Jupiter;
-
 
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
@@ -3039,7 +2962,6 @@ namespace VedAstro.Library
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Saturn;
 
-
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
 
@@ -3057,7 +2979,6 @@ namespace VedAstro.Library
 
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Mercury;
-
 
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
@@ -3077,7 +2998,6 @@ namespace VedAstro.Library
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Ketu;
 
-
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
 
@@ -3096,15 +3016,13 @@ namespace VedAstro.Library
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Venus;
 
-
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
 
             return new() { Occuring = occuring };
         }
 
-
-        #endregion
+        #endregion SATURN BHUKTI
 
         #region MERCURY BHUKTI
 
@@ -3119,7 +3037,6 @@ namespace VedAstro.Library
 
             //check bhukti
             var bhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Sun;
-
 
             //occuring if all conditions met
             var occuring = dasa && bhukti;
@@ -3139,7 +3056,6 @@ namespace VedAstro.Library
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Moon;
 
-
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
 
@@ -3157,7 +3073,6 @@ namespace VedAstro.Library
 
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Mars;
-
 
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
@@ -3177,7 +3092,6 @@ namespace VedAstro.Library
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Rahu;
 
-
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
 
@@ -3195,7 +3109,6 @@ namespace VedAstro.Library
 
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Jupiter;
-
 
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
@@ -3215,7 +3128,6 @@ namespace VedAstro.Library
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Saturn;
 
-
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
 
@@ -3233,7 +3145,6 @@ namespace VedAstro.Library
 
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Mercury;
-
 
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
@@ -3253,7 +3164,6 @@ namespace VedAstro.Library
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Ketu;
 
-
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
 
@@ -3272,15 +3182,13 @@ namespace VedAstro.Library
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Venus;
 
-
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
 
             return new() { Occuring = occuring };
         }
 
-
-        #endregion
+        #endregion MERCURY BHUKTI
 
         #region KETU BHUKTI
 
@@ -3295,7 +3203,6 @@ namespace VedAstro.Library
 
             //check bhukti
             var bhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Sun;
-
 
             //occuring if all conditions met
             var occuring = dasa && bhukti;
@@ -3315,7 +3222,6 @@ namespace VedAstro.Library
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Moon;
 
-
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
 
@@ -3333,7 +3239,6 @@ namespace VedAstro.Library
 
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Mars;
-
 
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
@@ -3353,7 +3258,6 @@ namespace VedAstro.Library
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Rahu;
 
-
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
 
@@ -3371,7 +3275,6 @@ namespace VedAstro.Library
 
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Jupiter;
-
 
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
@@ -3391,7 +3294,6 @@ namespace VedAstro.Library
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Saturn;
 
-
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
 
@@ -3409,7 +3311,6 @@ namespace VedAstro.Library
 
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Mercury;
-
 
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
@@ -3429,7 +3330,6 @@ namespace VedAstro.Library
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Ketu;
 
-
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
 
@@ -3448,14 +3348,13 @@ namespace VedAstro.Library
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Venus;
 
-
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
 
             return new() { Occuring = occuring };
         }
 
-        #endregion
+        #endregion KETU BHUKTI
 
         #region VENUS BHUKTI
 
@@ -3470,7 +3369,6 @@ namespace VedAstro.Library
 
             //check bhukti
             var bhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Sun;
-
 
             //occuring if all conditions met
             var occuring = dasa && bhukti;
@@ -3490,7 +3388,6 @@ namespace VedAstro.Library
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Moon;
 
-
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
 
@@ -3508,7 +3405,6 @@ namespace VedAstro.Library
 
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Mars;
-
 
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
@@ -3528,7 +3424,6 @@ namespace VedAstro.Library
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Rahu;
 
-
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
 
@@ -3546,7 +3441,6 @@ namespace VedAstro.Library
 
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Jupiter;
-
 
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
@@ -3566,7 +3460,6 @@ namespace VedAstro.Library
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Saturn;
 
-
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
 
@@ -3584,7 +3477,6 @@ namespace VedAstro.Library
 
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Mercury;
-
 
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
@@ -3604,7 +3496,6 @@ namespace VedAstro.Library
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Ketu;
 
-
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
 
@@ -3623,15 +3514,15 @@ namespace VedAstro.Library
             //check bhukti
             var isCorrectBhukti = currentDasaBhuktiAntaram.Bhukti == PlanetName.Venus;
 
-
             //occuring if all conditions met
             var occuring = isCorrectDasa && isCorrectBhukti;
 
             return new() { Occuring = occuring };
         }
 
+        #endregion VENUS BHUKTI
 
-        #endregion
+        //ANTARAM
 
         #region SUN ANTARAMS
 
@@ -3662,7 +3553,7 @@ namespace VedAstro.Library
         [EventCalculator(EventName.VenusBhuktiSunAntaram)]
         public static CalculatorResult VenusBhuktiSunAntaram(Time time, Person person) => PlanetBhuktiPlanetAntaram(time, person, PlanetName.Venus, PlanetName.Sun);
 
-        #endregion
+        #endregion SUN ANTARAMS
 
         #region MOON ANTARAMS
 
@@ -3693,7 +3584,7 @@ namespace VedAstro.Library
         [EventCalculator(EventName.VenusBhuktiMoonAntaram)]
         public static CalculatorResult VenusBhuktiMoonAntaram(Time time, Person person) => PlanetBhuktiPlanetAntaram(time, person, PlanetName.Venus, PlanetName.Moon);
 
-        #endregion
+        #endregion MOON ANTARAMS
 
         #region MARS ANTARAMS
 
@@ -3724,7 +3615,7 @@ namespace VedAstro.Library
         [EventCalculator(EventName.VenusBhuktiMarsAntaram)]
         public static CalculatorResult VenusBhuktiMarsAntaram(Time time, Person person) => PlanetBhuktiPlanetAntaram(time, person, PlanetName.Venus, PlanetName.Mars);
 
-        #endregion
+        #endregion MARS ANTARAMS
 
         #region RAHU ANTARAMS
 
@@ -3755,7 +3646,7 @@ namespace VedAstro.Library
         [EventCalculator(EventName.VenusBhuktiRahuAntaram)]
         public static CalculatorResult VenusBhuktiRahuAntaram(Time time, Person person) => PlanetBhuktiPlanetAntaram(time, person, PlanetName.Venus, PlanetName.Rahu);
 
-        #endregion
+        #endregion RAHU ANTARAMS
 
         #region JUPITER ANTARAMS
 
@@ -3786,7 +3677,7 @@ namespace VedAstro.Library
         [EventCalculator(EventName.VenusBhuktiJupiterAntaram)]
         public static CalculatorResult VenusBhuktiJupiterAntaram(Time time, Person person) => PlanetBhuktiPlanetAntaram(time, person, PlanetName.Venus, PlanetName.Jupiter);
 
-        #endregion
+        #endregion JUPITER ANTARAMS
 
         #region SATURN ANTARAMS
 
@@ -3817,7 +3708,7 @@ namespace VedAstro.Library
         [EventCalculator(EventName.VenusBhuktiSaturnAntaram)]
         public static CalculatorResult VenusBhuktiSaturnAntaram(Time time, Person person) => PlanetBhuktiPlanetAntaram(time, person, PlanetName.Venus, PlanetName.Saturn);
 
-        #endregion
+        #endregion SATURN ANTARAMS
 
         #region MERCURY ANTARAMS
 
@@ -3848,7 +3739,7 @@ namespace VedAstro.Library
         [EventCalculator(EventName.VenusBhuktiMercuryAntaram)]
         public static CalculatorResult VenusBhuktiMercuryAntaram(Time time, Person person) => PlanetBhuktiPlanetAntaram(time, person, PlanetName.Venus, PlanetName.Mercury);
 
-        #endregion
+        #endregion MERCURY ANTARAMS
 
         #region KETU ANTARAMS
 
@@ -3879,7 +3770,7 @@ namespace VedAstro.Library
         [EventCalculator(EventName.VenusBhuktiKetuAntaram)]
         public static CalculatorResult VenusBhuktiKetuAntaram(Time time, Person person) => PlanetBhuktiPlanetAntaram(time, person, PlanetName.Venus, PlanetName.Ketu);
 
-        #endregion
+        #endregion KETU ANTARAMS
 
         #region VENUS ANTARAMS
 
@@ -3910,9 +3801,10 @@ namespace VedAstro.Library
         [EventCalculator(EventName.VenusBhuktiVenusAntaram)]
         public static CalculatorResult VenusBhuktiVenusAntaram(Time time, Person person) => PlanetBhuktiPlanetAntaram(time, person, PlanetName.Venus, PlanetName.Venus);
 
-        #endregion
+        #endregion VENUS ANTARAMS
 
-        
+        //SUKSHMA
+
         #region SUN SUKSHMA
 
         [EventCalculator(EventName.SunAntaramSunSukshma)]
@@ -3942,7 +3834,7 @@ namespace VedAstro.Library
         [EventCalculator(EventName.VenusAntaramSunSukshma)]
         public static CalculatorResult VenusAntaramSunSukshma(Time time, Person person) => PlanetAntaramPlanetSukshma(time, person, PlanetName.Venus, PlanetName.Sun);
 
-        #endregion
+        #endregion SUN SUKSHMA
 
         #region MOON SUKSHMA
 
@@ -3973,7 +3865,7 @@ namespace VedAstro.Library
         [EventCalculator(EventName.VenusAntaramMoonSukshma)]
         public static CalculatorResult VenusAntaramMoonSukshma(Time time, Person person) => PlanetAntaramPlanetSukshma(time, person, PlanetName.Venus, PlanetName.Moon);
 
-        #endregion
+        #endregion MOON SUKSHMA
 
         #region MARS SUKSHMA
 
@@ -4004,7 +3896,7 @@ namespace VedAstro.Library
         [EventCalculator(EventName.VenusAntaramMarsSukshma)]
         public static CalculatorResult VenusAntaramMarsSukshma(Time time, Person person) => PlanetAntaramPlanetSukshma(time, person, PlanetName.Venus, PlanetName.Mars);
 
-        #endregion
+        #endregion MARS SUKSHMA
 
         #region RAHU SUKSHMA
 
@@ -4035,7 +3927,7 @@ namespace VedAstro.Library
         [EventCalculator(EventName.VenusAntaramRahuSukshma)]
         public static CalculatorResult VenusAntaramRahuSukshma(Time time, Person person) => PlanetAntaramPlanetSukshma(time, person, PlanetName.Venus, PlanetName.Rahu);
 
-        #endregion
+        #endregion RAHU SUKSHMA
 
         #region JUPITER SUKSHMA
 
@@ -4066,7 +3958,7 @@ namespace VedAstro.Library
         [EventCalculator(EventName.VenusAntaramJupiterSukshma)]
         public static CalculatorResult VenusAntaramJupiterSukshma(Time time, Person person) => PlanetAntaramPlanetSukshma(time, person, PlanetName.Venus, PlanetName.Jupiter);
 
-        #endregion
+        #endregion JUPITER SUKSHMA
 
         #region SATURN SUKSHMA
 
@@ -4097,7 +3989,7 @@ namespace VedAstro.Library
         [EventCalculator(EventName.VenusAntaramSaturnSukshma)]
         public static CalculatorResult VenusAntaramSaturnSukshma(Time time, Person person) => PlanetAntaramPlanetSukshma(time, person, PlanetName.Venus, PlanetName.Saturn);
 
-        #endregion
+        #endregion SATURN SUKSHMA
 
         #region MERCURY SUKSHMA
 
@@ -4128,7 +4020,7 @@ namespace VedAstro.Library
         [EventCalculator(EventName.VenusAntaramMercurySukshma)]
         public static CalculatorResult VenusAntaramMercurySukshma(Time time, Person person) => PlanetAntaramPlanetSukshma(time, person, PlanetName.Venus, PlanetName.Mercury);
 
-        #endregion
+        #endregion MERCURY SUKSHMA
 
         #region KETU SUKSHMA
 
@@ -4159,7 +4051,7 @@ namespace VedAstro.Library
         [EventCalculator(EventName.VenusAntaramKetuSukshma)]
         public static CalculatorResult VenusAntaramKetuSukshma(Time time, Person person) => PlanetAntaramPlanetSukshma(time, person, PlanetName.Venus, PlanetName.Ketu);
 
-        #endregion
+        #endregion KETU SUKSHMA
 
         #region VENUS SUKSHMA
 
@@ -4190,10 +4082,288 @@ namespace VedAstro.Library
         [EventCalculator(EventName.VenusAntaramVenusSukshma)]
         public static CalculatorResult VenusAntaramVenusSukshma(Time time, Person person) => PlanetAntaramPlanetSukshma(time, person, PlanetName.Venus, PlanetName.Venus);
 
-        #endregion
+        #endregion VENUS SUKSHMA
 
+        //PRANA
 
+        #region SUN Prana
 
+        [EventCalculator(EventName.SunSukshmaSunPrana)]
+        public static CalculatorResult SunSukshmaSunPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Sun, PlanetName.Sun);
+
+        [EventCalculator(EventName.MoonSukshmaSunPrana)]
+        public static CalculatorResult MoonSukshmaSunPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Moon, PlanetName.Sun);
+
+        [EventCalculator(EventName.MarsSukshmaSunPrana)]
+        public static CalculatorResult MarsSukshmaSunPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Mars, PlanetName.Sun);
+
+        [EventCalculator(EventName.RahuSukshmaSunPrana)]
+        public static CalculatorResult RahuSukshmaSunPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Rahu, PlanetName.Sun);
+
+        [EventCalculator(EventName.JupiterSukshmaSunPrana)]
+        public static CalculatorResult JupiterSukshmaSunPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Jupiter, PlanetName.Sun);
+
+        [EventCalculator(EventName.SaturnSukshmaSunPrana)]
+        public static CalculatorResult SaturnSukshmaSunPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Saturn, PlanetName.Sun);
+
+        [EventCalculator(EventName.MercurySukshmaSunPrana)]
+        public static CalculatorResult MercurySukshmaSunPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Mercury, PlanetName.Sun);
+
+        [EventCalculator(EventName.KetuSukshmaSunPrana)]
+        public static CalculatorResult KetuSukshmaSunPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Ketu, PlanetName.Sun);
+
+        [EventCalculator(EventName.VenusSukshmaSunPrana)]
+        public static CalculatorResult VenusSukshmaSunPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Venus, PlanetName.Sun);
+
+        #endregion SUN Prana
+
+        #region MOON Prana
+
+        [EventCalculator(EventName.SunSukshmaMoonPrana)]
+        public static CalculatorResult SunSukshmaMoonPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Sun, PlanetName.Moon);
+
+        [EventCalculator(EventName.MoonSukshmaMoonPrana)]
+        public static CalculatorResult MoonSukshmaMoonPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Moon, PlanetName.Moon);
+
+        [EventCalculator(EventName.MarsSukshmaMoonPrana)]
+        public static CalculatorResult MarsSukshmaMoonPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Mars, PlanetName.Moon);
+
+        [EventCalculator(EventName.RahuSukshmaMoonPrana)]
+        public static CalculatorResult RahuSukshmaMoonPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Rahu, PlanetName.Moon);
+
+        [EventCalculator(EventName.JupiterSukshmaMoonPrana)]
+        public static CalculatorResult JupiterSukshmaMoonPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Jupiter, PlanetName.Moon);
+
+        [EventCalculator(EventName.SaturnSukshmaMoonPrana)]
+        public static CalculatorResult SaturnSukshmaMoonPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Saturn, PlanetName.Moon);
+
+        [EventCalculator(EventName.MercurySukshmaMoonPrana)]
+        public static CalculatorResult MercurySukshmaMoonPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Mercury, PlanetName.Moon);
+
+        [EventCalculator(EventName.KetuSukshmaMoonPrana)]
+        public static CalculatorResult KetuSukshmaMoonPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Ketu, PlanetName.Moon);
+
+        [EventCalculator(EventName.VenusSukshmaMoonPrana)]
+        public static CalculatorResult VenusSukshmaMoonPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Venus, PlanetName.Moon);
+
+        #endregion MOON Prana
+
+        #region MARS Prana
+
+        [EventCalculator(EventName.SunSukshmaMarsPrana)]
+        public static CalculatorResult SunSukshmaMarsPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Sun, PlanetName.Mars);
+
+        [EventCalculator(EventName.MoonSukshmaMarsPrana)]
+        public static CalculatorResult MoonSukshmaMarsPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Moon, PlanetName.Mars);
+
+        [EventCalculator(EventName.MarsSukshmaMarsPrana)]
+        public static CalculatorResult MarsSukshmaMarsPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Mars, PlanetName.Mars);
+
+        [EventCalculator(EventName.RahuSukshmaMarsPrana)]
+        public static CalculatorResult RahuSukshmaMarsPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Rahu, PlanetName.Mars);
+
+        [EventCalculator(EventName.JupiterSukshmaMarsPrana)]
+        public static CalculatorResult JupiterSukshmaMarsPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Jupiter, PlanetName.Mars);
+
+        [EventCalculator(EventName.SaturnSukshmaMarsPrana)]
+        public static CalculatorResult SaturnSukshmaMarsPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Saturn, PlanetName.Mars);
+
+        [EventCalculator(EventName.MercurySukshmaMarsPrana)]
+        public static CalculatorResult MercurySukshmaMarsPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Mercury, PlanetName.Mars);
+
+        [EventCalculator(EventName.KetuSukshmaMarsPrana)]
+        public static CalculatorResult KetuSukshmaMarsPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Ketu, PlanetName.Mars);
+
+        [EventCalculator(EventName.VenusSukshmaMarsPrana)]
+        public static CalculatorResult VenusSukshmaMarsPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Venus, PlanetName.Mars);
+
+        #endregion MARS Prana
+
+        #region RAHU Prana
+
+        [EventCalculator(EventName.SunSukshmaRahuPrana)]
+        public static CalculatorResult SunSukshmaRahuPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Sun, PlanetName.Rahu);
+
+        [EventCalculator(EventName.MoonSukshmaRahuPrana)]
+        public static CalculatorResult MoonSukshmaRahuPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Moon, PlanetName.Rahu);
+
+        [EventCalculator(EventName.MarsSukshmaRahuPrana)]
+        public static CalculatorResult MarsSukshmaRahuPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Mars, PlanetName.Rahu);
+
+        [EventCalculator(EventName.RahuSukshmaRahuPrana)]
+        public static CalculatorResult RahuSukshmaRahuPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Rahu, PlanetName.Rahu);
+
+        [EventCalculator(EventName.JupiterSukshmaRahuPrana)]
+        public static CalculatorResult JupiterSukshmaRahuPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Jupiter, PlanetName.Rahu);
+
+        [EventCalculator(EventName.SaturnSukshmaRahuPrana)]
+        public static CalculatorResult SaturnSukshmaRahuPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Saturn, PlanetName.Rahu);
+
+        [EventCalculator(EventName.MercurySukshmaRahuPrana)]
+        public static CalculatorResult MercurySukshmaRahuPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Mercury, PlanetName.Rahu);
+
+        [EventCalculator(EventName.KetuSukshmaRahuPrana)]
+        public static CalculatorResult KetuSukshmaRahuPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Ketu, PlanetName.Rahu);
+
+        [EventCalculator(EventName.VenusSukshmaRahuPrana)]
+        public static CalculatorResult VenusSukshmaRahuPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Venus, PlanetName.Rahu);
+
+        #endregion RAHU Prana
+
+        #region JUPITER Prana
+
+        [EventCalculator(EventName.SunSukshmaJupiterPrana)]
+        public static CalculatorResult SunSukshmaJupiterPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Sun, PlanetName.Jupiter);
+
+        [EventCalculator(EventName.MoonSukshmaJupiterPrana)]
+        public static CalculatorResult MoonSukshmaJupiterPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Moon, PlanetName.Jupiter);
+
+        [EventCalculator(EventName.MarsSukshmaJupiterPrana)]
+        public static CalculatorResult MarsSukshmaJupiterPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Mars, PlanetName.Jupiter);
+
+        [EventCalculator(EventName.RahuSukshmaJupiterPrana)]
+        public static CalculatorResult RahuSukshmaJupiterPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Rahu, PlanetName.Jupiter);
+
+        [EventCalculator(EventName.JupiterSukshmaJupiterPrana)]
+        public static CalculatorResult JupiterSukshmaJupiterPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Jupiter, PlanetName.Jupiter);
+
+        [EventCalculator(EventName.SaturnSukshmaJupiterPrana)]
+        public static CalculatorResult SaturnSukshmaJupiterPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Saturn, PlanetName.Jupiter);
+
+        [EventCalculator(EventName.MercurySukshmaJupiterPrana)]
+        public static CalculatorResult MercurySukshmaJupiterPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Mercury, PlanetName.Jupiter);
+
+        [EventCalculator(EventName.KetuSukshmaJupiterPrana)]
+        public static CalculatorResult KetuSukshmaJupiterPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Ketu, PlanetName.Jupiter);
+
+        [EventCalculator(EventName.VenusSukshmaJupiterPrana)]
+        public static CalculatorResult VenusSukshmaJupiterPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Venus, PlanetName.Jupiter);
+
+        #endregion JUPITER Prana
+
+        #region SATURN Prana
+
+        [EventCalculator(EventName.SunSukshmaSaturnPrana)]
+        public static CalculatorResult SunSukshmaSaturnPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Sun, PlanetName.Saturn);
+
+        [EventCalculator(EventName.MoonSukshmaSaturnPrana)]
+        public static CalculatorResult MoonSukshmaSaturnPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Moon, PlanetName.Saturn);
+
+        [EventCalculator(EventName.MarsSukshmaSaturnPrana)]
+        public static CalculatorResult MarsSukshmaSaturnPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Mars, PlanetName.Saturn);
+
+        [EventCalculator(EventName.RahuSukshmaSaturnPrana)]
+        public static CalculatorResult RahuSukshmaSaturnPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Rahu, PlanetName.Saturn);
+
+        [EventCalculator(EventName.JupiterSukshmaSaturnPrana)]
+        public static CalculatorResult JupiterSukshmaSaturnPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Jupiter, PlanetName.Saturn);
+
+        [EventCalculator(EventName.SaturnSukshmaSaturnPrana)]
+        public static CalculatorResult SaturnSukshmaSaturnPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Saturn, PlanetName.Saturn);
+
+        [EventCalculator(EventName.MercurySukshmaSaturnPrana)]
+        public static CalculatorResult MercurySukshmaSaturnPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Mercury, PlanetName.Saturn);
+
+        [EventCalculator(EventName.KetuSukshmaSaturnPrana)]
+        public static CalculatorResult KetuSukshmaSaturnPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Ketu, PlanetName.Saturn);
+
+        [EventCalculator(EventName.VenusSukshmaSaturnPrana)]
+        public static CalculatorResult VenusSukshmaSaturnPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Venus, PlanetName.Saturn);
+
+        #endregion SATURN Prana
+
+        #region MERCURY Prana
+
+        [EventCalculator(EventName.SunSukshmaMercuryPrana)]
+        public static CalculatorResult SunSukshmaMercuryPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Sun, PlanetName.Mercury);
+
+        [EventCalculator(EventName.MoonSukshmaMercuryPrana)]
+        public static CalculatorResult MoonSukshmaMercuryPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Moon, PlanetName.Mercury);
+
+        [EventCalculator(EventName.MarsSukshmaMercuryPrana)]
+        public static CalculatorResult MarsSukshmaMercuryPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Mars, PlanetName.Mercury);
+
+        [EventCalculator(EventName.RahuSukshmaMercuryPrana)]
+        public static CalculatorResult RahuSukshmaMercuryPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Rahu, PlanetName.Mercury);
+
+        [EventCalculator(EventName.JupiterSukshmaMercuryPrana)]
+        public static CalculatorResult JupiterSukshmaMercuryPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Jupiter, PlanetName.Mercury);
+
+        [EventCalculator(EventName.SaturnSukshmaMercuryPrana)]
+        public static CalculatorResult SaturnSukshmaMercuryPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Saturn, PlanetName.Mercury);
+
+        [EventCalculator(EventName.MercurySukshmaMercuryPrana)]
+        public static CalculatorResult MercurySukshmaMercuryPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Mercury, PlanetName.Mercury);
+
+        [EventCalculator(EventName.KetuSukshmaMercuryPrana)]
+        public static CalculatorResult KetuSukshmaMercuryPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Ketu, PlanetName.Mercury);
+
+        [EventCalculator(EventName.VenusSukshmaMercuryPrana)]
+        public static CalculatorResult VenusSukshmaMercuryPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Venus, PlanetName.Mercury);
+
+        #endregion MERCURY Prana
+
+        #region KETU Prana
+
+        [EventCalculator(EventName.SunSukshmaKetuPrana)]
+        public static CalculatorResult SunSukshmaKetuPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Sun, PlanetName.Ketu);
+
+        [EventCalculator(EventName.MoonSukshmaKetuPrana)]
+        public static CalculatorResult MoonSukshmaKetuPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Moon, PlanetName.Ketu);
+
+        [EventCalculator(EventName.MarsSukshmaKetuPrana)]
+        public static CalculatorResult MarsSukshmaKetuPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Mars, PlanetName.Ketu);
+
+        [EventCalculator(EventName.RahuSukshmaKetuPrana)]
+        public static CalculatorResult RahuSukshmaKetuPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Rahu, PlanetName.Ketu);
+
+        [EventCalculator(EventName.JupiterSukshmaKetuPrana)]
+        public static CalculatorResult JupiterSukshmaKetuPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Jupiter, PlanetName.Ketu);
+
+        [EventCalculator(EventName.SaturnSukshmaKetuPrana)]
+        public static CalculatorResult SaturnSukshmaKetuPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Saturn, PlanetName.Ketu);
+
+        [EventCalculator(EventName.MercurySukshmaKetuPrana)]
+        public static CalculatorResult MercurySukshmaKetuPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Mercury, PlanetName.Ketu);
+
+        [EventCalculator(EventName.KetuSukshmaKetuPrana)]
+        public static CalculatorResult KetuSukshmaKetuPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Ketu, PlanetName.Ketu);
+
+        [EventCalculator(EventName.VenusSukshmaKetuPrana)]
+        public static CalculatorResult VenusSukshmaKetuPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Venus, PlanetName.Ketu);
+
+        #endregion KETU Prana
+
+        #region VENUS Prana
+
+        [EventCalculator(EventName.SunSukshmaVenusPrana)]
+        public static CalculatorResult SunSukshmaVenusPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Sun, PlanetName.Venus);
+
+        [EventCalculator(EventName.MoonSukshmaVenusPrana)]
+        public static CalculatorResult MoonSukshmaVenusPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Moon, PlanetName.Venus);
+
+        [EventCalculator(EventName.MarsSukshmaVenusPrana)]
+        public static CalculatorResult MarsSukshmaVenusPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Mars, PlanetName.Venus);
+
+        [EventCalculator(EventName.RahuSukshmaVenusPrana)]
+        public static CalculatorResult RahuSukshmaVenusPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Rahu, PlanetName.Venus);
+
+        [EventCalculator(EventName.JupiterSukshmaVenusPrana)]
+        public static CalculatorResult JupiterSukshmaVenusPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Jupiter, PlanetName.Venus);
+
+        [EventCalculator(EventName.SaturnSukshmaVenusPrana)]
+        public static CalculatorResult SaturnSukshmaVenusPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Saturn, PlanetName.Venus);
+
+        [EventCalculator(EventName.MercurySukshmaVenusPrana)]
+        public static CalculatorResult MercurySukshmaVenusPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Mercury, PlanetName.Venus);
+
+        [EventCalculator(EventName.KetuSukshmaVenusPrana)]
+        public static CalculatorResult KetuSukshmaVenusPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Ketu, PlanetName.Venus);
+
+        [EventCalculator(EventName.VenusSukshmaVenusPrana)]
+        public static CalculatorResult VenusSukshmaVenusPrana(Time time, Person person) => PlanetSukshmaPlanetPrana(time, person, PlanetName.Venus, PlanetName.Venus);
+
+        #endregion VENUS Prana
 
         #region DASA SPECIAL RULES
 
@@ -4204,20 +4374,17 @@ namespace VedAstro.Library
             // produce harmful results unless they acquire beneficence
             // otherwise.
 
-
             //get lord 6th house
             var lord6th = AstronomicalCalculator.GetLordOfHouse(HouseName.House6, person.BirthTime);
 
             //is lord 6th dasa occuring
             var isLord6thDasa = AstronomicalCalculator.GetCurrentDasaBhuktiAntaram(person.BirthTime, time).Dasa == lord6th;
 
-
             //get lord 8th house
             var lord8th = AstronomicalCalculator.GetLordOfHouse(HouseName.House8, person.BirthTime);
 
             //is lord 8th dasa occuring
             var isLord8thDasa = AstronomicalCalculator.GetCurrentDasaBhuktiAntaram(person.BirthTime, time).Dasa == lord8th;
-
 
             //occuring if one of the conditions met
             var occuring = isLord6thDasa || isLord8thDasa;
@@ -4239,13 +4406,11 @@ namespace VedAstro.Library
             //is lord 5th dasa occuring
             var isLord5thDasa = AstronomicalCalculator.GetCurrentDasaBhuktiAntaram(person.BirthTime, time).Dasa == lord5th;
 
-
             //get lord 9th house
             var lord9th = AstronomicalCalculator.GetLordOfHouse(HouseName.House9, person.BirthTime);
 
             //is lord 8th dasa occuring
             var isLord9thDasa = AstronomicalCalculator.GetCurrentDasaBhuktiAntaram(person.BirthTime, time).Dasa == lord9th;
-
 
             //occuring if one of the conditions met
             var occuring = isLord5thDasa || isLord9thDasa;
@@ -4259,7 +4424,6 @@ namespace VedAstro.Library
             //The sub-period of the lord of the 5th in the major
             //period of the lord of the 9th or vice versa is supposed to
             //produce good effects.
-
 
             //get lord 5th house
             var lord5th = AstronomicalCalculator.GetLordOfHouse(HouseName.House5, person.BirthTime);
@@ -4282,7 +4446,6 @@ namespace VedAstro.Library
             //dasa 5th lord & bhukti 9th lord
             var condition2 = isLord5thDasa && isLord9thBhukti;
 
-
             //occuring if one of the conditions met
             var occuring = condition1 || condition2;
 
@@ -4299,7 +4462,7 @@ namespace VedAstro.Library
             //get bukti lord
             var buhktiLord = AstronomicalCalculator.GetCurrentDasaBhuktiAntaram(person.BirthTime, time).Bhukti;
 
-            //get dasa lord = 
+            //get dasa lord =
             var dasaLord = AstronomicalCalculator.GetCurrentDasaBhuktiAntaram(person.BirthTime, time).Dasa;
 
             //condition 1
@@ -4310,7 +4473,6 @@ namespace VedAstro.Library
             //check if both planets are in bad houses at the same time
             var buhktiDasaIn6And8 = bhuktiLordIn6th && dasaLordIn8th;
 
-
             //condition 2
             //is bukti lord in 12th house at birth
             var bhuktiLordIn12th = AstronomicalCalculator.IsPlanetInHouse(person.BirthTime, buhktiLord, 12);
@@ -4318,7 +4480,6 @@ namespace VedAstro.Library
             var dasaLordIn2nd = AstronomicalCalculator.IsPlanetInHouse(person.BirthTime, dasaLord, 2);
             //check if both planets are in bad houses at the same time
             var buhktiDasaIn12And2 = bhuktiLordIn12th && dasaLordIn2nd;
-
 
             //occuring if one of the conditions are met
             var occuring = buhktiDasaIn6And8 || buhktiDasaIn12And2;
@@ -4436,7 +4597,6 @@ namespace VedAstro.Library
             var occuring = isSunDasa && isSunElevated;
 
             return CalculatorResult.New(occuring, PlanetName.Sun);
-
         }
 
         [EventCalculator(EventName.SunWithLord9Or10Dasa)]
@@ -4462,13 +4622,12 @@ namespace VedAstro.Library
             var occuring = isSunDasa && sunInGoodPosition;
 
             return CalculatorResult.New(occuring, new[] { HouseName.House9, HouseName.House10 }, new[] { PlanetName.Sun }, time);
-
         }
 
         [EventCalculator(EventName.SunWithLord5Dasa)]
         public static CalculatorResult SunWithLord5Dasa(Time time, Person person)
         {
-            //the Sun with lord of 5 - birth of children. 
+            //the Sun with lord of 5 - birth of children.
 
             //is sun dasa occuring
             var isSunDasa = AstronomicalCalculator.GetCurrentDasaBhuktiAntaram(person.BirthTime, time).Dasa == PlanetName.Sun;
@@ -4480,15 +4639,13 @@ namespace VedAstro.Library
             var occuring = isSunDasa && sunWithLord5th;
 
             return CalculatorResult.New(occuring, new[] { HouseName.House5 }, new[] { PlanetName.Sun }, time);
-
         }
-
 
         [EventCalculator(EventName.SunWithLord2Dasa)]
         public static CalculatorResult SunWithLord2Dasa(Time time, Person person)
         {
             //The Sun when related to lord of 2 - becomes rich, earns money, secures
-            //property, gains, favours from influential persons. 
+            //property, gains, favours from influential persons.
 
             //is sun dasa occuring
             var isSunDasa = AstronomicalCalculator.GetCurrentDasaBhuktiAntaram(person.BirthTime, time).Dasa == PlanetName.Sun;
@@ -4507,11 +4664,10 @@ namespace VedAstro.Library
         {
             //The Sun when debilitated or occupies the 6th or the
             //8th house or in cojunction with evil planets contracts evil diseases, loss of wealth, suffers from reverses
-            //in employment, penalty and becomes ill. 
+            //in employment, penalty and becomes ill.
 
             //TODO
             return new() { Occuring = false };
-
         }
 
         [EventCalculator(EventName.ExaltatedSunDasa)]
@@ -4534,16 +4690,12 @@ namespace VedAstro.Library
             return CalculatorResult.New(occuring, PlanetName.Sun);
         }
 
-
-
-
-        #endregion
-
+        #endregion DASA SPECIAL RULES
 
         //SPECIAL SHORTCUT FUNCTIONS
 
         /// <summary>
-        /// special shortcut method to make code smaller, easier to read & maintain 
+        /// special shortcut method to make code smaller, easier to read & maintain
         /// </summary>
         private static CalculatorResult PlanetBhuktiPlanetAntaram(Time time, Person person, PlanetName bhuktiPlanet, PlanetName antaramPlanet)
         {
@@ -4573,21 +4725,20 @@ namespace VedAstro.Library
             {
                 return CalculatorResult.NotOccuring();
             }
-
         }
 
         /// <summary>
-        /// special shortcut method to make code smaller, easier to read & maintain 
+        /// special shortcut method to make code smaller, easier to read & maintain
         /// </summary>
         private static CalculatorResult PlanetAntaramPlanetSukshma(Time time, Person person, PlanetName antaramPlanet, PlanetName sukshmaPlanet)
         {
             //get dasas for current time
             var currentDasaBhuktiAntaram = AstronomicalCalculator.GetCurrentDasaBhuktiAntaram(person.BirthTime, time);
 
-            //check bhukti
+            //check Antaram
             var isCorrectAntaram = currentDasaBhuktiAntaram.Antaram == antaramPlanet;
 
-            //check antaram
+            //check Sukshma
             var isCorrectSukshma = currentDasaBhuktiAntaram.Sukshma == sukshmaPlanet;
 
             //occuring if all conditions met
@@ -4607,8 +4758,39 @@ namespace VedAstro.Library
             {
                 return CalculatorResult.NotOccuring();
             }
-
         }
 
+        /// <summary>
+        /// special shortcut method to make code smaller, easier to read & maintain
+        /// </summary>
+        private static CalculatorResult PlanetSukshmaPlanetPrana(Time time, Person person, PlanetName sukshmaPlanet, PlanetName pranaPlanet)
+        {
+            //get whole dasa for current time
+            var currentDasaBhuktiAntaram = AstronomicalCalculator.GetCurrentDasaBhuktiAntaram(person.BirthTime, time);
+
+            //check Sukshma
+            var isCorrectSukshma = currentDasaBhuktiAntaram.Sukshma == sukshmaPlanet;
+
+            //check prana
+            var isCorrectPrana = currentDasaBhuktiAntaram.Prana == pranaPlanet;
+
+            //occuring if all conditions met
+            var occuring = isCorrectSukshma && isCorrectPrana;
+
+            //only get prediction if event occurring, else waste compute cycles
+            if (occuring)
+            {
+                //nature & description override, based on cyclic relationship between planets
+                var periodPrediction = AstronomicalCalculator.GetPlanetDasaMajorPlanetAndMinorRelationship(sukshmaPlanet, pranaPlanet);
+
+                var result = new CalculatorResult() { Occuring = occuring, NatureOverride = periodPrediction.eventNature, DescriptionOverride = periodPrediction.desciption };
+
+                return result;
+            }
+            else
+            {
+                return CalculatorResult.NotOccuring();
+            }
+        }
     }
 }

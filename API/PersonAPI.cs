@@ -1,11 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Xml.Linq;
-using VedAstro.Library;
+﻿using System.Text.Json;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.DurableTask;
+using Microsoft.DurableTask.Client;
+using VedAstro.Library;
 
 namespace API
 {
@@ -14,67 +12,23 @@ namespace API
     /// </summary>
     public class PersonAPI
     {
-        [Function("addperson")]
-        public static async Task<HttpResponseData> AddPerson([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] HttpRequestData incomingRequest)
-        {
 
-            try
-            {
-                //get new person data out of incoming request
-                //note: inside new person xml already contains user id
-                var newPersonXml = await APITools.ExtractDataFromRequest(incomingRequest);
-
-                //add new person to main list
-                await APITools.AddXElementToXDocumentAzure(newPersonXml, APITools.PersonListFile, APITools.BlobContainerName);
-
-                return APITools.PassMessage(incomingRequest);
-
-            }
-            catch (Exception e)
-            {
-                //log error
-                await APILogger.Error(e, incomingRequest);
-
-                //format error nicely to show user
-                return APITools.FailMessage(e, incomingRequest);
-            }
-
-        }
 
         /// <summary>
-        /// API to add current user ID to all people created with current VisitorID
-        /// note: this is done to auto move profiles created before login, then user decides to login
-        /// but expects all the profiles created before to be there in new account/logged in account
+        /// Generate a human readable Person ID
+        /// 
         /// </summary>
-        [Function(nameof(AddUserIdToVisitorPersons))]
-        public static async Task<HttpResponseData> AddUserIdToVisitorPersons([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] HttpRequestData incomingRequest)
+        [Function("GetNewPersonId")]
+        public static async Task<HttpResponseData> GetNewPersonId([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "GetNewPersonId/Name/{personName}/BirthYear/{birthYear}")] HttpRequestData incomingRequest,
+            string personName, string birthYear)
         {
 
             try
             {
-                //get new person data out of incoming request
-                //note: inside new person xml already contains user id
-                var rootXml = await APITools.ExtractDataFromRequest(incomingRequest);
-                var userId = rootXml.Element("UserId")?.Value;
-                var visitorId = rootXml.Element("VisitorId")?.Value ?? "";
+                //special ID made for human brains
+                var brandNewHumanReadyID = await APITools.GeneratePersonId(personName, birthYear);
 
-                //find all person's with inputed visitor ID
-                var personListXmlDoc = await APITools.GetXmlFileFromAzureStorage(APITools.PersonListFile, APITools.BlobContainerName);
-                var foundPersonList = APITools.FindPersonByUserId(personListXmlDoc, visitorId);
-
-                //add User ID to each person (if not already added, avoid duplicates)
-                foreach (var foundPerson in foundPersonList)
-                {
-                    var currentOwners = foundPerson?.Element("UserId")?.Value ?? "";
-                    var notInList = !currentOwners.Equals(userId);
-                    //if not in list, add to current person's owners user ID list
-                    if (notInList) { foundPerson.Element("UserId").Value = currentOwners + "," + userId; }
-                }
-
-                //upload modified list file to storage
-                await APITools.SaveXDocumentToAzure(personListXmlDoc, APITools.PersonListFile, APITools.BlobContainerName);
-
-                return APITools.PassMessage(incomingRequest);
+                return APITools.PassMessageJson(brandNewHumanReadyID, incomingRequest);
 
             }
             catch (Exception e)
@@ -87,74 +41,145 @@ namespace API
             }
 
         }
+
+
+
+
+
+
+        //░█████╗░░██████╗██╗░░░██╗███╗░░██╗░█████╗░
+        //██╔══██╗██╔════╝╚██╗░██╔╝████╗░██║██╔══██╗
+        //███████║╚█████╗░░╚████╔╝░██╔██╗██║██║░░╚═╝
+        //██╔══██║░╚═══██╗░░╚██╔╝░░██║╚████║██║░░██╗
+        //██║░░██║██████╔╝░░░██║░░░██║░╚███║╚█████╔╝
+        //╚═╝░░╚═╝╚═════╝░░░░╚═╝░░░╚═╝░░╚══╝░╚════╝░
+        //POWERED BY AZURE DURABLE FUNCTIONS
+        //-------------------------------------------------------------------------------------------
 
         /// <summary>
         /// Gets person all details from only hash
         /// </summary>
-        [Function("getperson")]
-        public static async Task<HttpResponseData> GetPerson([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] HttpRequestData incomingRequest)
+        [Function(nameof(GetPerson))]
+        public static async Task<HttpResponseData> GetPerson(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "GetPerson/PersonId/{personId}")] HttpRequestData req,
+            [DurableClient] DurableTaskClient client,
+            string personId)
         {
 
             try
             {
-                //get hash that will be used find the person
-                var requestData = await APITools.ExtractDataFromRequest(incomingRequest);
-                var personId = requestData.Value;
+                //get the person record by ID
+                var foundPersonXml = await APITools.FindPersonXMLById(personId);
 
-                //get the person record by hash
-                var foundPerson = await APITools.FindPersonById(personId);
-
+                var personToReturn = Person.FromXml(foundPersonXml);
+                
                 //send person to caller
-                return APITools.PassMessage(foundPerson, incomingRequest);
+                return APITools.PassMessageJson(personToReturn.ToJson(), req);
 
             }
             catch (Exception e)
             {
                 //log error
-                await APILogger.Error(e, incomingRequest);
+                await APILogger.Error(e, req);
 
                 //let caller know fail, include exception info for easy debugging
-                return APITools.FailMessage(e, incomingRequest);
+                return APITools.FailMessageJson(e, req);
             }
 
 
         }
+
+        [Function(nameof(AddPerson))]
+        public static async Task<HttpResponseData> AddPerson(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "AddPerson/UserId/{userId}/VisitorId/{visitorId}")] HttpRequestData req,
+            [DurableClient] DurableTaskClient client,
+            string userId, string visitorId)
+        {
+            //STAGE 1 : GET DATA OUT
+            var parsedRequest = new ParsedRequest(userId, visitorId);
+
+
+            //adding new person needs make sure all cache is cleared if any
+            //NOTE: only choice here is "Purge", "Terminate" does not work, will cause webhook url to 404
+            var purgeResult = await client.PurgeInstanceAsync(parsedRequest.CallerId);
+            var successPurge = purgeResult.PurgedInstanceCount > 0; //if purged will be 1
+
+
+            //STAGE 2 : NOW WE WORK
+            //get new person data out of incoming request
+            //note: inside new person xml already contains user id
+            var personJson = await APITools.ExtractDataFromRequestJson(req);
+            var newPerson = Person.FromJson(personJson);
+
+            //add new person to main list
+            await APITools.AddXElementToXDocumentAzure(newPerson.ToXml(), APITools.PersonListFile, APITools.BlobContainerName);
+
+            return APITools.PassMessageJson(req);
+
+        }
+
 
         /// <summary>
         /// Updates a person's record, uses hash to identify person to overwrite
         /// </summary>
-        [Function("updateperson")]
+        [Function(nameof(UpdatePerson))]
         public static async Task<HttpResponseData> UpdatePerson(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] HttpRequestData incomingRequest)
+            [HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = "UpdatePerson/UserId/{userId}/VisitorId/{visitorId}")] HttpRequestData req,
+            [DurableClient] DurableTaskClient client,
+            string userId, string visitorId)
         {
+            //STAGE 1 : GET DATA OUT
+            var parsedRequest = new ParsedRequest(userId, visitorId);
 
+
+            //adding new person needs make sure all cache is cleared if any
+            //NOTE: only choice here is "Purge", "Terminate" does not work, will cause webhook url to 404
+            var purgeResult = await client.PurgeInstanceAsync(parsedRequest.CallerId);
+            var successPurge = purgeResult.PurgedInstanceCount > 0; //if purged will be 1
+
+
+            //STAGE 2 : NOW WE WORK
             try
             {
-                //get unedited hash & updated person details from incoming request
-                var updatedPersonXml = await APITools.ExtractDataFromRequest(incomingRequest);
+                //get new person data out of incoming request
+                //note: inside new person xml already contains user id
+                var personJson = await APITools.ExtractDataFromRequestJson(req);
+                var updatedPerson = Person.FromJson(personJson);
 
-                //save a copy of the original person record in recycle bin, just in-case accidental update
-                var personId = Person.FromXml(updatedPersonXml).Id;//does not change
-                var originalPerson = await APITools.GetPersonById(personId);
-                await APITools.AddXElementToXDocumentAzure(originalPerson.ToXml(), APITools.RecycleBinFile, APITools.BlobContainerName);
 
-                //directly updates and saves new person record to main list (does all the work, sleep easy)
-                await APITools.UpdatePersonRecord(updatedPersonXml);
+                //only owner can delete so make sure here
+                var isOwner = Tools.IsUserIdMatch(updatedPerson.UserIdString, parsedRequest.CallerId);
+                if (isOwner)
+                {
+                    //save a copy of the original person record in recycle bin, just in-case accidental update
+                    var originalPerson = await APITools.GetPersonById(updatedPerson.Id);
+                    await APITools.AddXElementToXDocumentAzure(originalPerson.ToXml(), APITools.RecycleBinFile, APITools.BlobContainerName);
 
-                //all is good baby
-                return APITools.PassMessage(incomingRequest);
+                    //directly updates and saves new person record to main list (does all the work, sleep easy)
+                    await APITools.UpdatePersonRecord(updatedPerson);
+
+                    //all is good baby
+                    return APITools.PassMessage(req);
+
+                }
+                else
+                {
+                    return APITools.FailMessageJson("Only owner can update, you are not.", req);
+                }
+
 
             }
             catch (Exception e)
             {
                 //log error
-                await APILogger.Error(e, incomingRequest);
+                await APILogger.Error(e, req);
 
                 //format error nicely to show user
-                return APITools.FailMessage(e, incomingRequest);
+                return APITools.FailMessage(e, req);
             }
 
         }
+
 
         /// <summary>
         /// Deletes a person's record, uses hash to identify person
@@ -164,106 +189,156 @@ namespace API
         /// can delete the record by calling this API
         /// </summary>
         [Function(nameof(DeletePerson))]
-        public static async Task<HttpResponseData> DeletePerson([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] HttpRequestData incomingRequest)
+        public static async Task<HttpResponseData> DeletePerson(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "DeletePerson/UserId/{userId}/VisitorId/{visitorId}/PersonId/{personId}")] HttpRequestData req,
+            [DurableClient] DurableTaskClient client,
+            string userId, string visitorId, string personId)
         {
+            //STAGE 1 : GET DATA OUT
+            var parsedRequest = new ParsedRequest(userId, visitorId);
 
+
+            //adding new person needs make sure all cache is cleared if any
+            //NOTE: only choice here is "Purge", "Terminate" does not work, will cause webhook url to 404
+            var purgeResult = await client.PurgeInstanceAsync(parsedRequest.CallerId);
+            var successPurge = purgeResult.PurgedInstanceCount > 0; //if purged will be 1
+
+
+            //STAGE 2 : NOW WE WORK
             try
             {
-                //get unedited hash & updated person details from incoming request
-                var requestData = await APITools.ExtractDataFromRequest(incomingRequest);
-                var personId = requestData.Value;
-
                 //get the person record that needs to be deleted
-                var personToDelete = await APITools.FindPersonById(personId);
+                var personToDelete = await APITools.FindPersonXMLById(personId);
 
-                //add deleted person to recycle bin 
-                await APITools.AddXElementToXDocumentAzure(personToDelete, APITools.RecycleBinFile, APITools.BlobContainerName);
+                //only owner can delete so make sure here
+                var personParsed = Person.FromXml(personToDelete);
+                var isOwner = Tools.IsUserIdMatch(personParsed.UserIdString, parsedRequest.CallerId);
+                if (isOwner)
+                {
+                    //add deleted person to recycle bin 
+                    await APITools.AddXElementToXDocumentAzure(personToDelete, APITools.RecycleBinFile, APITools.BlobContainerName);
 
-                //delete the person record,
-                await APITools.DeleteXElementFromXDocumentAzure(personToDelete, APITools.PersonListFile, APITools.BlobContainerName);
+                    //delete the person record,
+                    await APITools.DeleteXElementFromXDocumentAzure(personToDelete, APITools.PersonListFile, APITools.BlobContainerName);
 
-                return APITools.PassMessage(incomingRequest);
+                    return APITools.PassMessageJson(req);
+                }
+                else
+                {
+                    return APITools.FailMessageJson("Only owner can delete, you are not.", req);
+                }
 
             }
             catch (Exception e)
             {
                 //log error
-                await APILogger.Error(e, incomingRequest);
+                await APILogger.Error(e, req);
 
                 //format error nicely to show user
-                return APITools.FailMessage(e, incomingRequest);
+                return APITools.FailMessage(e, req);
             }
         }
 
-        /// <summary>
-        /// Gets all person profiles owned by User ID & Visitor ID
-        /// </summary>
-        [Function(nameof(GetPersonList))]
-        public static async Task<HttpResponseData> GetPersonList([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] HttpRequestData incomingRequest)
+
+
+
+        //-------------------TODO CLEAN
+
+
+
+
+        [Function(nameof(GetPersonListAsync))]
+        public static async Task<HttpResponseData> GetPersonListAsync(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "GetPersonListAsync/UserId/{userId}/VisitorId/{visitorId}")] HttpRequestData req,
+            [DurableClient] DurableTaskClient client,
+            string userId, string visitorId)
         {
-        //used when visitor id person were moved to user id, shouldn't happen all the time, obviously adds to the lag (needs speed testing) 
-        TryAgain:
+            //STAGE 1 : GET DATA OUT
+            var parsedRequest = new ParsedRequest(userId, visitorId);
 
-            try
+
+            //check if new call or old call 
+            var result = await client.GetInstanceAsync(parsedRequest.CallerId, CancellationToken.None);
+            var needsRestart = result?.RuntimeStatus == OrchestrationRuntimeStatus.Failed ||
+                               result?.RuntimeStatus == OrchestrationRuntimeStatus.Terminated ||
+                               result?.RuntimeStatus == OrchestrationRuntimeStatus.Suspended;
+            var isNewCall = result == null; //no old calls found will null
+
+
+            //STAGE 2 : PROCESS
+            //NOTE: only recalculate if non existent or corrupt
+            if (isNewCall || needsRestart)
             {
-                //TODO CHECK HERE FOR SAM ENTRY
+                //if already exist than we must kill it first completely of the face of the earth aka PURGE
+                //NOTE: this should help make sure brand new instance is created after without error effecting restart
+                var purgeResult = await client.PurgeInstanceAsync(parsedRequest.CallerId);
+                var successPurge = purgeResult.PurgedInstanceCount > 0; //if purged will be 1
 
-                //data out of request
-                var rootXml = await APITools.ExtractDataFromRequest(incomingRequest);
-                var userId = rootXml.Element("UserId")?.Value;
-                var visitorId = rootXml.Element("VisitorId")?.Value;
-
-                //get all person list from storage
-                var personListXml = await APITools.GetXmlFileFromAzureStorage(APITools.PersonListFile, APITools.BlobContainerName);
-
-                //filter out person by user id
-                var filteredList1 = APITools.FindPersonByUserId(personListXml, userId);
-
-                //filter out person by visitor id
-                var visitorIdList = APITools.FindPersonByUserId(personListXml, visitorId);
-
-                //before sending to user, clean the data
-                //if user made profile while logged out then logs in, transfer the profiles created with visitor id to the new user id
-                //if this is not done, then when user loses the visitor ID, they also loose access to the person profile
-                var loggedIn = userId != "101" && !(string.IsNullOrEmpty(userId));//already logged in if true
-                var visitorProfileExists = visitorIdList.Any();
-                if (loggedIn && visitorProfileExists)
-                {
-                    //transfer to user id
-                    foreach (var person in visitorIdList)
-                    {
-                        //edit data direct to for speed
-                        person.Element("UserId").Value = userId;
-
-                        //save to main list
-                        await APITools.UpdatePersonRecord(person);
-                    }
-
-                    //after the transfer, restart the call as though new, so that user only gets the correct list at all times (though this might be little slow)
-                    goto TryAgain;
-                }
-
-
-                //combine and remove duplicates
-                if (visitorIdList.Any()) { filteredList1.AddRange(visitorIdList); }
-                List<XElement> personListNoDupes = filteredList1.Distinct().ToList();
-
-                //convert list to xml
-                var xmlPayload = Tools.AnyTypeToXmlList(personListNoDupes);
-
-
-                //send filtered list to caller
-                return APITools.PassMessage(xmlPayload, incomingRequest);
-
-            }
-            catch (Exception e)
-            {
-                //log error
-                await APILogger.Error(e, incomingRequest);
-                //format error nicely to show user
-                return APITools.FailMessage(e, incomingRequest);
+                //start processing
+                var options = new StartOrchestrationOptions(parsedRequest.CallerId); //set caller id so can callback
+                var instanceId = await client.ScheduleNewOrchestrationInstanceAsync(nameof(_getPersonListAsync), parsedRequest, options, CancellationToken.None); //should match caller ID
             }
 
+            //give user the url to query for status and data
+            //note : todo this is hack to get polling URL via RESPONSE creator, should be able to create directly
+            var x = client.CreateCheckStatusResponse(req, parsedRequest.CallerId);
+            var pollingUrl = APITools.GetHeaderValue(x, "Location");
+
+            //send polling URL to caller as Passed payload, client should know what todo
+            return APITools.PassMessageJson(pollingUrl, req);
+
+        }
+
+
+        /// <summary>
+        /// The underlying async func that actually gets the list
+        /// </summary>
+        /// <param name="context"></param>
+        /// <returns></returns>
+        [Function(nameof(_getPersonListAsync))]
+        public static async Task<JsonDocument> _getPersonListAsync([OrchestrationTrigger]
+            TaskOrchestrationContext context)
+        {
+            var requestData = context.GetInput<ParsedRequest>();
+
+            var swapStatus = await context.CallActivityAsync<bool>(nameof(SwapData), requestData); //note swap done before get list
+            var personList = await context.CallActivityAsync<JsonDocument>(nameof(FilterData), requestData);
+
+            return personList;
+        }
+
+        [Function(nameof(SwapData))]
+        public static async Task<bool> SwapData([ActivityTrigger] ParsedRequest swapOptions, FunctionContext executionContext)
+        {
+
+            //STAGE 2 : SWAP DATA
+            //swap visitor ID with user ID if any (data follows user when log in)
+            bool didSwap = await APITools.SwapUserId(swapOptions.VisitorId, swapOptions.UserId, APITools.PersonListFile);
+
+            return didSwap;
+        }
+
+        [Function(nameof(FilterData))]
+        public static async Task<JsonDocument> FilterData([ActivityTrigger] ParsedRequest requestData, FunctionContext executionContext)
+        {
+
+            //get latest all match reports
+            var personListXml = await APITools.GetXmlFileFromAzureStorage(APITools.PersonListFile, APITools.BlobContainerName);
+
+            //filter out record by caller id, which will be visitor id when user not logged in
+            var personListByCallerIdXml = Tools.FindXmlByUserId(personListXml, requestData.CallerId);
+
+            //sort a to z by name for ease of user (done here for speed vs client)
+            var sortedList = personListByCallerIdXml.OrderBy(personXml => personXml.Element("Name")?.Value ?? "").ToList();
+
+            //convert raw XML to Person Json
+            var personListJson = Person.XmlListToJsonList(sortedList);
+
+            //convert to type .NET's JSON accepted by durable
+            var jsonText = personListJson.ToString();
+            var personListJsonDurable = JsonDocument.Parse(jsonText); //done for compatibility with durable
+
+            return personListJsonDurable;
 
         }
 

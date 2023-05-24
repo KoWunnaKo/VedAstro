@@ -3,18 +3,6 @@
 
 @using VedAstro.Library
 
-@*<style>
-    TODO custom table hover color
-    .table-hover tbody tr:hover td, .table-hover tbody tr:hover th {
-        background-color: aqua !important;
-    }
-    .table {
-        border-color: #747474 !important;
-    }
-    .table-hover tbody tr:hover td {
-        background: aqua;
-    }
-</style>*@
 
 <PageTitle>@_pageTitle</PageTitle>
 
@@ -53,20 +41,14 @@
             </a>
         </li>
         @*DROP DOWN ACTIONS*@
-        <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">
-                <Icon IconName="carbon:touch-interaction" /> Actions
-            </a>
-            <ul class="dropdown-menu">
-                <li><a class="dropdown-item" style="cursor:pointer;" @onclick="CopyPersonProfileShareLink"><Icon IconName="material-symbols:ios-share" /> Share Link</a></li>
-                <li><a class="dropdown-item" style="cursor:pointer;" @onclick="OnClickSubmitButton"><Icon IconName="bx:save" /> Save</a></li>
-                <li><a class="dropdown-item" style="cursor:pointer;" @onclick="OnClickDeleteButton"><Icon IconName="material-symbols:delete-rounded" /> Delete</a></li>
-                @*                <li><a class="dropdown-item" href="#">Something else here</a></li>
-                <li><hr class="dropdown-divider"></li>
-                <li><a class="dropdown-item" href="#">Separated link</a></li>
-                *@
-            </ul>
-        </li>
+        <DropDownButton ButtonText="Actions" IconName="carbon:touch-interaction">
+            <ButtonList>
+                <li><a class="dropdown-item" style="cursor: pointer;" @onclick="CopyPersonProfileShareLink"><Icon IconName="material-symbols:ios-share" /> Share Link</a></li>
+                <li><a class="dropdown-item" style="cursor: pointer;" @onclick="OnClickSubmitButton"><Icon IconName="bx:save" /> Save</a></li>
+                <li><a class="dropdown-item" style="cursor: pointer;" @onclick="OnClickDeleteButton"><Icon IconName="material-symbols:delete-rounded" /> Delete</a></li>
+            </ButtonList>
+        </DropDownButton>
+
     </ul>
 
     @*TAB BODY*@
@@ -88,7 +70,7 @@
                 <div>
                     <label class="form-label">
                         Gender
-                        <HelpBox SmallIcon="true" HelpText="@HelpText.Gender"></HelpBox>
+                        <HelpIconTooltip SmallIcon="true" HelpText="@HelpText.Gender" />
                     </label>
                     <select @bind="_genderInput" class="form-control">
                         <option value="Male">Male</option>
@@ -124,6 +106,10 @@
                         <li class="list-group-item">Local Standard Time (STD)</li>
                         <li class="list-group-item">@_person.BirthTime.GetStdDateTimeOffsetText()</li>
                     </ul>
+                    <ul class="list-group list-group-horizontal">
+                        <li class="list-group-item">Owners</li>
+                        <li class="list-group-item">@_person.UserIdString</li>
+                    </ul>
                 </ul>
             </div>
         </div>
@@ -146,7 +132,7 @@
     /// editor passed, else becomes creator
     /// </summary>
     [Parameter]
-    public string PersonId { get; set; }
+    public string PersonIdUrl { get; set; }
 
     /// <summary>
     /// represents the Person instance that this page represents
@@ -202,6 +188,7 @@
     }
 
 
+
     /// <summary>
     /// Function that is called on click of button
     /// </summary>
@@ -211,16 +198,6 @@
         //UpdateExistingPerson();
         await UpdateExistingPerson();
 
-
-        ////button does different stuff based on page mode
-        //if (IsCreator)
-        //{
-        //    //SubmitNewPerson();
-        //    await SubmitNewPerson();
-        //}
-        //else
-        //{
-        //}
     }
 
 
@@ -231,13 +208,13 @@
     {
 
         //try get person profile from ID
-        _person = await WebsiteTools.GetPersonFromId(PersonId, _jsRuntime);
+        _person = await WebsiteTools.GetPersonById(PersonIdUrl, _jsRuntime);
 
         //set page title
         _pageTitle = $"Profile | {_person.Name}";
 
         //place data into fields
-        PersonId = _person.Id;
+        PersonIdUrl = _person.Id;
         _nameInput = _person.Name;
         _notesInput = _person.Notes;
         _genderInput = _person.Gender.ToString();
@@ -252,8 +229,6 @@
         var birthTimeDate = _person.BirthDateMonthYear;
         _timeInput.DateMonthYear = birthTimeDate;
 
-
-        //geolocation only needs to be set in Editor mode
         var geoLocation = new GeoLocation
         (
             _person.GetBirthLocation().GetName(),
@@ -269,29 +244,6 @@
         this.StateHasChanged();
     }
 
-    //sends the newly created person to API server
-    private async Task SubmitNewPerson()
-    {
-        //only continue if passed input field validation
-        if (!(await IsValidationPassed())) { return; }
-
-        await _jsRuntime.ShowLoading();
-
-        //make a new person from the details in the input
-        _person = await GetPersonInstanceFromInput();
-
-        //send newly created person to API server
-        await WebsiteTools.AddPerson(_person);
-
-        //page ready
-        _jsRuntime.HideAlert();
-
-        await _jsRuntime.ShowAlert("success", $"{_nameInput} added successfully!", false, 2500);
-
-        //send user to person list page after period of time
-        await Task.Delay(100);
-        _navigation.NavigateTo(PageRoute.PersonList);
-    }
 
     /// <summary>
     /// Checks if validation of all input fields
@@ -390,7 +342,7 @@
         var birthTime = _timeInput.GetTime(geoLocation);
         //if user not signed in, use their visitor id as user ID
         //done so that public list is not clouded
-        var currentUserId = AppData.CurrentUser?.Id == UserData.Empty.Id ? AppData.VisitorId : AppData.CurrentUser?.Id;
+        var currentUserId = AppData.CurrentUser?.Id == UserData.Guest.Id ? AppData.VisitorId : AppData.CurrentUser?.Id;
 
         //get all owner list & add this user id if not included
         //this way 1 user does not delete other users when click save
@@ -420,7 +372,7 @@
         _person = await GetPersonInstanceFromInput();
 
         //update person in API by hash
-        await WebsiteTools.UpdatePerson(_person, _jsRuntime);
+        await AppData.API.UpdatePerson(_person);
 
         //let user know person has been updated
         await _jsRuntime.ShowAlert("success", "Updated successfully!", false, timer: 1000);
@@ -440,13 +392,13 @@
         await _jsRuntime.ShowLoading();
 
         //tell API to delete person, using person id
-        await WebsiteTools.DeletePerson(PersonId, _jsRuntime);
+        await AppData.API.DeletePerson(PersonIdUrl);
 
         //let user know person has been updates
         await _jsRuntime.ShowAlert("success", $"{_nameInput} deleted successfully!", false, timer: 1000);
 
         //refresh the page variables
-        //todo marked for deletion, test without = no difference > delete
+        //todo marked for deletion, test without = no difference -> delete
         this.StateHasChanged();
 
         //page ready
@@ -463,10 +415,11 @@
     private async void CopyPersonProfileShareLink()
     {
         //generate the url
-        var url = AppData.URL.WebUrl + $"{PageRoute.PersonEditor}/{PersonId}";
+        //var url = AppData.URL.WebUrl + $"{PageRoute.PersonEditor}/{PersonId}";
+        var url = Path.Combine(AppData.URL.WebUrl, PageRoute.PersonEditor, PersonIdUrl); //use Combine for safety
 
         //use js to transfer to clipboard
-        await _jsRuntime.InvokeVoidAsync("CopyToClipboard", url);
+        await _jsRuntime.InvokeVoidAsync(JS.CopyToClipboard, url);
 
         //let user know link coppied
         await _jsRuntime.ShowAlert("success", $"Share Link Copied!", false, 2600);

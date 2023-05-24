@@ -1,21 +1,402 @@
-﻿@attribute [Route(PageRoute.APIBuilder)]
+﻿@using VedAstro.Library
+@attribute [Route(PageRoute.APIBuilder)]
 
+<PageTitle>Easy API Builder | VedAstro</PageTitle>
 
-<PageTitle>API Builder</PageTitle>
-    <PageTop Title="API Builder" IconName="mdi:cloud-tags">
-    <Description>
-        A simple URL builder using dropdown boxes. This should make it easy for any beginner to get started.
-        The biggest problem with consuming any API, is the learning curve. Normally the first 3-5 hours will be spent learning the small nuances or semantics used by the API provider.
-        We hope to reduce this lag with this simple API URL builder.
-    </Description>
+<PageTop ImageName="api-builder-banner.svg"
+         Title="Easy API Builder"
+         DescriptionText="Build your HTTP calls fast and easy. No manuals needed.
+         Powered by .NET Roslyn compiler to auto generate calls dynamically from source code.">
 </PageTop>
 
 
-<h4>
-    <a href="@PageRoute.Donate" class="link-primary">Fund</a> this calculator for faster development.
-</h4>
+@*API DROP DOWN SELECTORS*@
+<div>
+    <div class="d-flex flex-wrap gap-5" style="max-width:@GR.W667px;">
+
+        @*GENERATOR*@
+        <div class="vstack gap-3" style="max-width:@GR.W412px;">
+            <TimeInputSimple @ref="_timeInput" LabelText="Time" />
+            <GeoLocationInput @ref="_geoLocationInput" LabelText="Location" HideLongLat="@true" />
+
+            @*Celestial Body*@
+            <div class="form-floating">
+                <select @bind="SelectedBodyType" class="form-select" id="celestialBodySelect" aria-label="Celestial Body Select">
+                    <option value="" selected>Make a choice</option>
+                    <option value="Planet">Planet</option>
+                    <option value="House">House</option>
+                    <option value="SkyChart">Sky Chart</option>
+                    <option value="SkyChartGIF">Sky Chart GIF</option>
+                </select>
+                <label style="font-weight: 700; color: black;" for="celestialBodySelect">Celestial Body</label>
+            </div>
+
+            @*Planet Name*@
+            <div @ref="planetNameSelector" style="display: none;" class="form-floating">
+                <select @bind="selectedPlanetName" class="form-select" id="planetNameSelector" aria-label="Planet Name Select">
+                    <option value="" selected>Make a choice</option>
+                    <option value="Sun">Sun</option>
+                    <option value="Moon">Moon</option>
+                    <option value="Mars">Mars</option>
+                    <option value="Mercury">Mercury</option>
+                    <option value="Jupiter">Jupiter</option>
+                    <option value="Venus">Venus</option>
+                    <option value="Saturn">Saturn</option>
+                    <option value="Rahu">Rahu</option>
+                    <option value="Ketu">Ketu</option>
+                </select>
+                <label style="font-weight: 700; color: black;" for="planetNameSelector">Planet Name</label>
+            </div>
+
+            @*House Name*@
+            <div @ref="houseNameSelector" style="display: none;" class="form-floating">
+                <select @bind="selectedHouseName" class="form-select" id="houseNameSelector" aria-label="House Name Select">
+                    <option value="" selected>Make a choice</option>
+                    <option value="House1">House 1</option>
+                    <option value="House2">House 2</option>
+                    <option value="House3">House 3</option>
+                    <option value="House4">House 4</option>
+                    <option value="House5">House 5</option>
+                    <option value="House6">House 6</option>
+                    <option value="House7">House 7</option>
+                    <option value="House8">House 8</option>
+                    <option value="House9">House 9</option>
+                    <option value="House10">House 10</option>
+                    <option value="House11">House 11</option>
+                    <option value="House12">House 12</option>
+                </select>
+                <label style="font-weight: 700; color: black;" for="houseNameSelector">House Name</label>
+            </div>
+
+            @*Planet Property*@
+            <div @ref="planetPropertySelector" style="display: none;" class="form-floating">
+                <select @bind="selectedPlanetProperty" class="form-select" id="planetPropertySelector" aria-label="Data Property Select">
+                    <option value="" selected>Make a choice</option>
+                    <option value="All">All</option>
+                    @*make a dynamic selection of all available calls*@
+                    @foreach (var dataProperty in PlanetCallList)
+                    {
+                        <option value="@dataProperty.Name">@(Format.FormatName(dataProperty.Name))</option>
+                    }
+                </select>
+                <label style="font-weight: 700; color: black;" for="planetPropertySelector">Planet Property</label>
+            </div>
+
+            @*House Property*@
+            <div @ref="housePropertySelector" style="display: none;" class="form-floating">
+                <select @bind="selectedHouseProperty" class="form-select" id="housePropertySelector" aria-label="Data Property Select">
+                    <option value="" selected>Make a choice</option>
+                    <option value="All">All</option>
+                    @*make a dynamic selection of all available calls*@
+                    @foreach (var dataProperty in HouseCallList)
+                    {
+                        <option value="@dataProperty.Name">@(Format.FormatName(dataProperty.Name))</option>
+                    }
+                </select>
+                <label style="font-weight: 700; color: black;" for="housePropertySelector">House Property</label>
+            </div>
+
+            <IconButton ButtonText="Generate" FullWidth="true" FontSize="17px" FontWeight="500" TextCenter="true" SmallSize="true" Color="success" IconName="flat-color-icons:flash-auto" OnClickCallback="@OnClickSubmitButton" />
+
+            @*OUTPUT*@
+            <Icon IconName="flat-color-icons:down" ExtraStyle="text-align: center;" Size="55" />
+
+            @*ARROW DOWN*@
+            <kbd style="padding: 12px; font-size: 18px; overflow-wrap: break-word;line-height: 33px;">@_finalApiGetCall</kbd>
+
+            @*COPY AND CALL BUTTON*@
+            <div class="hstack gap-3">
+                <IconButton ButtonText="Copy" IconName="carbon:link" OnClickCallback="OnClickCopyChartLink" SmallSize="true" />
+                <IconButton ButtonText="Test Call" IconName="ph:phone-call-light" OnClickCallback="OnDemoCallGeneratedUrl" SmallSize="true" />
+            </div>
+
+
+        </div>
+
+        @*GUIDE TEXT*@
+        <div class="vstack gap-3">
+            <ArticleBlock Title="Next Step" IconName="mdi:foot-print">
+                <ButtonRow>
+                    <IconButton ButtonText="Read More" ClickUrl="@PageRoute.OpenApi" IconName="octicon:info-16"/>
+                </ButtonRow>
+                <TextHTML>
+                    Make a <kbd>HTTP GET</kbd> request from your app or website. It can be in any language,
+                    PHP, JS, Python, even your browsers' URL. Design your app to cache the received data.
+                    Note : calls have been known to fail once in a blue moon, if and when that happens,
+                    just make sure your app just replays the same call again. Design your code to try
+                    HTTP call at least 2 times be reporting as failed. Even a small network issue on the
+                    client side may cause this.
+                </TextHTML>
+            </ArticleBlock>
+
+            <ArticleBlock Title="Simple Response" IconName="bi:filetype-json">
+                <TextHTML>
+                    Data is returned in <strong>JSON</strong>. Only 2 properties. First field is always <kbd>Status</kbd>, it can be only <kbd>Pass</kbd> or <kbd>Fail</kbd>.
+                    If it shows <kbd>Fail</kbd> then most likely cause is invalid data on your part. More details about the
+                    error will be in <kbd>Payload</kbd> property. If call is successful, all the data you need will be alphabetically stored in <kbd>Payload</kbd> property.
+                </TextHTML>
+            </ArticleBlock>
+
+            <ArticleBlock Title="Reverse Engineer" IconName="emojione:hammer-and-wrench">
+                <TextHTML>
+                    To maximize the use of the API, you need to understand its <strong>basic structure</strong>.
+                    And the best way todo so is to <strong>play with it</strong>. Try modifying the API URL in your browser,
+                    and see what data you get. Experiment with different data formats.
+                    The API is designed to handle this, so don't worry about breaking it. Have fun.
+                </TextHTML>
+            </ArticleBlock>
+
+            <ArticleBlock Title="Library (coming soon)" IconName="clarity:thin-client-line">
+                <TextHTML>
+                    There are also client libraries to help you access the API even more easily. It simply wraps HTTP calls into easy to consume functions, that your app can use.
+                    Please note, these sub-projects is under <strong>prototype</strong> stage and much remains to be done. If you've created a library already please share it with the community.
+                    <BoldLink URL="@URL.VedAstroJS">JavaScript</BoldLink>, <BoldLink URL="@URL.VedAstroNuget">.NET NuGet</BoldLink> &amp; <BoldLink URL="@URL.VedAstroSwift">Swift iOS &amp; MacOS</BoldLink>.
+                </TextHTML>
+            </ArticleBlock>
+
+
+        </div>
+
+    </div>
+</div>
+
 
 
 @code {
+
+    private string selectedPlanetName;
+    private string selectedHouseName;
+    private string selectedPlanetProperty;
+    private string selectedHouseProperty;
+
+    private ElementReference houseNameSelector;
+    private ElementReference planetNameSelector;
+    private ElementReference housePropertySelector;
+    private ElementReference planetPropertySelector;
+
+    TimeInputSimple _timeInput;
+    private GeoLocationInput _geoLocationInput;
+    private string _finalApiGetCall = "https://api.vedastro.org/Location/Singapore/Time/23:59/31/12/2000/+08:00/Planet/Sun/Sign/";
+
+    //done so that it is cached in memory
+    private static IEnumerable<Tools.APICallData> PlanetCallList = Tools.GetPlanetApiCallList<PlanetName, Time>();
+    private static IEnumerable<Tools.APICallData> HouseCallList = Tools.GetPlanetApiCallList<HouseName, Time>();
+
+    /// <summary>
+    /// Controls the showing and hiding of other dropdowns
+    /// </summary>
+    public string SelectedBodyType
+    {
+        get => _selectedBodyType;
+        set
+        {
+            _selectedBodyType = value;
+
+            //based on body type only show relevant related fields
+            switch (value.ToLower())
+            {
+                case "planet"://hide house & show planet
+                    _jsRuntime.Show(planetNameSelector);
+                    _jsRuntime.Hide(houseNameSelector);
+                    _jsRuntime.Show(planetPropertySelector);
+                    _jsRuntime.Hide(housePropertySelector);
+                    break;
+                case "house"://show house & hide planet
+                    _jsRuntime.Show(houseNameSelector);
+                    _jsRuntime.Hide(planetNameSelector);
+                    _jsRuntime.Show(housePropertySelector);
+                    _jsRuntime.Hide(planetPropertySelector);
+                    break;
+                case "skychart"://show house & hide planet
+                    _jsRuntime.Hide(houseNameSelector);
+                    _jsRuntime.Hide(planetNameSelector);
+                    _jsRuntime.Hide(housePropertySelector);
+                    _jsRuntime.Hide(planetPropertySelector);
+                    break;
+                case "skychartgif"://show house & hide planet
+                    _jsRuntime.Hide(houseNameSelector);
+                    _jsRuntime.Hide(planetNameSelector);
+                    _jsRuntime.Hide(housePropertySelector);
+                    _jsRuntime.Hide(planetPropertySelector);
+                    break;
+            }
+        }
+    }
+
+    private string _selectedBodyType;
+
+    /// <summary>
+    /// After user click generate check data validity, generate final url
+    /// </summary>
+    /// <returns></returns>
+    private async Task OnClickSubmitButton()
+    {
+        await _jsRuntime.ShowLoading();
+
+        //only continue if passed input field validation
+        if (!(await IsValidationPassed())) { return; }
+
+
+        //auto set correct Timezone based on location & birth date
+        var dateTimeOffset = await _timeInput.GetDateTimeOffset(); //offset is ignored here
+        _timeInput.TimeZone = await Tools.GetTimezoneOffsetApi(_geoLocationInput.GetGeoLocation(), dateTimeOffset, ServerManager.GoogleGeoLocationApiKey);
+
+        //parse data received from user
+        var geoLocation = _geoLocationInput.GetGeoLocation();
+
+        //create a new person from the inputed data
+        var timeInputed = await _timeInput.GetTime(geoLocation);
+
+        //get final celes name, if empty raise nice alarm
+        var finalCelesName = GetFinalCelesName();
+        var finalCelesProperty = GetFinalCelesProperty();
+
+        //data property
+        //if select all, leave empty as for API to give all
+        finalCelesName = finalCelesName == "All" ? "" : finalCelesName;
+        finalCelesProperty = finalCelesProperty == "All" ? "" : finalCelesProperty;
+
+        //STAGE 2 :
+        //combine the call
+        //---
+        var domain = AppData.URL.ApiUrl; //get stable or beta as needed
+                                         //---
+        var localNameNoSpace = Tools.RemoveWhiteSpace(_geoLocationInput.LocationName);
+        var location = $"/Location/{localNameNoSpace}";
+        //---
+        string hhmmStr = timeInputed.GetStdDateTimeOffset().ToString("HH:mm");
+        string dateSt = timeInputed.GetStdDateTimeOffset().ToString("dd");
+        string monthStr = timeInputed.GetStdDateTimeOffset().ToString("MM");
+        string yearStr = timeInputed.GetStdDateTimeOffset().ToString("yyyy");
+        string offsetStr = timeInputed.GetStdDateTimeOffset().ToString("zzz");
+        var time = $"/Time/{hhmmStr}/{dateSt}/{monthStr}/{yearStr}/{offsetStr}";
+
+        //format of the API call
+        var placeHolder = "";
+        if (SelectedBodyType == "SkyChart")
+        {
+            placeHolder = domain + location + time + "/SkyChart";
+        }
+        else if (SelectedBodyType == "SkyChartGIF")
+        {
+            placeHolder = domain + location + time + "/SkyChartGIF";
+        }
+        else
+        {
+            var celestialBodyData = $"/{SelectedBodyType}/{finalCelesName}/{finalCelesProperty}";
+            placeHolder = domain + location + time + celestialBodyData;
+        }
+
+        _finalApiGetCall = placeHolder;
+
+        //tactile feedback to user
+        await _jsRuntime.ShowAlert("success", AlertText.IsDoneText(), false, 2200);
+
+    }
+
+    /// <summary>
+    /// Checks if validation of all input fields
+    /// </summary>
+    private async Task<bool> IsValidationPassed()
+    {
+        //TEST 1 : Time
+        //todo check if time is 00 confirm with user
+        var timeTxt = await _timeInput.GetFullTimeString();
+        if (string.IsNullOrEmpty(timeTxt))
+        {
+            //mark invalid & alert user
+            await _jsRuntime.ShowAlert("error", "Time is invalid, check it again", true);
+            return false;
+        }
+
+        //TEST 2 : Location
+        var isValid = await _geoLocationInput.IsValid();
+        if (!isValid)
+        {
+            //mark invalid & alert user
+            await _jsRuntime.ShowAlert("error", AlertText.InvalidLocation, true);
+            return false;
+        }
+
+        //TEST 3 : Celes Type
+        if (String.IsNullOrWhiteSpace(SelectedBodyType))
+        {
+            //mark invalid & alert user
+            await _jsRuntime.ShowAlert("error", "Falling asleep?", "Select a celestial body first");
+
+            return false;
+        }
+
+        //TEST 4 : Celes Name
+        if (String.IsNullOrWhiteSpace(GetFinalCelesName()))
+        {
+            //mark invalid & alert user
+            await _jsRuntime.ShowAlert("error", $"What's the \"Name\" of the {SelectedBodyType}?", true);
+            return false;
+        }
+
+        //TEST 5 : Celes Prop
+        if (String.IsNullOrWhiteSpace(GetFinalCelesProperty()))
+        {
+            //mark invalid & alert user
+            await _jsRuntime.ShowAlert("error", $"What exact {SelectedBodyType} data you want?", true);
+            return false;
+        }
+
+
+        //if control reaches here than, it's valid
+        return true;
+
+    }
+
+
+    /// <summary>
+    /// if null or empty than needs selection
+    /// since only calculated when called
+    /// </summary>
+    private string GetFinalCelesName()
+    {
+        switch (SelectedBodyType.ToLower())
+        {
+            case "planet":
+                return selectedPlanetName;
+            case "house":
+                return selectedHouseName;
+        }
+
+        //if not specified than not needed, return empty
+        return "pass"; //something to escape validation
+    }
+
+    private string GetFinalCelesProperty()
+    {
+        switch (SelectedBodyType.ToLower())
+        {
+            case "planet":
+                return selectedPlanetProperty;
+            case "house":
+                return selectedHouseProperty;
+        }
+
+        //if not specified than not needed, return empty
+        return "pass"; //something to escape validation
+    }
+
+    private async Task OnDemoCallGeneratedUrl()
+    {
+        //make API GET direct call on new tab
+        _jsRuntime.OpenNewTab(_finalApiGetCall);
+    }
+
+    private async Task OnClickCopyChartLink()
+    {
+        //use js to transfer to clipboard
+        await _jsRuntime.InvokeVoidAsync(JS.CopyToClipboard, _finalApiGetCall);
+
+        //let user know link copied
+        await _jsRuntime.ShowAlert("success", $"Call Copied!", false, 2600);
+    }
+
+
 
 }

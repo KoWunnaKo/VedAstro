@@ -3,6 +3,7 @@ using System.Xml.Linq;
 using Microsoft.JSInterop;
 using Newtonsoft.Json;
 using Microsoft.AspNetCore.Components.WebAssembly.Http;
+using Newtonsoft.Json.Linq;
 
 namespace Website
 {
@@ -141,7 +142,6 @@ namespace Website
         }
 
         /// <summary>
-        /// TODO DEPRECATED MARKED FOR DELETION
         /// Send xml as string to server and returns xml as response
         /// Note:
         /// - on failure payload will contain error info
@@ -211,11 +211,29 @@ namespace Website
         /// <summary>
         /// HTTP Post via JS interop
         /// </summary>
-        public static async Task<WebResult<XElement>> WriteToServerXmlReply(string apiUrl, XElement xmlData)
+        public static async Task<WebResult<XElement>> WriteToServerXmlReply(string apiUrl, XElement xmlData, int timeout = 60)
         {
+
+
+        TryAgain:
+
             //ACT 1:
             //send data to URL, using JS for reliability & speed
-            var receivedData = await WebsiteTools.Post(apiUrl, xmlData);
+            //also if call does not respond in time, we replay the call over & over
+            string receivedData;
+            try { receivedData = await Tools.TaskWithTimeoutAndException(WebsiteTools.Post(apiUrl, xmlData), TimeSpan.FromSeconds(timeout)); }
+
+            //if fail replay and log it
+            catch (Exception e)
+            {
+                var debugInfo = $"Call to \"{apiUrl}\" timeout at : {timeout}s";
+
+                WebLogger.Data(debugInfo);
+#if DEBUG
+                Console.WriteLine(debugInfo);
+#endif
+                goto TryAgain;
+            }
 
             //ACT 2:
             //check raw data 
@@ -228,17 +246,51 @@ namespace Website
                 return new WebResult<XElement>(false, new XElement("CallEmptyError"));
             }
 
-            //ACT 2:
+            //ACT 3:
             //return data as XML
             //problems might occur when parsing
             //try to parse as XML
             var writeToServerXmlReply = XElement.Parse(receivedData);
             var returnVal = WebResult<XElement>.FromXml(writeToServerXmlReply);
 
-            //ACT 3:
+            //ACT 4:
             return returnVal;
         }
-        
+        //public static async Task<WebResult<JToken>> WriteToServerJsonReply(string apiUrl, JObject xmlData, int timeout = 60)
+        //{
+        //    //prepare the data to be sent
+        //    var httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, apiUrl);
+        //    httpRequestMessage.Content = Tools.XmLtoHttpContent(xmlData);
+
+        //    //tell sender to wait for complete reply before exiting
+        //    var waitForContent = HttpCompletionOption.ResponseContentRead;
+
+        //    //send the data on its way 
+        //    var response = await AppData.HttpClient.SendAsync(httpRequestMessage, waitForContent);
+
+        //    //keep for error logging if needed
+        //    statusCode = response?.StatusCode.ToString();
+
+        //    //extract the content of the reply data
+        //    rawMessage = await response?.Content.ReadAsStringAsync() ?? "";
+
+        //    //problems might occur when parsing
+        //    //try to parse as XML
+        //    var writeToServerXmlReply = XElement.Parse(rawMessage);
+        //    returnVal = WebResult<XElement>.FromXml(writeToServerXmlReply);
+
+
+        //    //ACT 3:
+        //    //return data as XML
+        //    //problems might occur when parsing
+        //    //try to parse as XML
+        //    var writeToServerXmlReply = JObject.Parse(receivedData);
+        //    var returnVal = WebResult<JObject>.FromJson(writeToServerXmlReply);
+
+        //    //ACT 4:
+        //    return returnVal;
+        //}
+
 
         //PRIVATE METHODS
 

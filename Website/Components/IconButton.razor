@@ -6,9 +6,9 @@
 @*DROP DOWN VERSION*@
 @if (IsDropDownMode)
 {
-
-    <div class="dropdown @ExtraClass"> @*extra class for dropdown direct to parent div*@
-        <button @ref="ElementReference" @onclick="OnClickButton" class="@ButtonClassStr" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+    <div class="dropdown @ExtraClass">
+        @*extra class for dropdown direct to parent div*@
+        <button style="@FinalCss" @ref="ElementReference" @onmouseover="OnMouseOver" @onclick="OnClickButton" class="@ButtonClassStr" type="button" data-bs-toggle="dropdown" aria-expanded="false">
             @*only show icon if specified*@
             @if (IconName != null)
             {
@@ -16,7 +16,7 @@
             }
             @ButtonText
         </button>
-        <ul class="dropdown-menu dropdown-menu-dark">
+        <ul style="cursor: pointer;" class="dropdown-menu w-100"> @*auto match size with button width*@
             @DropDownList
         </ul>
     </div>
@@ -24,11 +24,17 @@
 @*NORMAL BUTTON*@
 else
 {
-    <button @ref="ElementReference" @onclick="OnClickButton" class="@ButtonClassStr">
+    <button style="@FinalCss" @ref="ElementReference" @onmouseover="OnMouseOver" @onclick="OnClickButton" class="@ButtonClassStr">
+        @*SPECIAL LITTLE EXTRA INFO TEXT*@
+        @if (!string.IsNullOrEmpty(RetinaText))
+        {
+            <span style=" position: absolute; margin-top: -3px; margin-left: 35px; font-size: 6px; writing-mode: tb-rl; font-weight: 700; ">@RetinaText</span>
+        }
+
         @*only show icon if specified*@
         @if (IconName != null)
         {
-            <span class="iconify" data-icon="@IconName" data-width="25" />
+            <span class="iconify" data-icon="@IconName" data-width="25"/>
         }
         @ButtonText
     </button>
@@ -37,17 +43,14 @@ else
 
 
 
-
 @*text below button*@
 @if (ShowDelayWarning)
 {
-    <div class="hstack gap-1" style="align-items: start;margin-top: -10px;">
-        <span class="iconify" data-icon="mdi:snail" data-width="20"></span>
-        <p style="font-size: 13px; color: #8f8f8f;">Warning Slow</p>
-    </div>
+    <IconText FontColor="#8f8f8f" IconName="mdi:snail">Warning Slow</IconText>
 }
 
 @code {
+
 
     /// <summary>
     /// the final class list added to button elm generates based on the parameters set
@@ -80,6 +83,12 @@ else
     public bool Outline { get; set; } = false;
 
     /// <summary>
+    /// adds align-self: self-end; which pushes it down bottom of parent
+    /// </summary>
+    [Parameter]
+    public bool PlaceBottom { get; set; } = false;
+
+    /// <summary>
     /// Text that will be displayed in button
     /// </summary>
     [Parameter]
@@ -100,6 +109,12 @@ else
 
     [Parameter]
     public bool SmallSize { get; set; } = false;
+
+    /// <summary>
+    /// Very small text next to button to give more info, visible only in high DPI screens
+    /// </summary>
+    [Parameter]
+    public string RetinaText { get; set; } = "";
 
     /// <summary>
     /// Defaults to false, if true button will be 100% of parent by adding w-100
@@ -162,6 +177,18 @@ else
     public string? ClickUrl { get; set; } = "";
 
     /// <summary>
+    /// if set is used, else will default
+    /// </summary>
+    [Parameter]
+    public string FontWeight { get; set; } = "";
+
+    /// <summary>
+    /// if set is used, else will default
+    /// </summary>
+    [Parameter]
+    public string FontSize { get; set; } = "";
+
+    /// <summary>
     /// Checks if click URL has been specified
     /// </summary>
     public bool IsClickMode => !string.IsNullOrEmpty(ClickUrl);
@@ -170,10 +197,46 @@ else
     /// Related to ClickURL, if set true opens in new tab, default is false
     /// </summary>
     [Parameter]
-    public bool IsNewTabOpen { get; set; } = false;
+    public bool OpenNewTab { get; set; } = false;
+
+    /// <summary>
+    /// will place text in center of true, default false
+    /// </summary>
+    [Parameter]
+    public bool TextCenter { get; set; } = false;
 
     [Parameter]
     public ElementReference ElementReference { get; set; }
+
+
+    /// <summary>
+    /// if true will use Golden Ratio 60.1px
+    /// default false
+    /// </summary>
+    [Parameter]
+    public bool GoldRatioWidth { get; set; } = false;
+
+    /// <summary>
+    /// Computes the final css based on set variables
+    /// </summary>
+    private string FinalCss
+    {
+        get
+        {
+            var css = "";
+
+            //use golden ration if specified
+            css += GoldRatioWidth ? $" width:{GR.W60px} !important;" : "";
+            css += PlaceBottom ? $" align-self: self-end !important;" : "";
+            css += TextCenter ? $" place-content: center !important;" : "";
+            css += !string.IsNullOrEmpty(FontWeight) ? $"font-weight: {FontWeight} !important;" : "";
+            css += !string.IsNullOrEmpty(FontSize) ? $"font-size: {FontSize} !important;" : "";
+            css += $" height:{GR.W37px};";
+            css += $" width: fit-content;";
+
+            return css;
+        }
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender) => await InvokeAsync(async () => await _OnAfterRender(firstRender)).Try(_jsRuntime);
 
@@ -209,10 +272,18 @@ else
         else if (IsClickMode)
         {
             //if specified opens link in new tab
-            if (IsNewTabOpen) { _jsRuntime.OpenNewTab(ClickUrl); }
+            if (OpenNewTab) { _jsRuntime.OpenNewTab(ClickUrl); }
             else { _navigation.NavigateTo(ClickUrl); }
         }
 
     }
+
+    private async Task OnMouseOver(MouseEventArgs obj)
+    {
+        //log this
+        Console.WriteLine("Mouse Over Button!");
+
+    }
+
 
 }

@@ -1,0 +1,49 @@
+﻿@namespace Website.Pages
+@using VedAstro.Library;
+@using System.Xml.Linq
+
+<div class="py-2">
+
+    <IconTitle IconSize="@IconSize" Title="@Title" IconName="@IconName" TitleHolder="h4">
+        <ButtonRow>@ButtonRow</ButtonRow>
+    </IconTitle>
+    <p class="text-justify">
+        @TextHTML
+    </p>
+
+</div>
+
+@code {
+
+    /// <summary>
+    /// Title text, placed in heading
+    /// </summary>
+    [Parameter]
+    public string Title { get; set; } = "";
+
+    /// <summary>
+    /// Icon placed nicely before title
+    /// </summary>
+    [Parameter]
+    public string IconName { get; set; } = "";
+
+    /// <summary>
+    /// Default 38
+    /// </summary>
+    [Parameter]
+    public int IconSize { get; set; } = AppData.DefaultIconSize;
+
+
+    /// <summary>
+    /// This will be placed in side P tag, p tag not needed
+    /// </summary>
+    [Parameter]
+    public RenderFragment? TextHTML { get; set; }
+
+    /// <summary>
+    /// buttons next to title
+    /// </summary>
+    [Parameter]
+    public RenderFragment? ButtonRow { get; set; }
+
+}

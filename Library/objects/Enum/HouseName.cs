@@ -1,14 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Xml.Linq;
 
 namespace VedAstro.Library
 {
 
-    public enum HouseName 
+    public enum HouseName
     {
         //Note: maintain int relation for code that is still using int
         House1 = 1,
@@ -27,6 +24,16 @@ namespace VedAstro.Library
 
     public static class HouseNameExtensions
     {
+
+        /// <summary>
+        /// If fail will return null
+        /// </summary>
+        public static HouseName? FromString(string inputHouseName)
+        {
+            var houseName = (HouseName)Enum.Parse(typeof(HouseName), inputHouseName,true);
+
+            return houseName;
+        }
 
         /// <summary>
         /// Note: Root element must be named HouseName

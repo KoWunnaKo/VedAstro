@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Resources;
-using System.Text;
-using System.Threading.Tasks;
 using System.Xml.Linq;
+using Newtonsoft.Json.Linq;
 
 namespace VedAstro.Library
 {
@@ -84,6 +81,19 @@ namespace VedAstro.Library
 
             //put parsed xml payload into package 
             result.Payload = finalXml;
+
+            return result;
+        }
+        public static WebResult<JToken> FromJson(JObject inputXml)
+        {
+            var result = new WebResult<JToken>();
+
+            //get data out of the xml
+            result.IsPass = inputXml["Status"].Value<string>() == "Pass";
+            var payloadJson = inputXml["Payload"];
+
+            //put parsed xml payload into package 
+            result.Payload = payloadJson;
 
             return result;
         }

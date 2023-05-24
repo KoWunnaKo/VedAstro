@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using VedAstro.Library;
+﻿using VedAstro.Library;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 
@@ -20,13 +17,13 @@ namespace API
             try
             {
                 //get person from request
-                var rootXml = await APITools.ExtractDataFromRequest(incomingRequest);
+                var rootXml = await APITools.ExtractDataFromRequestXml(incomingRequest);
                 var personId = rootXml.Value;
 
                 var person = await APITools.GetPersonById(personId);
 
                 //calculate predictions for current person
-                var predictionList = await APITools.GetPrediction(person);
+                var predictionList = await Tools.GetHoroscopePrediction(person, APITools.HoroscopeDataListFile);
 
                 var sortedList = SortPredictionData(predictionList);
 

@@ -1,26 +1,24 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
+using System.Net.Mime;
 using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml;
 using System.Xml.Linq;
-using Microsoft.AspNetCore.Components.WebAssembly.Http;
-using Microsoft.JSInterop;
-using Microsoft.VisualBasic;
+using System.Xml.Serialization;
 using Newtonsoft.Json;
-using static System.Net.WebRequestMethods;
-using static VedAstro.Library.PlanetName;
+using Newtonsoft.Json.Linq;
+using SwissEphNet;
+using Formatting = Newtonsoft.Json.Formatting;
 
 namespace VedAstro.Library
 {
@@ -30,6 +28,104 @@ namespace VedAstro.Library
     /// </summary>
     public static class Tools
     {
+        public static async Task<T> DelayedResultTask<T>(TimeSpan delay, Func<T> fallbackMaker)
+        {
+            await Task.Delay(delay);
+            return fallbackMaker();
+        }
+
+        public static async Task<T> DelayedTimeoutExceptionTask<T>(TimeSpan delay)
+        {
+            await Task.Delay(delay);
+            throw new TimeoutException();
+        }
+
+        public static async Task<T> TaskWithTimeoutAndException<T>(Task<T> task, TimeSpan timeout)
+        {
+            //two task are fired at once, real task and countdown
+            return await await Task.WhenAny(task, DelayedTimeoutExceptionTask<T>(timeout));
+        }
+
+        public static List<HoroscopeData> SavedHoroscopeDataList { get; set; } = null; //null used for checking empty
+
+        /// <summary>
+        /// Get parsed HoroscopeDataList.xml from wwwroot file / static site
+        /// Note: auto caching is used
+        /// </summary>
+        public static async Task<List<HoroscopeData>> GetHoroscopeDataList(string fileUrl)
+        {
+            //if prediction list already loaded use that instead
+            if (SavedHoroscopeDataList != null) { return SavedHoroscopeDataList; }
+
+            //get data list from Static Website storage
+            //always get from STABLE for reliability, and also no URL instance here
+            var horoscopeDataListXml = await Tools.GetXmlFileHttp(fileUrl);
+
+            //parse each raw event data in list
+            var horoscopeDataList = new List<HoroscopeData>();
+            foreach (var predictionDataXml in horoscopeDataListXml)
+            {
+                //add it to the return list
+                horoscopeDataList.Add(HoroscopeData.FromXml(predictionDataXml));
+            }
+
+            //make a copy to be used later if needed (speed improve)
+            SavedHoroscopeDataList = horoscopeDataList;
+
+            return horoscopeDataList;
+        }
+
+        /// <summary>
+        /// Gets all horoscope predictions for a person
+        /// </summary>
+        public static async Task<List<HoroscopePrediction>> GetHoroscopePrediction(Person person, string fileUrl)
+        {
+            //get list of horoscope data (file from wwwroot)
+            var horoscopeDataList = await GetHoroscopeDataList(fileUrl);
+
+            //start calculating predictions (mix with time by person's birth date)
+            var predictionList = calculate(person, horoscopeDataList);
+
+            return predictionList;
+
+            /// <summary>
+            /// Get list of predictions occurring in a time period for all the
+            /// inputed prediction types aka "prediction data"
+            /// </summary>
+            List<HoroscopePrediction> calculate(Person person, List<HoroscopeData> horoscopeDataList)
+            {
+                //get data to instantiate muhurtha time period
+                //get start & end times
+
+                //initialize empty list of event to return
+                List<HoroscopePrediction> horoscopeList = new();
+
+                try
+                {
+                    foreach (var horoscopeData in horoscopeDataList)
+                    {
+                        //only add if occuring
+                        var isOccuring = horoscopeData.IsEventOccuring(person.BirthTime, person);
+                        if (isOccuring)
+                        {
+                            var newHoroscopePrediction = new HoroscopePrediction(horoscopeData.Name, horoscopeData.Description, horoscopeData.RelatedBody);
+                            //add events to main list of event
+                            horoscopeList.Add(newHoroscopePrediction);
+                        }
+                    }
+                }
+                //catches only exceptions that indicates that user canceled the calculation (caller lost interest in the result)
+                catch (Exception)
+                {
+                    //return empty list
+                    return new List<HoroscopePrediction>();
+                }
+
+                //return calculated event list
+                return horoscopeList;
+            }
+        }
+
 
         /// <summary>
         /// "H1N1" -> ["H", "1", "N", "1"]
@@ -108,6 +204,21 @@ namespace VedAstro.Library
             var typeName = typeof(T).FullName;
 
             return new XElement(typeName, enumValueStr);
+        }
+
+        /// <summary>
+        /// will convert inputed type to xelement via .net serializer
+        /// </summary>
+        public static XElement AnyTypeToXElement(object o)
+        {
+            var doc = new XDocument();
+            using (XmlWriter writer = doc.CreateWriter())
+            {
+                XmlSerializer serializer = new XmlSerializer(o.GetType());
+                serializer.Serialize(writer, o);
+            }
+
+            return doc.Root;
         }
 
         /// <summary>
@@ -403,9 +514,25 @@ namespace VedAstro.Library
         public static string ListToString<T>(List<T> list)
         {
             var combinedNames = "";
-            foreach (var item in list)
+
+            for (int i = 0; i < list.Count; i++)
             {
-                combinedNames += item.ToString() + ", ";
+                //when last in row, don't add comma
+                var isLastItem = i == (list.Count - 1);
+                var ending = isLastItem ? "" : ", ";
+
+                //combine to together based on type
+                var item = list[i];
+                if (item is IToJson iToJson)
+                {
+                    //todo can wrap into jobject if needed
+                    combinedNames += iToJson.ToJson() + ending;
+                }
+                else
+                {
+                    combinedNames += item.ToString() + ending;
+                }
+
             }
 
             return combinedNames;
@@ -421,6 +548,13 @@ namespace VedAstro.Library
         //█▀▀ ▄▀▄ ░░█░░ █▀▀ █░░█ ▀▀█ ▀█▀ █░░█ █░░█ 　 █░▀░█ █▀▀ ░░█░░ █▀▀█ █░░█ █░░█ ▀▀█ 
         //▀▀▀ ▀░▀ ░░▀░░ ▀▀▀ ▀░░▀ ▀▀▀ ▀▀▀ ▀▀▀▀ ▀░░▀ 　 ▀░░░▀ ▀▀▀ ░░▀░░ ▀░░▀ ▀▀▀▀ ▀▀▀░ ▀▀▀
 
+
+        public static string? Truncate(this string? value, int maxLength, string truncationSuffix = "…")
+        {
+            return value?.Length > maxLength
+                ? value.Substring(0, maxLength) + truncationSuffix
+                : value;
+        }
 
         /// <summary>
         /// Find the first offset in the string that might contain the characters
@@ -513,8 +647,15 @@ namespace VedAstro.Library
         /// </summary>
         public static TimeSpan GetSystemTimezone() => DateTimeOffset.Now.Offset;
 
+
+        /// <summary>
+        /// Given a place's name, using google API will get location
+        /// </summary>
         public static async Task<WebResult<GeoLocation>> AddressToGeoLocation(string address)
         {
+            //if null or empty turn back as nothing
+            if (string.IsNullOrEmpty(address)) { return new WebResult<GeoLocation>(false, GeoLocation.Empty); }
+
             //create the request url for Google API
             var apiKey = "AIzaSyDqBWCqzU1BJenneravNabDUGIHotMBsgE";
             var url = $"https://maps.googleapis.com/maps/api/geocode/xml?key={apiKey}&address={Uri.EscapeDataString(address)}&sensor=false";
@@ -530,8 +671,10 @@ namespace VedAstro.Library
             var resultXml = geocodeResponseXml.Element("result");
             var statusXml = geocodeResponseXml.Element("status");
 
+#if DEBUG
             //DEBUG
-            //Console.WriteLine(geocodeResponseXml.ToString());
+            Console.WriteLine(geocodeResponseXml.ToString());
+#endif
 
             //check the data, if location was NOT found by google API, end here
             if (statusXml == null || statusXml.Value == "ZERO_RESULTS") { return new WebResult<GeoLocation>(false, GeoLocation.Empty); }
@@ -880,6 +1023,25 @@ namespace VedAstro.Library
         }
 
         /// <summary>
+        /// Packages the data into ready form for the HTTP client to use in final sending stage
+        /// </summary>
+        public static StringContent JsontoHttpContent(JToken data)
+        {
+            //gets the main XML data as a string
+            var dataString = data.ToString();
+
+            //specify the data encoding todo es mui nesasito?
+            var encoding = Encoding.UTF8;
+
+            //specify the type of the data sent
+            //plain text, stops auto formatting
+            var mediaType = "application/json";
+
+            //return packaged data to caller
+            return new StringContent(dataString, encoding, mediaType);
+        }
+
+        /// <summary>
         /// Extracts data from an Exception puts it in a nice XML
         /// </summary>
         public static XElement ExtractDataFromException(Exception e)
@@ -986,6 +1148,781 @@ namespace VedAstro.Library
             }
         }
 
+
+        /// <summary>
+        /// Given a parsed XML element will convert to Json string
+        /// Note:
+        /// - auto removes Root from XML (since XML needs it & JSON does not)
+        /// - this light weight only uses Newtownsoft
+        /// - Newtownsoft here because the converter is better than .net's
+        /// </summary>
+        public static string XmlToJsonString(XElement xElement)
+        {
+            //no XML indent
+            var finalXml = xElement.ToString(SaveOptions.DisableFormatting);
+
+            //convert to JSON
+            XmlDocument doc = new XmlDocument(); //NOTE: different xDOC from .Net's
+            doc.LoadXml(finalXml);
+
+            //removes "Root" from xml
+            string jsonText = JsonConvert.SerializeXmlNode(doc, Formatting.None, true);
+
+            return jsonText;
+        }
+
+        ///// <summary>
+        ///// Parses from XML > string > .Net JSON
+        ///// NOTE:
+        ///// - compute heavier than just string, use wisely
+        ///// </summary>
+        //public static JsonElement XmlToJson(XElement xElement)
+        //{
+        //    //convert xml to JSON string
+        //    var jsonStr = XmlToJsonString(xElement);
+
+        //    //convert string 
+        //    using JsonDocument doc = JsonDocument.Parse(jsonStr);
+        //    JsonElement root = doc.RootElement;
+
+        //    return root;
+        //}
+        public static JObject XmlToJson(XElement xElement)
+        {
+            var x = XmlToJsonString(xElement);
+
+            var y = JObject.Parse(x);
+
+            return y;
+        }
+
+        /// <summary>
+        /// Converts VedAstro planet name to Swiss Eph planet
+        /// </summary>
+        /// <returns></returns>
+        public static int VedAstroToSwissEph(PlanetName planetName)
+        {
+            int planet = 0;
+
+            //Convert PlanetName to SE_PLANET type
+            if (planetName == PlanetName.Sun)
+                planet = SwissEph.SE_SUN;
+            else if (planetName == PlanetName.Moon)
+            {
+                planet = SwissEph.SE_MOON;
+            }
+            else if (planetName == PlanetName.Mars)
+            {
+                planet = SwissEph.SE_MARS;
+            }
+            else if (planetName == PlanetName.Mercury)
+            {
+                planet = SwissEph.SE_MERCURY;
+            }
+            else if (planetName == PlanetName.Jupiter)
+            {
+                planet = SwissEph.SE_JUPITER;
+            }
+            else if (planetName == PlanetName.Venus)
+            {
+                planet = SwissEph.SE_VENUS;
+            }
+            else if (planetName == PlanetName.Saturn)
+            {
+                planet = SwissEph.SE_SATURN;
+            }
+            else if (planetName == PlanetName.Rahu)
+            {
+                planet = SwissEph.SE_MEAN_NODE;
+            }
+            else if (planetName == PlanetName.Ketu)
+            {
+                //TODO CHECK HERE + REF BV RAMAN ADD 180 TO ketu to get rahu
+                planet = SwissEph.SE_MEAN_NODE;
+            }
+
+            return planet;
+        }
+
+        /// <summary>
+        /// Converts string name of planets, all case to swiss type
+        /// </summary>
+        public static int StringToSwissEph(string planetName)
+        {
+            int planet = 0;
+
+            //make small case, best reliablility
+            planetName = planetName.ToLower();
+
+            //Convert PlanetName to SE_PLANET type
+            if (planetName == "sun")
+                planet = SwissEph.SE_SUN;
+            else if (planetName == "moon")
+            {
+                planet = SwissEph.SE_MOON;
+            }
+            else if (planetName == "mars")
+            {
+                planet = SwissEph.SE_MARS;
+            }
+            else if (planetName == "Mercury")
+            {
+                planet = SwissEph.SE_MERCURY;
+            }
+            else if (planetName == "Jupiter")
+            {
+                planet = SwissEph.SE_JUPITER;
+            }
+            else if (planetName == "Venus")
+            {
+                planet = SwissEph.SE_VENUS;
+            }
+            else if (planetName == "Saturn")
+            {
+                planet = SwissEph.SE_SATURN;
+            }
+            else if (planetName == "Rahu")
+            {
+                planet = SwissEph.SE_MEAN_NODE;
+            }
+            else if (planetName == "Ketu")
+            {
+                //TODO CHECK HERE + REF BV RAMAN ADD 180 TO ketu to get rahu
+                planet = SwissEph.SE_MEAN_NODE;
+            }
+
+            return planet;
+        }
+
+        /// <summary>
+        /// Given a reference to astro calculator method,
+        /// will return it's API friendly name
+        /// </summary>
+        public static string GetAPISpecialName(MethodInfo methodInfo1)
+        {
+            //try to get special API name for the calculator, possible not to exist
+            var customAttributes = methodInfo1?.GetCustomAttributes(true);
+            var apiAttributes = customAttributes?.OfType<APIAttribute>();
+            var firstOrDefault = apiAttributes?.FirstOrDefault();
+            var properApiName = firstOrDefault?.Name ?? "";
+            //default name in-case no special
+            var defaultName = methodInfo1.Name;
+
+            //choose which name is available, prefer special
+            var name = string.IsNullOrEmpty(properApiName) ? defaultName : properApiName;
+
+            return name;
+
+        }
+
+        /// <summary>
+        /// All possible for all celestial body types
+        /// </summary>
+        /// <returns></returns>
+        public static IEnumerable<string> ApiDataPropertyCallList()
+        {
+            var returnList = new List<string>();
+
+            //get all possible calls for API
+            //get all calculators that can work with the inputed data
+            var calculatorClass = typeof(AstronomicalCalculator);
+
+            foreach (var methodInfo in calculatorClass.GetMethods())
+            {
+                //get special API name
+                returnList.Add(GetAPISpecialName(methodInfo));
+            }
+
+            return returnList;
+
+        }
+
+
+        /// <summary>
+        /// Given any string will remove the white spaces
+        /// </summary>
+        public static string RemoveWhiteSpace(string stringWithSpace)
+        {
+            var removed = string.Join("", stringWithSpace.Split(default(string[]), StringSplitOptions.RemoveEmptyEntries));
+
+            return removed;
+        }
+
+        public readonly record struct APICallData(string Name, string Description);
+
+        /// <summary>
+        /// Get all methods that is available to time and planet param
+        /// this is the lis that will appear on the fly in API Builder dropdown
+        /// </summary>
+        /// <returns></returns>
+        public static IEnumerable<APICallData> GetPlanetApiCallList<T1, T2>()
+        {
+            //get all the same methods gotten by Open api func
+            var calcList = GetCalculatorListByParam<T1, T2>();
+
+            var finalList = new List<APICallData>();
+
+            //make final list with API description
+            //get nice API calc name, shown in builder dropdown
+            foreach (var calc in calcList)
+            {
+                finalList.Add(new APICallData(Tools.GetAPISpecialName(calc), Tools.GetAPICallDescByName("")));
+            }
+
+            return finalList;
+        }
+
+        //todo needs improvement
+        private static string GetAPICallDescByName(string calcName)
+        {
+            //temp
+            return "temp no data, implement pls";
+        }
+
+        /// <summary>
+        /// Gets calculators by param type and count
+        /// Gets all calculated data in nice JSON with matching param signature
+        /// used to create a dynamic API call list
+        /// </summary>
+        public static JObject ExecuteCalculatorByParam<T1, T2>(T1 inputedPram1, T2 inputedPram2)
+        {
+            //get reference to all the calculators that can be used with the inputed param types
+            var finalList = GetCalculatorListByParam<T1, T2>();
+
+            //sort alphabetically so easier to eye data point
+            var aToZOrder = finalList.OrderBy(method => Tools.GetAPISpecialName(method)).ToList();
+
+
+            //place the data from all possible methods nicely in JSON
+            var rootPayloadJson = new JObject(); //each call below adds to this root
+            object[] paramList = new object[] { inputedPram1, inputedPram2 };
+            foreach (var methodInfo in aToZOrder)
+            {
+                var resultParse1 = ExecuteAPICalculator(methodInfo, paramList);
+                //done to get JSON formatting right
+                var resultParse2 = JToken.FromObject(resultParse1); //jprop needs to be wrapped in JToken
+                rootPayloadJson.Add(resultParse2);
+            }
+
+            return rootPayloadJson;
+
+        }
+
+        public static JObject ExecuteCalculatorByParam<T1>(T1 inputedPram1)
+        {
+            //get reference to all the calculators that can be used with the inputed param types
+            var finalList = GetCalculatorListByParam<T1>();
+
+            //sort alphabetically so easier to eye data point
+            var aToZOrder = finalList.OrderBy(method => Tools.GetAPISpecialName(method)).ToList();
+
+
+            //place the data from all possible methods nicely in JSON
+            var rootPayloadJson = new JObject(); //each call below adds to this root
+            object[] paramList = new object[] { inputedPram1 };
+            foreach (var methodInfo in aToZOrder)
+            {
+                var resultParse1 = ExecuteAPICalculator(methodInfo, paramList);
+                //done to get JSON formatting right
+                var resultParse2 = JToken.FromObject(resultParse1); //jprop needs to be wrapped in JToken
+                rootPayloadJson.Add(resultParse2);
+            }
+
+            return rootPayloadJson;
+
+        }
+
+
+        /// <summary>
+        /// Given an API name, will find the calc and try to call and wrap it in JSON
+        /// </summary>
+        public static JProperty ExecuteCalculatorByApiName<T1, T2>(string methodName, T1 param1, T2 param2)
+        {
+            var calculatorClass = typeof(AstronomicalCalculator);
+            var foundMethod = calculatorClass.GetMethods().Where(x => Tools.GetAPISpecialName(x) == methodName).FirstOrDefault();
+
+            //place the data from all possible methods nicely in JSON
+            var rootPayloadJson = new JObject(); //each call below adds to this root
+
+            //if method not found, possible outdated API call link, end call here
+            if (foundMethod == null)
+            {
+                //let caller know that method not found
+                var msg = $"Call not found, make sure API link is latest version : {methodName} ";
+                return new JProperty(methodName, $"ERROR:{msg}");
+            }
+
+            //pass to main function
+            return ExecuteCalculatorByApiName(foundMethod, param1, param2);
+        }
+
+        /// <summary>
+        /// Given an API name, will find the calc and try to call and wrap it in JSON
+        /// </summary>
+        public static JProperty ExecuteCalculatorByApiName<T1, T2>(MethodInfo foundMethod, T1 param1, T2 param2)
+        {
+            //get methods 1st param
+            var param1Type = foundMethod.GetParameters()[0].ParameterType;
+            object[] paramOrder1 = new object[] { param1, param2 };
+            object[] paramOrder2 = new object[] { param2, param1 };
+
+            //if first param match type, then use that
+            var finalParamOrder = param1Type == param1.GetType() ? paramOrder1 : paramOrder2;
+
+#if DEBUG
+            //print out which order is used more, helps to clean code
+            Console.WriteLine(param1Type == param1.GetType() ? "paramOrder1" : "paramOrder2");
+#endif
+
+            //based on what type it is we process accordingly, converts better to JSON
+            var rawResult = foundMethod?.Invoke(null, finalParamOrder);
+
+            //get correct name for this method, API friendly
+            var apiSpecialName = Tools.GetAPISpecialName(foundMethod);
+
+            //process list differently
+            JProperty rootPayloadJson;
+            if (rawResult is IList iList) //handles results that have many props from 1 call, exp : SwissEphemeris
+            {
+                //convert list to comma separated string
+                var parsedList = iList.Cast<object>().ToList();
+                var stringComma = Tools.ListToString(parsedList);
+
+                rootPayloadJson = new JProperty(apiSpecialName, stringComma);
+            }
+            //custom JSON converter available
+            else if (rawResult is IToJson iToJson)
+            {
+                rootPayloadJson = new JProperty(apiSpecialName, iToJson.ToJson());
+            }
+            //normal conversion via to string
+            else
+            {
+                rootPayloadJson = new JProperty(apiSpecialName, rawResult?.ToString());
+            }
+
+
+            return rootPayloadJson;
+        }
+
+        public static JProperty ExecuteCalculatorByApiName<T1>(MethodInfo foundMethod, T1 param1)
+        {
+            //get methods 1st param
+            var param1Type = foundMethod.GetParameters()[0].ParameterType;
+            object[] paramOrder1 = new object[] { param1 };
+
+
+            //based on what type it is we process accordingly, converts better to JSON
+            var rawResult = foundMethod?.Invoke(null, paramOrder1);
+
+            //get correct name for this method, API friendly
+            var apiSpecialName = Tools.GetAPISpecialName(foundMethod);
+
+            //process list differently
+            JProperty rootPayloadJson;
+            if (rawResult is IList iList) //handles results that have many props from 1 call, exp : SwissEphemeris
+            {
+                //convert list to comma separated string
+                var parsedList = iList.Cast<object>().ToList();
+                var stringComma = Tools.ListToString(parsedList);
+
+                rootPayloadJson = new JProperty(apiSpecialName, stringComma);
+            }
+            //custom JSON converter available
+            else if (rawResult is IToJson iToJson)
+            {
+                rootPayloadJson = new JProperty(apiSpecialName, iToJson.ToJson());
+            }
+            //normal conversion via to string
+            else
+            {
+                rootPayloadJson = new JProperty(apiSpecialName, rawResult?.ToString());
+            }
+
+
+            return rootPayloadJson;
+        }
+
+        /// <summary>
+        /// Executes all calculators for API based on input param type only
+        /// Wraps return data in JSON
+        /// </summary>
+        public static JProperty ExecuteAPICalculator(MethodInfo methodInfo1, object[] param)
+        {
+
+            //likely to fail during call, as such just ignore and move along
+            try
+            {
+                JProperty outputResult;
+                //execute based on param count
+                if (param.Length == 1)
+                {
+                    outputResult = ExecuteCalculatorByApiName(methodInfo1, param[0]);
+                }
+                else if (param.Length == 2)
+                {
+                    outputResult = ExecuteCalculatorByApiName(methodInfo1, param[0], param[1]);
+                }
+                else
+                {
+                    //if not filled than not accounted for
+                    throw new Exception("END OF THE LINE!");
+                }
+
+
+                return outputResult;
+            }
+            catch (Exception e)
+            {
+                try
+                {
+#if DEBUG
+                    Console.WriteLine($"Trying again in reverse! {methodInfo1.Name}:\n{e.Message}\n{e.StackTrace}");
+#endif
+                    //try again in reverse
+                    if (param.Length == 2)
+                    {
+                        var outputResult3 = ExecuteCalculatorByApiName(methodInfo1, param[1], param[0]);
+                        return outputResult3;
+                    }
+
+                    var jsonPacked = new JProperty(methodInfo1.Name, $"ERROR: {e.Message}");
+                    return jsonPacked;
+
+                }
+                //if fail put error in data for easy detection
+                catch (Exception e2)
+                {
+                    //save it nicely in json format
+                    var jsonPacked = new JProperty(methodInfo1.Name, $"ERROR: {e2.Message}");
+                    return jsonPacked;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets all methods in Astronomical calculator that has the pram types inputed
+        /// Note : also gets when order is reversed
+        /// </summary>
+        public static IEnumerable<MethodInfo> GetCalculatorListByParam<T1, T2>()
+        {
+            var inputedParamType1 = typeof(T1);
+            var inputedParamType2 = typeof(T2);
+
+            //get all calculators that can work with the inputed data
+            var calculatorClass = typeof(AstronomicalCalculator);
+
+            var finalList = new List<MethodInfo>();
+
+            var calculators1 = from calculatorInfo in calculatorClass.GetMethods()
+                               let parameter = calculatorInfo.GetParameters()
+                               where parameter.Length == 2 //only 2 params
+                                     && parameter[0].ParameterType == inputedParamType1
+                                     && parameter[1].ParameterType == inputedParamType2
+                               select calculatorInfo;
+
+            finalList.AddRange(calculators1);
+
+            //reverse order
+            //second possible order, technically should be aligned todo
+            var calculators2 = from calculatorInfo in calculatorClass.GetMethods()
+                               let parameter = calculatorInfo.GetParameters()
+                               where parameter.Length == 2 //only 2 params
+                                     && parameter[0].ParameterType == inputedParamType2
+                                     && parameter[1].ParameterType == inputedParamType1
+                               select calculatorInfo;
+
+            finalList.AddRange(calculators2);
+
+#if true
+            //PRINT DEBUG DATA
+            Console.WriteLine($"Calculators Type 1 : {calculators1?.Count()}");
+            Console.WriteLine($"Calculators Type 2 : {calculators2?.Count()}");
+#endif
+
+            return finalList;
+        }
+
+
+        public static IEnumerable<MethodInfo> GetCalculatorListByParam<T1>()
+        {
+            var inputedParamType1 = typeof(T1);
+
+            //get all calculators that can work with the inputed data
+            var calculatorClass = typeof(AstronomicalCalculator);
+
+            var finalList = new List<MethodInfo>();
+
+            var calculators1 = from calculatorInfo in calculatorClass.GetMethods()
+                               let parameter = calculatorInfo.GetParameters()
+                               where parameter.Length == 1 //only 2 params
+                                     && parameter[0].ParameterType == inputedParamType1
+                               select calculatorInfo;
+
+            finalList.AddRange(calculators1);
+
+
+#if true
+            //PRINT DEBUG DATA
+            Console.WriteLine($"Calculators with 1 param : {calculators1?.Count()}");
+#endif
+
+            return finalList;
+        }
+
+
+
+        public static JToken AnyToJSON(dynamic anyTypeData)
+        {
+            JToken parsed = JToken.Parse("{}");//to identify errors by default
+
+            try
+            {
+                string rawText = anyTypeData.ToString();
+                parsed = JToken.Parse("'" + rawText + "'");
+            }
+            catch (Exception e)
+            {
+                //todo better error
+                Console.WriteLine("Could not parse JSON");
+            }
+
+            try
+            {
+
+                //string goes in like normal
+                if (anyTypeData is string stringData) { return parsed; }
+                else if (anyTypeData is IEnumerable dataList)
+                {
+                    //convert to string
+                    foreach (var data in dataList)
+                    {
+                        var rawText = data.ToString();
+                        parsed = JToken.Parse("'" + rawText + "'");
+
+                        return parsed;
+                    }
+                }
+
+                //just convert direct
+                return parsed;
+
+
+            }
+            catch (Exception e)
+            {
+
+                //in prod log data and exist silent
+                LibLogger.Error(e);
+#if DEBUG
+                Console.WriteLine(e.Message);
+                //raise alarm
+                throw e;
+#endif
+            }
+
+            throw new Exception("END OF LINE");
+
+        }
+
+        public static string StringToMimeType(string fileFormat)
+        {
+            switch (fileFormat.ToLower())
+            {
+                case "pdf": return MediaTypeNames.Application.Pdf;
+                case "xml": return MediaTypeNames.Application.Xml;
+                case "gif": return MediaTypeNames.Image.Gif;
+                case "jpeg": return MediaTypeNames.Image.Jpeg;
+                case "jpg": return MediaTypeNames.Image.Jpeg;
+                case "tiff": return MediaTypeNames.Image.Tiff;
+            }
+
+            throw new Exception("END OF LINE");
+
+        }
+
+        /// <summary>
+        /// Given a list of object will make into JSON
+        /// </summary>
+        public static JArray ListToJson<T>(List<T> personList)
+        {
+            //get all as converted to basic string
+
+            JArray arrayJson = new JArray();
+            foreach (var person in personList)
+            {
+                if (person is XElement personXml)
+                {
+                    var personJson = Tools.XmlToJson(personXml);
+                    arrayJson.Add(personJson);
+                }
+                //do it normal string way
+                else
+                {
+                    arrayJson.Add(person.ToString());
+                }
+
+            }
+
+            return arrayJson;
+        }
+
+        /// <summary>
+        /// Used for Person, Match Report, Chart and all things made by end user
+        /// </summary>
+        public static string[] GetUserIdFromData(XElement inputXml)
+        {
+            var userIdRaw = inputXml.Element("UserId")?.Value ?? "";
+            //clean, remove white space & new line if any
+            userIdRaw = userIdRaw.Replace("\n", "");
+            userIdRaw = userIdRaw.Replace(" ", "");
+
+            var userId = userIdRaw.Split(',');//split by comma
+
+            return userId;
+        }
+
+        public static string[] GetUserIdFromData(JToken input)
+        {
+            var userIdRaw = input["UserId"].Value<string>();
+            //clean, remove white space & new line if any
+            userIdRaw = userIdRaw.Replace("\n", "");
+            userIdRaw = userIdRaw.Replace(" ", "");
+
+            var userId = userIdRaw.Split(',');//split by comma
+
+            return userId;
+        }
+
+        /// <summary>
+        /// Given a doc os records will find by user ID , owners
+        /// used by to get stuff created by end user
+        /// </summary>
+        public static List<XElement> FindXmlByUserId(XDocument allListXmlDoc, string inputUserId)
+        {
+            var returnList = new List<XElement>();
+
+            //add all  profiles that have the given user ID
+            var allItems = allListXmlDoc.Root?.Elements();
+            foreach (var itemXml in allItems)
+            {
+                var allOwnerId = itemXml.Element("UserId")?.Value ?? "";
+
+                //check if inputed ID is found in list, add to return list
+                var match = IsUserIdMatch(allOwnerId, inputUserId);
+                if (match) { returnList.Add(itemXml); }
+            }
+
+            return returnList;
+        }
+
+        /// <summary>
+        /// check if 2 user id strings match, can't just use contains since 101 can be anywhere
+        /// split by comma, and check by direct equality lower case
+        /// </summary>
+        public static bool IsUserIdMatch(string userIdStringA, string userIdStringB)
+        {
+
+            //must be split before can be used
+            var userListA = userIdStringA.Split(',');
+            var userListB = userIdStringB.Split(',');
+
+            foreach (var userIdA in userListA)
+            {
+                foreach (var userIdB in userListB)
+                {
+                    //check direct match with lower case todo maybe lower case not needed since user ID, not person ID
+                    var match = userIdA.ToLower() == userIdB.ToLower();
+
+                    //if found even 1 match then return
+                    if (match) { return true; }
+                }
+            }
+
+            //if control reaches here than confirm no match
+            return false;
+        }
+
+        /// <summary>
+        /// Check if inputed time was within last hour
+        /// </summary>
+        public static bool IsWithinLastHour(Time logItemTime, double hours)
+        {
+            //get time 1 hour ago
+            var time1HourAgo = DateTimeOffset.Now.AddHours(hours);
+
+            //check if inputed time is after this 1 ago mark
+            var isAfter = logItemTime.GetStdDateTimeOffset() >= time1HourAgo;
+
+            return isAfter;
+        }
+
+
+        /// <summary>
+        /// sends a simple head request to check if file exists (low cost)
+        /// </summary>
+        public static async Task<bool> DoesFileExist(string url)
+        {
+            var client = new HttpClient();
+
+            using (HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Head, url))
+            {
+                using (HttpResponseMessage response = await client.SendAsync(request))
+                {
+                    return response.StatusCode == System.Net.HttpStatusCode.OK;
+                }
+            }
+        }
+
+        public static string TimeZoneToLocation(string timeZone)
+        {
+            throw new NotImplementedException();
+        }
+
+        public static async Task<JObject> ReadServer(string receiverAddress)
+        {
+            //prepare the data to be sent
+            var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, receiverAddress);
+
+            //tell sender to wait for complete reply before exiting
+            var waitForContent = HttpCompletionOption.ResponseContentRead;
+
+            //send the data on its way
+            using var client = new HttpClient();
+            var response = await client.SendAsync(httpRequestMessage, waitForContent);
+
+            //return the raw reply to caller
+            var dataReturned = await response.Content.ReadAsStringAsync();
+            return JObject.Parse(dataReturned);
+        }
+
+
+        public static async Task<JObject> WriteServer(HttpMethod method, string receiverAddress, JToken? payloadJson = null)
+        {
+
+            //prepare the data to be sent
+            var httpRequestMessage = new HttpRequestMessage(method, receiverAddress);
+
+            //tell sender to wait for complete reply before exiting
+            var waitForContent = HttpCompletionOption.ResponseContentRead;
+
+            //add in payload if specified
+            if (payloadJson != null) { httpRequestMessage.Content = VedAstro.Library.Tools.JsontoHttpContent(payloadJson); }
+
+            //send the data on its way (wait forever no timeout)
+            using var client = new HttpClient();
+            client.Timeout = new TimeSpan(0, 0, 0, 0, Timeout.Infinite);
+
+            //send the data on its way
+            var response = await client.SendAsync(httpRequestMessage, waitForContent);
+
+            //return the raw reply to caller
+            var dataReturned = await response.Content.ReadAsStringAsync();
+
+            //return data as JSON as expected from API 
+            return JObject.Parse(dataReturned);
+        }
     }
+
 
 }

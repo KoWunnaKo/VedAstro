@@ -1,0 +1,100 @@
+﻿@*SIMPLE BOX TO RENDER IMAGE TOOLTIP OF PERSON BY NAME*@
+
+@namespace Website.Pages
+@using VedAstro.Library;
+@using System.Xml.Linq
+
+
+@*this element is auto hidden by Tippy, and made visible when on hover*@
+<div @ref="tooltipElement" class="hstack gap-2 shadow rounded-4 border-dark-subtle">
+    @*only show image if exist, don't waste that nice space*@
+    @if (ImageExist)
+    {
+        <img style="width: @GR.W157px;" src="@(ImageUrl(Person))" class="img-thumbnail mt-1" alt="..." />
+    }
+    @*buttons related to account*@
+    <div class="vstack gap-2 my-1">
+        <span class="ms-2" style="text-align: center;">@Person.BirthTimeString</span>
+        <IconButton FullWidth="true" ButtonText="Horoscope" IconName="fluent:book-star-20-filled" SmallSize="true" ClickUrl="@($"{PageRoute.Horoscope}/{Person.Id}")" />
+        <IconButton FullWidth="true" ButtonText="Journal" IconName="game-icons:secret-book" SmallSize="true" ClickUrl="@($"{PageRoute.Journal}/{Person.Id}")" />
+        <IconButton FullWidth="true" ButtonText="Life Predictor" IconName="gis:map-time" SmallSize="true" ClickUrl="@($"{PageRoute.LifePredictor}/{Person.Id}")" />
+        <div class="hstack gap-2">
+            <IconButton TooltipText="Edit" FullWidth="true" IconName="ic:baseline-ios-share" SmallSize="true" ClickUrl="@($"{PageRoute.LifePredictor}/{Person.Id}")" />
+            <IconButton TooltipText="Edit" FullWidth="true" IconName="material-symbols:edit-square" SmallSize="true" ClickUrl="@($"{PageRoute.PersonEditor}/{Person.Id}")" />
+            <IconButton FullWidth="true" IconName="gis:map-time" SmallSize="true" ClickUrl="@($"{PageRoute.LifePredictor}/{Person.Id}")" />
+        </div>
+    </div>
+</div>
+
+<div style="cursor: pointer;white-space: nowrap;" @ref="nameHolderElement">
+    @Person.Name
+</div>
+
+
+@code {
+
+    /// <summary>
+    /// final URL placed in src to get image
+    /// </summary>
+    private string ImageUrl(Person person) => $"images/person/{person.ImageName}";
+
+    /// <summary>
+    /// image name is expected to exist in images folder with .JPG format
+    /// </summary>
+    [Parameter]
+    public Person Person { get; set; }
+
+    /// <summary>
+    /// element that is shown in tool tip is referenced here to be accessed by Tippy.js
+    /// </summary>
+    private ElementReference tooltipElement { get; set; }
+
+    /// <summary>
+    /// reference to element that shows the name, when mouse over is triggers Tippy
+    /// </summary>
+    private ElementReference nameHolderElement { get; set; }
+
+    /// <summary>
+    /// if true image exists and it will be shown
+    /// </summary>
+    private bool ImageExist { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        //make sure image is there else, no need to waste that nice space
+        //this will be used when rendering
+        var wwwUrl = Path.Combine(_navigation.BaseUri, ImageUrl(Person));
+        ImageExist = await Tools.DoesFileExist(wwwUrl);
+    }
+
+
+
+
+    protected override async Task OnAfterRenderAsync(bool firstRender) => await InvokeAsync(async () => await _OnAfterRender(firstRender)).Try(_jsRuntime);
+
+    private async Task _OnAfterRender(bool firstRender)
+    {
+
+        if (firstRender)
+        {
+            //attach tooltip lib element if tooltip provided
+            if (!string.IsNullOrEmpty(Person.ImageName)) //todo needs update
+            {
+                //construct html to show image
+                var tooltipSettings =
+                    new
+                    {
+                        placement = "right",
+                        content = tooltipElement,
+                        theme = "light",
+                        allowHTML = true,
+                        arrow = true,
+                        interactive = true //so that can click button
+                    };
+
+                await _jsRuntime.Tippy(nameHolderElement, tooltipSettings);
+            }
+        }
+    }
+
+}

@@ -1,4 +1,5 @@
 ﻿using System;
+using Newtonsoft.Json.Linq;
 
 namespace VedAstro.Library
 {
@@ -6,7 +7,7 @@ namespace VedAstro.Library
     /// The zodiac sign which is at a longitude
     /// </summary>
     [Serializable()]
-    public struct ZodiacSign
+    public struct ZodiacSign : IToJson
     {
         private readonly ZodiacName _signName;
         private readonly Angle _degreesInSign;
@@ -59,7 +60,17 @@ namespace VedAstro.Library
 
         public override string ToString()
         {
-            return $"{_signName} : {_degreesInSign}";
+            return $"{_signName} : {_degreesInSign.Rounded}";
         }
+
+        public JObject ToJson()
+        {
+            var temp = new JObject();
+            temp["Name"] = _signName.ToString();
+            temp["DegreesIn"] = _degreesInSign.ToJson();
+            return temp;
+
+        }
+
     }
 }

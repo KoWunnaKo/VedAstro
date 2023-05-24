@@ -3,31 +3,32 @@
 @using VedAstro.Library
 
 
-
 <PageTitle>@_pageTitle</PageTitle>
-<PageTop Title="Journal" IconName="game-icons:secret-book">
-    <Description>Record your life events to understand the astrological reason behind them.</Description>
-    <ButtonsRow>
-        <IconButton SmallSize="true" IconName="carbon:graphical-data-flow" ButtonText="Dasa Chart" ClickUrl="@PageRoute.Dasa"></IconButton>
-        <IconButton SmallSize="true" IconName="carbon:graphical-data-flow" ButtonText="Muhurtha Chart" ClickUrl="@PageRoute.Muhurtha"></IconButton>
-    </ButtonsRow>
+
+<PageTop ImageName="journal-banner.png"
+         Title="Astro Journal"
+         DescriptionText="Record your life events to understand the astrological reason behind them.">
 </PageTop>
+
 
 
 <div>
     <div class="d-flex flex-wrap">
         <div class="vstack gap-3">
-            <PeopleSelectorBox @ref="_peopleSelectorBox" />
+            <PersonSelectorBox @ref="_peopleSelectorBox" />
             <IconButton SmallSize="true" IconName="uim:process" ButtonText="Show journal" OnClickCallback="ShowButtonClicked"></IconButton>
         </div>
-        <div class="alert alert-info d-flex align-items-center w-50" role="alert">
-            <span class="iconify bi flex-shrink-0 me-2" data-icon="ic:outline-tips-and-updates" data-width="50"></span>
-            <div>
-                <strong>Quick Tip</strong><br />
-                After updating your journal, go to <a href="@PageRoute.Dasa"><span class="fw-bold">Dasa</span></a> or <a href="@PageRoute.Muhurtha"><span class="fw-bold">Muhurtha</span></a> chart,
+
+        <InfoBox Title="Quick Tip" IconName="flat-color-icons:idea">
+            <DescriptionHTML>
+                After updating your journal, go to <BoldLink URL="@PageRoute.LifePredictor">Life Predictor</BoldLink>,
                 to view them against astrological influence.
-            </div>
-        </div>
+            </DescriptionHTML>
+            <ImageHTML>
+                <img class="img-thumbnail" width="@GR.W412px" src="images/journal-example-life-hitler.png" />
+            </ImageHTML>
+        </InfoBox>
+
     </div>
 
 </div>
@@ -66,33 +67,48 @@
     private string _searchInput = "";
     private Person _selectedPerson;
     private List<LifeEvent>? _filteredLifeEvents;
-
-    private PeopleSelectorBox? _peopleSelectorBox;
+    private PersonSelectorBox? _peopleSelectorBox;
 
     private bool _isReady = false;
 
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    //█░░ █ █▀▀ █▀▀ █▀▀ █▄█ █▀▀ █░░ █▀▀   █▀▄▀█ █▀▀ ▀█▀ █░█ █▀█ █▀▄ █▀
+    //█▄▄ █ █▀░ ██▄ █▄▄ ░█░ █▄▄ █▄▄ ██▄   █░▀░█ ██▄ ░█░ █▀█ █▄█ █▄▀ ▄█
+    //METHODS THAT CAN IMPLEMENT ASYNC ERROR HANDLER
+
+
+    protected override async Task OnAfterRenderAsync(bool firstRender) => await InvokeAsync(async () => await _OnAfterRenderAsync(firstRender)).Try(_jsRuntime);
+
+
+
+    //█▀█ █▀█ █ █░█ ▄▀█ ▀█▀ █▀▀   █▀▄▀█ █▀▀ ▀█▀ █░█ █▀█ █▀▄ █▀
+    //█▀▀ █▀▄ █ ▀▄▀ █▀█ ░█░ ██▄   █░▀░█ ██▄ ░█░ █▀█ █▄█ █▄▀ ▄█
+
+    private async Task _OnAfterRenderAsync(bool firstRender)
     {
         //if parameter has been set then auto load person data as
         //though person was selected and calculate was clicked
         if (PersonIdUrl != null && firstRender)
         {
+            await _jsRuntime.ShowLoading();
+
             //programmatically select the person
             await _peopleSelectorBox.SetPerson(PersonIdUrl);
 
             //start the same process as show button click
             await ShowButtonClicked();
 
-            //needed to see updates because any changes in OnAfterRender
-            //have to be manually set
+    //needed to see updates because any changes in OnAfterRender
+    //have to be manually set
             StateHasChanged();
 
+            _jsRuntime.HideLoading();
+
             //little delay for renderer to complete
-            await Task.Delay(200);
+            //await Task.Delay(200);
 
             //HACK: done because StateHasChanged will clear the one by SetPerson above
-            await _jsRuntime.SetValue(".PersonSelector", PersonIdUrl);
+            //await _jsRuntime.SetValue(".PersonSelector", PersonIdUrl);
         }
     }
 
@@ -112,7 +128,8 @@
         //only set url if not already set
         //note:this improves UX, as links can lead faster to data
         PersonIdUrl = _selectedPerson.Id; //save local copy
-        _navigation.NavigateTo($"{PageRoute.Journal}/{PersonIdUrl}"); //change url
+        var urlWithId = Path.Combine(PageRoute.Journal, PersonIdUrl);
+        _navigation.NavigateTo(urlWithId); //does not reload page since same URL
 
         //life events
         await _lifeEventEditor.SetData(_selectedPerson);

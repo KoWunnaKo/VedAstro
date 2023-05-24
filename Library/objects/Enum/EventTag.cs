@@ -1,8 +1,7 @@
-﻿
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Xml.Linq;
+using Newtonsoft.Json.Linq;
 
 namespace VedAstro.Library
 {
@@ -15,7 +14,9 @@ namespace VedAstro.Library
     /// </summary>
     public enum EventTag
     {
+        //todo made visible to public via api
         Agriculture,
+
         General,
         Personal,
         RulingConstellation,
@@ -30,7 +31,8 @@ namespace VedAstro.Library
         Dasa,
         Bhukti,
         Antaram,
-        Sukshma,
+        Sukshma, // weeks
+        Prana, // days
         DasaSpecialRules,
         Horoscope,
         Tarabala,
@@ -42,7 +44,6 @@ namespace VedAstro.Library
 
     public static class EventTagExtensions
     {
-
         /// <summary>
         /// Note: Root element must be named EventTag
         /// </summary>
@@ -51,7 +52,15 @@ namespace VedAstro.Library
             //converts string to enum instance
             Enum.TryParse(eventTagXml.Value, out EventTag eventTag);
 
-            return eventTag; 
+            return eventTag;
+        }
+
+        public static EventTag FromJson(JToken eventTagJson)
+        {
+            //converts string to enum instance
+            Enum.TryParse(eventTagJson.Value<string>(), out EventTag eventTag);
+
+            return eventTag;
         }
 
         /// <summary>
@@ -63,6 +72,16 @@ namespace VedAstro.Library
             foreach (var eventTagXml in eventTagListXml.Elements())
             {
                 returnList.Add(EventTagExtensions.FromXml(eventTagXml));
+            }
+            return returnList;
+        }
+
+        public static List<EventTag> FromJsonList(JToken eventTagJsonList)
+        {
+            var returnList = new List<EventTag>();
+            foreach (var eventTagJson in eventTagJsonList)
+            {
+                returnList.Add(EventTagExtensions.FromJson(eventTagJson));
             }
             return returnList;
         }
@@ -81,8 +100,21 @@ namespace VedAstro.Library
 
             return eventTagListXml;
         }
+        /// <summary>
+        /// Note: Root element must be named EventTagList
+        /// </summary>
+        public static JArray ToJsonList(List<EventTag> eventTagList)
+        {
+            var jsonList = new JArray();
 
 
+            foreach (var eventTag in eventTagList)
+            {
+                jsonList.Add(eventTag.ToString());
+            }
+
+            return jsonList;
+        }
 
         /// <summary>
         /// Note root element is "EventTag"
@@ -93,8 +125,11 @@ namespace VedAstro.Library
 
             return holder;
         }
+        public static JObject ToJson(this EventTag _eventTag)
+        {
+            var holder = new JObject(_eventTag.ToString());
 
-
-
+            return holder;
+        }
     }
 }

@@ -32,12 +32,15 @@ namespace VedAstro.Library
         public const string AskAstrologer = "Thank you\nOur astrologer will contact you soon!";
         public const string AskAstrologerEmail = "Please give email for astrologer to contact you!";
         public const string SelectEventType = "Select at least 1 Event Type!";
-        public const string LoginFailed = "Login failed\nPlease try again";
+        public const string LoginFailed = "Could not login.\nDon't give up, try again";
         public const string FacebookLoginFail = "Error in OnFacebookSignInSuccessHandler where authResponse is null";
         public const string NoSavedCharts = "No saved charts, calculate a chart and save it to view here.";
         public const string NoPersonFound = "Person profile not found,\nrefresh or check profile share link";
         public const string PersonProfileNoExist = "Person profile no longer exists, could not make chart.";
         public const string Unexpected = "Unexpected error, we are working on the fix.\nPlease try again later.";
+        public const string PleaseLogin1 = "If you don't login how can we save your data?";
+        public const string PleaseLogin2 = "Don't worry we won't spam you. Our servers got better things todo.";
+        public const string PleaseLogin3 = "Login to proof you're not a program from the Machine World.";
 
 
         /// <summary>
@@ -45,12 +48,17 @@ namespace VedAstro.Library
         /// and since it's hard to detect during failure, for now select on random, to tell user both possible related errors info
         /// </summary>
         /// <returns></returns>
-        public static string ServerConnectionProblem() => Tools.RandomSelect(new[] { SlowUnstableInternet, NewFeatures, ImproveWebsite });
-        
+        public static string ServerConnectionProblem() => Tools.RandomSelect(new[]
+        {
+            SlowUnstableInternet, NewFeatures, ImproveWebsite, Unexpected
+        });
+
         /// <summary>
         /// Random selection of errors messages for unexpected errors 
         /// </summary>
         public static string ObliviousErrors() => Tools.RandomSelect(new[] { Unexpected, SlowUnstableInternet, NewFeatures, ImproveWebsite });
+        public static string FunnyLoginText() => Tools.RandomSelect(new[] { PleaseLogin1, PleaseLogin2, PleaseLogin3 });
+        public static string IsDoneText() => Tools.RandomSelect(new[] { "Your pizza is ready!", "Generated nicely!", "Bingo done!", "Oh yeah, its done!" });
 
 
     }

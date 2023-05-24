@@ -1,4 +1,5 @@
 ﻿using System;
+using Newtonsoft.Json.Linq;
 
 namespace VedAstro.Library
 {
@@ -13,7 +14,7 @@ namespace VedAstro.Library
     }
 
     [Serializable()]
-    public class Angle : IAngle
+    public class Angle : IAngle, IToJson
     {
         //CONST FIELDS
         private const long SecondsPerDegree = SecondsPerMinute * 60; //3600
@@ -48,6 +49,10 @@ namespace VedAstro.Library
         public double TotalDegrees => SecondsToDegrees(_seconds);
         public double TotalMinutes => SecondsToMinutes(_seconds);
 
+        /// <summary>
+        /// Total degrees rounded nicely for human eyes, used to show in site
+        /// </summary>
+        public double Rounded => Math.Round(TotalDegrees, 4);
 
 
         //METHODS
@@ -197,10 +202,21 @@ namespace VedAstro.Library
         public override string ToString()
         {
             //prepare string
-            var returnString = $"{this.Degrees}°{Math.Abs(this.Minutes)}'{Math.Abs(this.Seconds)}\"";//Only degrees is in negative
+            var degreeAll = this.TotalDegrees.ToString();//Only degrees is in negative
 
             //return string to caller
-            return returnString;
+            return $"{degreeAll}";
+        }
+
+        public JObject ToJson()
+        {
+            var returnVal = new JObject();
+            //classical notation (DMS)
+            returnVal["DegreeMinuteSecond"] = $"{this.Degrees}° {Math.Abs(this.Minutes)}' {Math.Abs(this.Seconds)}";//Only degrees is in negative
+            returnVal["TotalDegrees"] = this.TotalDegrees.ToString();//Only degrees is in negative
+
+            return returnVal;
+            
         }
 
         /// <summary>
@@ -213,6 +229,5 @@ namespace VedAstro.Library
 
             return hash1;
         }
-
     }
 }

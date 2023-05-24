@@ -1,7 +1,7 @@
 ﻿
-<a href="https://www.vedastro.org">
+<a href="https://vedastro.org">
 <img
-  src="https://www.vedastro.org/images/website-header-screenshot.png"
+  src="https://vedastro.org/images/website-header-screenshot.png"
   alt="VedAstro.org"
   title="VedAstro.org">
 </a>
@@ -33,15 +33,17 @@
 
 
 
+## Whats Possible
+![SkyChartGIF](https://vedastro.org/images/SkyChart/release-mk1.gif)
+
 
 # 🌍 Links
 - [Quick Guide](https://vedastro.org/Docs/QuickGuide) learn how to use
-- [Open API](https://vedastro.org/Docs/API) easily get astrology data for your app or website
-- [Swiss Ephemris API](https://vedastro.org/Docs/API/SwissEphemeris) access powerful astronomical library with a simple `HTTP GET`
-- [Calculators](https://vedastro.org/Calculator) each calculator shows an aspect of vedic astrology
-- [Docker](https://github.com/orgs/VedAstro/discussions/8) supported for easy deployement anywhere
-- [Contact](https://www.vedastro.org/Contact) us and we'll get back to you ASAP.
-- [Donate](https://www.vedastro.org/Donate) to keep this project going
+- [Open API](https://vedastro.org/Calculator/APIBuilder) easily get astrology data for your app or website with a simple `HTTP GET`
+- [Swiss Ephemeris API](https://vedastro.org/Calculator/APIBuilder) free and simple API to get advanced astronomical data
+- [Match Finder](https://vedastro.org/Calculator/Match/Finder) find your astrologically perfect match in our global database
+- [Life Predictor](https://vedastro.org/Calculator/LifePredictor) algorithmic prediction of a human life's past and future
+
 
 <!--
 
@@ -52,9 +54,11 @@ can be clearly seen predicted by the chart in the "Summary Row". Red for a bad e
 Using a combination of Dasa, Bhukti, Antaram and Gocharam of 9 planets this complex chart can give perfect predictions!
 The chart takes alot of computational power to generate, so please be patient after you click the Calculate button.
 
-[![](GithubImages/napoleon-dasa-chart.png)](https://www.vedastro.org)
-[![](GithubImages/elizabeth-dasa-chart.png)](https://www.vedastro.org)
+[![](GithubImages/napoleon-dasa-chart.png)](https://vedastro.org)
+[![](GithubImages/elizabeth-dasa-chart.png)](https://vedastro.org)
  -->
+
+
 
 
 # 📜 About
@@ -81,7 +85,7 @@ As such this knowledge only reaches a limited people.
 This project is an effort to change that.
 
 # 🎂 9 Years Old 
-The first line of code for this project was written in 2014.
+The first line of code for this project was written in late 2014 at Itä-Pasila.
 Back then it was a simple desktop software, with no UI and only text display.
 With continued support from users, this project has steadily developed to what it is today.
 Helping people from all over the world.
@@ -95,38 +99,44 @@ Astronomical calculation was made possible by "SwissEphNet" &amp; "SWISS EPHEMER
 Last but not least, we thank users like you who keep this project going.
 
 ### :pray: Special Thanks
-@Ceeper00 @razukc @kristaps.bunts
+@Ceeper00 @razukc @kristaps.bunts @Circuito
 
 <hr>
 
+
+<hr>
+
+# 👪 Join our family
+We're always looking for somebody to write docs, edit code, raise funds or help out in another ways.
+You can also choose to get paid for your time spent improving VedAstro.
+
+[Read More](https://vedastro.org/JoinOurFamily)
+
+<!-- SLACK JOIN IMAGE -->
 [![image](https://user-images.githubusercontent.com/43817262/227275627-609ceb21-025a-4902-b552-6e12f62f2f9d.png)](https://join.slack.com/t/vedastro/shared_invite/zt-1rqkyn0vm-A7YncrN4PFPolVxCEBA37Q)
 
-<!--
-# Help us and get paid!
-Complete tasks for this project and get paid instantly! Each task has a different value based on complexity.
-To get started fork the repo, make your edits and submit pull request. Contact us for task details.
 
-Task | Value | Status
---- | --- | ---
-Improve API chart generator performance by 2x | $10 | ![](https://img.shields.io/static/v1?label=&message=Open&color=blue)
-Show name of planet state in Horoscope page (combust, exalted, debilited) | $2 | ![](https://img.shields.io/static/v1?label=&message=Open&color=blue)
-Generate traditional Rasi, Navamsa South/North style chart | $5 | ![](https://img.shields.io/static/v1?label=&message=Open&color=blue)
-Find a spelling mistake in VedAstro.org content | $1 | ![](https://img.shields.io/static/v1?label=&message=Open&color=blue)
-Show name of planet motion in Horoscope page (retrograde, direct, stationary) | $1.5 | ![](https://img.shields.io/static/v1?label=&message=Done&color=green)
+# ⚙️ Gonzo Development Pattern
+This development style celebrates the methodology of chaotic development at the benefit of low cost and fast paced prototyping.
+Inspired by the concept of "Gonzo Journalism", pioneered by [Hunter S. Thompson](https://en.wikipedia.org/wiki/Hunter_S._Thompson) in the 1970s.
+
+We favour this pattern for the development of VedAstro simply due to the volatile nature of this project.
+Other development styles like "Waterfall" and "Scrum" are equally good when the need is.
+We want to try out novel ideas at a heartbeat, we want the latest platform and we want it cheap.
+So the "gonzo development" pattern is best for this needs.
+
+![gonzon-dev-button](https://vedastro.org/images/gonzon-dev-button.png)
+
+The negative side effect is that there will be bugs forever. Because it's near impossible to constantly
+change an ever-growing code base without having to constantly fix breaking changes.
+To deal with this, we split the Web App into Beta and Stable.
+Stable version will contain an old version of the App, while beta will always contain latest buildable code.
+But the database will be shared between these. Meaning changes in Beta will seen in Stable as well.
 
 
-- Clear browser cache & reload WebApp
-- Switch to Beta version
- -->
+# ⚙️ Project Structure
+![vedastro-4-parts](https://vedastro.org/images/4-parts-of-vedastro.jpg)
 
-
-# Other Cool Projects 😎
-- [VedicFeed](https://ask.vedicfeed.com) : AI Powered Astrologer
-
-<hr>
-
-# Project Architecture 🔩
-Key design notes to understand the internals of the program better during development
 
 
 ## Core Function Explained

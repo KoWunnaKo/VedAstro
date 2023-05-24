@@ -14,7 +14,6 @@ namespace Website
 
         private static XElement BranchXml = new XElement("Branch", ThisAssembly.Version);
 
-
         /// <summary>
         /// Tries to ID the user, and sends a log of the visit to API server
         /// Called from MainLayout everytime page is loaded
@@ -47,7 +46,6 @@ namespace Website
             }
 
         }
-
 
         public static async Task Error(XElement errorDataXml)
         {
@@ -211,14 +209,12 @@ namespace Website
             return visitorXml;
         }
 
-
-
         //all possible details are logged
         private static async Task<XElement> NewVisitor(XElement userIdXml, XElement urlXml)
         {
             //get visitor data & format it nicely for storage
-            var browserDataXml = await AppData.JsRuntime.InvokeAsyncJson("getVisitorData", "BrowserData");
-            var screenDataXml = await AppData.JsRuntime.InvokeAsyncJson("getScreenData", "ScreenData");
+            var browserDataXml = await AppData.JsRuntime.InvokeAsyncJson(JS.getVisitorData, "BrowserData");
+            var screenDataXml = await AppData.JsRuntime.InvokeAsyncJson(JS.getScreenData, "ScreenData");
             var originUrlXml = new XElement("OriginUrl", await AppData.OriginUrl);
             var visitorIdXml = new XElement("VisitorId", AppData.VisitorId);
             var locationXml = await GetVisitorLocation();
@@ -273,8 +269,8 @@ namespace Website
         {
             try
             {
-                //send using worker JS
-                await AppData.JsRuntime.InvokeAsync<string>("window.LogThread.postMessage", visitorElement.ToString());
+                //send using worker JS (the faster way, avoids congestion)
+                await AppData.JsRuntime.InvokeAsync<string>(JS.LogThread_postMessage, visitorElement.ToString());
 
                 //send to API for save keeping
                 //note:js runtime passed as null, so no internet checking done

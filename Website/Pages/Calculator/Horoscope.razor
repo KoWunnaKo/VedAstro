@@ -21,11 +21,10 @@
 
     <div class="d-flex flex-wrap">
         <div class="vstack gap-3">
-            <PeopleSelectorBox @ref="_peopleSelectorBox" />
+            <PersonSelectorBox @ref="_peopleSelectorBox" />
             <IconButton IconName="uim:process" ButtonText="Calculate" OnClickCallback="CalculateButtonClicked"></IconButton>
         </div>
-        <InfoBox Title="Pro Tip" Description="Results shown here need to be combined with Astrological Data to get accurate predictions.
-        Every combination mentioned should be applied to the Rasi, Bhava and Navamsa charts and then a conclusion drawn." IconName="flat-color-icons:idea" />
+        <InfoBox Title="Pro Tip" Description="Combine matched references with astrological data to make final accurate predictions" IconName="flat-color-icons:idea" />
     </div>
 
     @*divider*@
@@ -39,7 +38,7 @@
     <PageHelpSection @ref="_helpSection">
         <Content>
             <h4 class="fw-bold">How to use these predictions?</h4>
-            <p class="text-justify mb-4" style="max-width:@AppData.MaxWidth;">
+            <p class="text-justify mb-4">
                 For accurate predictions, results must be duly modified
                 or qualified according to the affliction or otherwise of the
                 planets concerned. For example, predictions involving planets with
@@ -47,7 +46,7 @@
             </p>
 
             <h4 class="fw-bold">Where are these predictions from?</h4>
-            <p class="text-justify mb-4" style="max-width:@AppData.MaxWidth;">
+            <p class="text-justify mb-4">
                 Prediction data come from books by renowned astrologer B.V. Raman.
                 Books such as <span class="fw-bold">How to Judge Horoscope</span> and
                 <span class="fw-bold">Hindu Predictive Astrology</span>,
@@ -61,16 +60,15 @@
 
 @code {
 
-
-
     /// <summary>
     /// Param used in URL to set Person ID via URL
+    /// also set via URL when page is loaded
     /// </summary>
     [Parameter]
     public string PersonIdUrl { get; set; } = "";
 
     private string _pageTitle = "Horoscope | VedAstro";
-    private PeopleSelectorBox? _peopleSelectorBox;
+    private PersonSelectorBox? _peopleSelectorBox;
     private Person _selectedPerson;
     private HoroscopeInfoView _horoscopeInfoView;
 

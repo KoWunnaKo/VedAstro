@@ -1,24 +1,86 @@
-ï»¿@attribute [Route(PageRoute.Match)]
+@attribute [Route(PageRoute.Match)]
 @using Microsoft.AspNetCore.Components
+@using Microsoft.Extensions.FileSystemGlobbing.Internal
+@using VedAstro.Library
+@using System.Xml.Linq
 
 
-<PageTitle>Find Marriage Match</PageTitle>
+<PageTitle>Match Checker | VedAstro</PageTitle>
 
-<PageTop Title="Match" IconName="bi:arrow-through-heart-fill">
-    <Description>Check marriage compatibility between horoscopes. 16 Astrological factors are used to make this accurate prediction</Description>
-    <ButtonsRow>
-        <IconButton IconName="ant-design:user-add-outlined" ButtonText="Add Person" ClickUrl="@PageRoute.AddPerson"></IconButton>
-        <IconButton IconName="fluent:people-list-24-filled" ButtonText="Person List" ClickUrl="@PageRoute.PersonList"></IconButton>
-    </ButtonsRow>
+<PageTop ImageName="match-checker.svg"
+         Title="Match Checker"
+         DescriptionText="Check compatibility between two people. Easily predict your relationship's future.">
 </PageTop>
 
 
+<div class="d-flex justify-content-between mb-5">
+    @*SELECTOR*@
+    <div>
+        <div class="vstack gap-3 me-5">
+            <PersonSelectorBox @ref="_malePeopleSelector" @bind-SelectedPersonId="@SelectedMale" Label="Male" />
+            <PersonSelectorBox @ref="_femalePeopleSelector" @bind-SelectedPersonId="@SelectedFemale" Label="Female" />
+            <IconButton IconName="uim:process" ExtraClass="mt-1" Color="success" ButtonText="Calculate" OnClickCallback="OnClickCalculate" />
+        </div>
+    </div>
+    @*SIDEBAR*@
+    <div class="gap-3 me-md-4">
+        <InfoBox Title="Find Perfect Match" Description="Your soulmate is out there. Start a search in our global database" Color="#ffbdf7" ClickUrl="@PageRoute.MatchFinder" MaxWidth="365" FullWidth="@true" IconName="emojione:heart-with-arrow" />
+        <InfoBox Title="Full Check" Description="16 astrological factors used to make this accurate prediction" Color="#d1e7dd" MaxWidth="365" FullWidth="@true" IconName="line-md:check-list-3-twotone" />
+    </div>
+</div>
 
 
-<div class="vstack gap-3">
-    <PeopleSelectorBox @ref="_malePeopleSelector" @bind-SelectedPersonId="@SelectedMale" Label="Male" />
-    <PeopleSelectorBox @ref="_femalePeopleSelector" @bind-SelectedPersonId="@SelectedFemale" Label="Female" />
-    <IconButton IconName="uim:process" ButtonText="Calculate" OnClickCallback="OnClickCalculate"></IconButton>
+<div class="mt-3">
+    <IconTitle Title="Accurate Predictions" IconName="flat-color-icons:filing-cabinet" />
+    <MatchReportListViewer @ref="savedMatchReportList" />
+</div>
+
+<div class="mt-3" style="max-width: @GR.W667px">
+
+    <ArticleBlock Title="Marriage Karma" IconName="mdi:state-machine">
+        <TextHTML>
+            <p class="text-justify">
+                In each life the probability for marriage <strong>comes and goes</strong> multiple times. During the high period,
+                your mind and environment around you will be geared towards romance and marriage.
+                When this happens you will be attracted to people for partnership, even if they are <strong>not in-tune</strong>.
+            </p>
+            <img src="images/how-marriage-karma.png" class="img-thumbnail mt-2 mb-3" alt="...">
+            <p class="text-justify">
+                If this "<strong>marriage karma</strong>" lasted forever, there would be no problem. You can even <strong>marry your enemy</strong>, and you will not fight.
+                But in reality this <strong>period ends</strong>, so that next periods can come. When this happens, if your "<strong>life partner</strong>" is not in-tune with you,
+                then comes the fights, broken hearts, and divorces. This is how <strong>bad marriages</strong> are made.
+            </p>
+        </TextHTML>
+    </ArticleBlock>
+
+
+
+    <ArticleBlock Title="Imagine Perfect Marriages" IconName="emojione:heart-with-arrow">
+        <TextHTML>
+            <p>
+                Do we need <strong>more proof?</strong> Is it not high time, for us as a human species to stop hunting for partners blindly like
+                animals based on our <strong>senses and circumstances</strong>. But rather use intelligence guided by cosmic laws that guarantee
+                a perfect union.
+            </p>
+            <p>
+                The age of "imperfection", the age of <BoldLink OpenInNewTab="false" URL="@PageRoute.NowInDwapara">"Kali" is over</BoldLink>. We have before us a new age of thinking men, the age of "<BoldLink OpenInNewTab="false" URL="@PageRoute.NowInDwapara">Dwarpara</BoldLink>". Gone are the ways of old.
+                Just imagine a world with <strong>no divorces</strong>, a world where <strong>happy marriages</strong> is common sight. Where laughter abounds &amp; fear stands still.
+            </p>
+
+            <div>
+                <figure class="text-center mt-5" style="cursor: pointer;" @onclick="() => _jsRuntime.OpenNewTab(URL.JohnLenonImagine)">
+                    <blockquote class="blockquote">
+                        <p>You may say I'm dreamer, <br /> but I'm not the only one.</p>
+                    </blockquote>
+                    <figcaption class="blockquote-footer">
+                        John Lenon @*<cite title="Source Title">Singer Beatles 60'</cite>*@
+                    </figcaption>
+                </figure>
+            </div>
+
+        </TextHTML>
+    </ArticleBlock>
+
 </div>
 
 
@@ -27,8 +89,10 @@
     //VARIABLES
     public string? SelectedMale { get; set; }
     public string? SelectedFemale { get; set; }
-    private PeopleSelectorBox _malePeopleSelector;
-    private PeopleSelectorBox _femalePeopleSelector;
+    private PersonSelectorBox _malePeopleSelector;
+    private PersonSelectorBox _femalePeopleSelector;
+    private PersonSelectorBox _SavedMatchReport;
+    private MatchReportListViewer savedMatchReportList;
 
 
 
@@ -39,21 +103,31 @@
     {
         if (firstRender)
         {
-            //show loading box
-            //await _jsRuntime.ShowLoading();
-
-            //get male list from api server & save it for later
-            //_malePeopleSelector.SetData(await WebsiteTools.GetMalePeopleList(AppData.CurrentUser?.Id));
-            //_femalePeopleSelector.SetData(await WebsiteTools.GetFemalePeopleList(AppData.CurrentUser?.Id));
-
-            //hide loading box
-            //_jsRuntime.HideAlert();
-
-            ////called last because will loop back
-            //this.StateHasChanged();
-
+            var exampleReport = await WebsiteTools.GetSavedMatchList("101", "101");
+            savedMatchReportList.Show(exampleReport);
         }
     }
+
+    private async Task<List<MatchReport>> GetExampleReports()
+    {
+        var returnVal = new List<MatchReport>()
+        {
+            //Kristen Bell  Dax Shepard
+            await WebsiteTools.GetCompatibilityReport("70d6a995dec84c0aa74211ac9ff50d29", "8e9b5804e68a4b82a1a975ebee1643dc"),
+            //Matt Damon  Luciana Barroso
+            await WebsiteTools.GetCompatibilityReport("696c62d1f429469aaf8111fc1418f7ce", "ef97500191d248cd92bc43d32fed6093"),
+            //Napoleon Bonaparte  Joséphine de Beau.
+            await WebsiteTools.GetCompatibilityReport("54041d1ffb49479997f7987ecfchf08b5", "7faa6fe13ac5442d9d3dba972daa9af2"),
+            //Brad Pitt  Angelina Jolie
+            await WebsiteTools.GetCompatibilityReport("70d6a995dec84c0aa74211ac9ff50d29", "8e9b5804e68a4b82a1a975ebee1643dc"),
+            //John Lennon  Yoko Ono
+            await WebsiteTools.GetCompatibilityReport("70d6a995dec84c0aa74211ac9ff50d29", "8e9b5804e68a4b82a1a975ebee1643dc"),
+        };
+
+        return returnVal;
+    }
+
+
 
     private async Task OnClickCalculate()
     {
@@ -96,7 +170,6 @@
 
         //if control reaches here than, it's valid
         return true;
-
 
     }
 

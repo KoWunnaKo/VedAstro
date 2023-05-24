@@ -2,7 +2,9 @@
 @using VedAstro.Library;
 @using System.Xml.Linq
 
-<span class="iconify" data-icon="@IconName" data-width="@Size"></span>
+<div class="@ExtraClass" style="@ExtraStyle">
+    <span style="@CssStyle" class="iconify" data-icon="@IconName" data-width="@Size" />
+</div>
 
 @code {
 
@@ -10,7 +12,42 @@
     /// Special icon name from icon-sets.iconify.design
     /// </summary>
     [Parameter]
-    public string? IconName { get; set; }
+    public string IconName { get; set; } = "ph:paw-print-duotone";
+
+    /// <summary>
+    /// add extra styles to SVG icon parent div
+    /// </summary>
+    [Parameter]
+    public string ExtraClass { get; set; } = "";
+
+    /// <summary>
+    /// add extra styles to SVG icon parent div
+    /// </summary>
+    [Parameter]
+    public string ExtraStyle { get; set; } = "";
+
+    /// <summary>
+    /// If set true, will make icon properly align with neighboring text
+    /// defaults to false
+    /// </summary>
+    [Parameter]
+    public bool NextToText { get; set; } = false;
+
+    /// <summary>
+    /// computed style applied to 
+    /// </summary>
+    private string CssStyle
+    {
+        get
+        {
+            var compiledStyle = "";
+
+            compiledStyle += NextToText ? "vertical-align: text-bottom; " : "";
+
+            return compiledStyle;
+
+        }
+    }
 
     /// <summary>
     /// Size in pixels, default is 25

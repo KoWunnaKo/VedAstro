@@ -2,6 +2,7 @@ using System.Xml.Linq;
 using VedAstro.Library;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
+using System.Threading;
 
 namespace Website
 {
@@ -26,11 +27,35 @@ namespace Website
         public static async Task<string> Post(string apiUrl, XElement xmlData)
         {
             //this call will take you to NetworkThread.js
-            var rawPayload = await AppData.JsRuntime.InvokeAsync<string>("postWrapper", apiUrl, xmlData.ToString(SaveOptions.DisableFormatting));
+            var rawPayload = await AppData.JsRuntime.InvokeAsync<string>(JS.postWrapper, apiUrl, xmlData.ToString(SaveOptions.DisableFormatting));
 
             //todo proper checking of status needed
             return rawPayload;
         }
+
+        public static async Task OnClickShareFacebook(string pdfFileName, ElementReference elementToConvert)
+        {
+            var currentUrl = await AppData.JsRuntime.GetCurrentUrl();
+            await AppData.JsRuntime.InvokeVoidAsync(JS.shareDialogFacebook, currentUrl);
+        }
+
+        /// <summary>
+        /// show box to get email and log for sending todo
+        /// </summary>
+        public static async Task OnClickSendToEmail(string pdfFileName, ElementReference elementToConvert)
+        {
+            //get email from user via js sweet alert lib
+            var emailFromAlert = await AppData.JsRuntime.ShowSendToEmail("Send PDF to...");
+
+            //calls special JS lib to convert html version of the chart to PDF
+            //and initiated download as well, with 1 call
+            var cleanFileName = Tools.RemoveWhiteSpace(pdfFileName); //remove spaces so that no errors and looks clean in URL
+
+            //will also show complete alert after done
+            await AppData.JsRuntime.InvokeVoidAsync(JS.htmlToEmail, elementToConvert, cleanFileName, "pdf", emailFromAlert);
+
+        }
+
 
         /// <summary>
         /// Extension method for setting a Timeout for a Task
@@ -60,29 +85,26 @@ namespace Website
         /// </summary>
         public static bool GetIsBetaRuntime() => ThisAssembly.BranchName.Contains("beta");
 
+
+
         /// <summary>
-        /// Gets all people list from API server
-        /// This is the central place all person list is gotten for a User ID/Visitor ID
-        /// NOTE: API combines person list from visitor id and 
-        /// - if API fail will return empty list
+        /// Gets a list of saved match reports for a user/visitor
         /// </summary>
-        public static async Task<List<Person>?> GetPeopleList()
+        /// <returns></returns>
+        public static async Task<List<MatchReport>?> GetSavedMatchList(string userId, string visitorId)
         {
-
             //get all person profile owned by current user/visitor
-            var payload = new XElement("Root", new XElement("UserId", AppData.CurrentUser.Id), new XElement("VisitorId", AppData.VisitorId));
-            var result = await ServerManager.WriteToServerXmlReply(AppData.URL.GetPersonList, payload);
+            var payload = new XElement("Root", new XElement("UserId", userId), new XElement("VisitorId", visitorId));
+            var result = await ServerManager.WriteToServerXmlReply(AppData.URL.GetMatchReportList, payload);
 
-            if (result.IsPass)
-            {
-                var personList = Person.FromXml(result.Payload.Elements());
-                return personList;
-            }
+            //get match data out and parse it (if all went well)
+            if (result.IsPass) { return MatchReport.FromXml(result.Payload.Elements()); }
+
             //if fail log it and return empty list as not to break the caller
             else
             {
-                await AppData.JsRuntime.ShowAlert("error", AlertText.FailedNameList, true);
-                return new List<Person>();
+                await AppData.JsRuntime.ShowAlert("error", AlertText.ServerConnectionProblem(), true);
+                return new List<MatchReport>();
             }
 
 
@@ -111,11 +133,18 @@ namespace Website
             return visitorList;
         }
 
+        //marked for deletion
+        public static Person GetPersonFromId2(string personId, IJSRuntime jsRuntime)
+        {
+            var result = GetPersonById(personId, jsRuntime).Result;
+            return result;
+        }
+        
         /// <summary>
         /// Gets person from ID
         /// Checks user's person list,
         /// </summary>
-        public static async Task<Person> GetPersonFromId(string personId, IJSRuntime jsRuntime)
+        public static async Task<Person> GetPersonById(string personId, IJSRuntime jsRuntime)
         {
             Person foundPerson;
 
@@ -131,37 +160,17 @@ namespace Website
             //user's person profile, which is allowed but also monitored
             await WebLogger.Data($"Direct Link Access:{personId}");
 
-            foundPerson = await GetFromApi(personId, jsRuntime);
+            foundPerson = await AppData.API.GetPerson(personId);
 
             return foundPerson;
 
 
             //LOCAL FUNCTION
-            async Task<Person> GetFromApi(string personId, IJSRuntime jsRuntime)
-            {
-                //send request to API
-                var xmlData = Tools.AnyTypeToXml(personId);
-                var result = await ServerManager.WriteToServerXmlReply(AppData.URL.GetPersonApi, xmlData);
-
-                //check result
-                if (result.IsPass)
-                {
-                    //if pass get person data out & return to caller
-                    var personXml = result.Payload;
-                    return Person.FromXml(personXml);
-                }
-                else
-                {
-                    //let user know fail, and return empty person
-                    await jsRuntime.ShowAlert("error", AlertText.NoPersonFound, true);
-                    return Person.Empty;
-                }
-            }
 
             async Task<Person> GetFromPersonList(string personId)
             {
                 //try to get from person's own user list
-                var personList = await AppData.TryGetPersonList();
+                var personList = await AppData.API.GetPersonList();
                 var personFromId = personList.Where(p => p.Id == personId);
 
                 //will return Empty person if none found
@@ -169,27 +178,6 @@ namespace Website
             }
         }
 
-        /// <summary>
-        /// Deletes person from API server  main list
-        /// note:
-        /// - if fail will show alert message
-        /// - cached person list is cleared here
-        /// </summary>
-        public static async Task DeletePerson(string personId, IJSRuntime jsRuntime)
-        {
-            var personIdXml = new XElement("PersonId", personId);
-            var result = await ServerManager.WriteToServerXmlReply(AppData.URL.DeletePerson, personIdXml);
-
-            //check result, display error if needed
-            if (!result.IsPass)
-            {
-                WebLogger.Error($"BLZ:DeletePerson() Fail:\n{result.Payload}");
-                await jsRuntime.ShowAlert("error", AlertText.DeletePersonFail, true);
-            }
-
-            //if all went well clear stored person list
-            else { AppData.ClearPersonList(); }
-        }
 
         public static async Task DeleteSavedChart(string chartId, IJSRuntime jsRuntime)
         {
@@ -205,49 +193,7 @@ namespace Website
 
         }
 
-        /// <summary>
-        /// Send updated person to API server to be saved in main list
-        /// note:
-        /// - if fail will show alert message
-        /// - cached person list is cleared here
-        /// </summary>
-        public static async Task UpdatePerson(Person person, IJSRuntime jsRuntime)
-        {
-            //prepare and send updated person to API server
-            var updatedPersonXml = person.ToXml();
-            var result = await ServerManager.WriteToServerXmlReply(AppData.URL.UpdatePersonApi, updatedPersonXml);
 
-            //check result, display error if needed
-            if (!result.IsPass)
-            {
-                WebLogger.Error($"BLZ:UpdatePerson() Fail:\n{result.Payload}");
-                await jsRuntime.ShowAlert("error", AlertText.UpdatePersonFail, true);
-            }
-
-            //if all went well clear stored person list
-            else { AppData.ClearPersonList(); }
-        }
-
-        /// <summary>
-        /// Adds new person to API server main list
-        /// </summary>
-        public static async Task AddPerson(Person person)
-        {
-            //send newly created person to API server
-            var xmlData = person.ToXml();
-            var result = await ServerManager.WriteToServerXmlReply(AppData.URL.AddPersonApi, xmlData);
-
-            //check result, display error if needed
-            if (!result.IsPass)
-            {
-                WebLogger.Error($"BLZ:AddPerson() Fail:\n{result.Payload}");
-                await AppData.JsRuntime.ShowAlert("error", AlertText.UpdatePersonFail, true);
-            }
-
-            //if all went well clear stored person list
-            else { AppData.ClearPersonList(); }
-
-        }
         public static void ReloadPage(NavigationManager navigation) => navigation.NavigateTo(navigation.Uri, forceLoad: true);
 
         /// <summary>
@@ -472,8 +418,6 @@ namespace Website
             }
         }
 
-
-
         /// <summary>
         /// Gets XML file from any URL and parses it into xelement list
         /// </summary>
@@ -495,11 +439,11 @@ namespace Website
         /// Tries to get visitor ID from browser else makes new Visitor ID
         /// also update is new visitor flag
         /// </summary>
-        public static async Task<string?> TryGetVisitorId(IJSRuntime jsRuntime)
+        public static async Task<string> TryGetVisitorId(IJSRuntime jsRuntime)
         {
             //find out if new visitor just arriving or old one browsing
-            var visitorId = await jsRuntime.GetProperty("VisitorId"); //local storage
-            AppData.IsNewVisitor = visitorId is null or "";
+            var visitorId = await jsRuntime.GetProperty("VisitorId") ; //local storage
+            AppData.IsNewVisitor = string.IsNullOrEmpty(visitorId);
 
             //generate new ID if not found
             if (AppData.IsNewVisitor)
@@ -519,7 +463,7 @@ namespace Website
             var chartIdXml = new XElement("ChartId", selectedChartId);
             var result = await ServerManager.WriteToServerXmlReply(AppData.URL.GetPersonIdFromSavedChartId, chartIdXml);
             var personId = result.Payload.Value;//xml named person id
-            var selectedPerson = await GetPersonFromId(personId, jsRuntime);
+            var selectedPerson = await GetPersonById(personId, jsRuntime);
 
             return selectedPerson;
         }
@@ -535,5 +479,26 @@ namespace Website
 
             return css;
         }
+
+        public static async Task<MatchReport> GetCompatibilityReport(string maleId, string femaleId)
+        {
+            var male = await WebsiteTools.GetPersonById(maleId, AppData.JsRuntime);
+            var female = await WebsiteTools.GetPersonById(femaleId, AppData.JsRuntime);
+
+            //if male & female profile found, make report and return caller
+            var notEmpty = !Person.Empty.Equals(male) && !Person.Empty.Equals(female);
+            if (notEmpty)
+            {
+                return MatchCalculator.GetNewMatchReport(male, female, "101");
+            }
+            else
+            {
+                throw new Exception(AlertText.PersonProfileNoExist);
+            }
+        }
+
+
+       
+
     }
 }

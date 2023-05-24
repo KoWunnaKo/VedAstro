@@ -19,7 +19,7 @@
     </div>
     <div class="vstack gap-3 me-5 mb-4" style="max-width: 300px">
 
-        <div @ref="_messageFormElement" class="vstack gap-2" style="max-width: @AppData.MaxWidth;">
+        <div @ref="_messageFormElement" class="vstack gap-2" style="max-width: @GR.W667px;">
             <div>
                 <label for="emailInputId">Email</label>
                 <input @bind="_emailInput" type="text" id="emailInputId" class="form-control" placeholder="john@example.com">
@@ -34,7 +34,8 @@
     @*STACK BOXES ON RIGHT*@
     <div class="w-50">
         <InfoBox MaxWidth="365" IsNewTabOpen="true" FullWidth="@true" Title="WhatsApp" ClickUrl="@URL.WhatsAppContact" Description="Call or chat with us." IconName="logos:whatsapp-icon" />
-        <InfoBox MaxWidth="365" IsNewTabOpen="true" Color="success" FullWidth="@true" Title="Email" ClickUrl="@URL.EmailToClick" Description="contact@vedastro.org" IconName="flat-color-icons:address-book" />
+        <InfoBox MaxWidth="365" IsNewTabOpen="true" FullWidth="@true" Title="Email" ClickUrl="@URL.EmailToClick" Description="contact@vedastro.org" IconName="flat-color-icons:address-book" Color="success" />
+        <InfoBox MaxWidth="365" IsNewTabOpen="true" FullWidth="@true" Title="Telegram" ClickUrl="@URL.TelegramContact" Description="Call or chat with us." IconName="logos:telegram" />
     </div>
 </div>
 
@@ -69,11 +70,11 @@
         var textXml = new XElement("Text", _messageInput);
         var emailXml = new XElement("Email", _emailInput);
         var userIdXml = new XElement("UserId", AppData.CurrentUser?.Id);
-        var messageXml = new XElement("Message", userIdXml, emailXml, Tools.TimeStampSystemXml, textXml);
+        var visitorIdXml = new XElement("VisitorId", AppData.VisitorId);
+        var messageXml = new XElement("Message", userIdXml, visitorIdXml, emailXml, Tools.TimeStampSystemXml, Tools.TimeStampServerXml, textXml);
 
         //send message to API server
         await ServerManager.WriteToServerXmlReply(AppData.URL.AddMessageApi, messageXml);
-
 
         //hide message form
         await _jsRuntime.Hide(_messageFormElement);

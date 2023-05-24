@@ -1,7 +1,5 @@
-﻿using Google.Apis.Auth;
-using System;
-using System.Text.Json.Nodes;
-using System.Threading.Tasks;
+﻿using System.Text.Json.Nodes;
+using Google.Apis.Auth;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 
@@ -10,12 +8,12 @@ namespace API
     public class SignInAPI
     {
 
-        [Function("SignInGoogle")]
+        [Function(nameof(SignInGoogle))]
         public static async Task<HttpResponseData> SignInGoogle([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] HttpRequestData incomingRequest)
         {
 
             //get ID Token/JWT from received request
-            var tokenXml = await APITools.ExtractDataFromRequest(incomingRequest);
+            var tokenXml = await APITools.ExtractDataFromRequestXml(incomingRequest);
             var jwtToken = tokenXml.Value;
 
             try
@@ -46,14 +44,14 @@ namespace API
             }
         }
 
-        [Function("SignInFacebook")]
+        [Function(nameof(SignInFacebook))]
         public static async Task<HttpResponseData> SignInFacebook([HttpTrigger(AuthorizationLevel.Anonymous, "post", Route = null)] HttpRequestData incomingRequest)
         {
 
             try
             {
                 //get accessToken from received request
-                var tokenXml = await APITools.ExtractDataFromRequest(incomingRequest);
+                var tokenXml = await APITools.ExtractDataFromRequestXml(incomingRequest);
                 var accessToken = tokenXml.Value;
 
                 //validate the the token & get user data

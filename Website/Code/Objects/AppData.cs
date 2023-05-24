@@ -1,8 +1,10 @@
-using System.Xml.Linq;
-using VedAstro.Library;
-using Microsoft.AspNetCore.Components;
+﻿using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
+using System.Xml.Linq;
+using Library.API;
+using VedAstro.Library;
 using Website.Pages;
+using Website.Pages.Account;
 
 namespace Website
 {
@@ -19,29 +21,30 @@ namespace Website
         /// Shortcut text to show credit
         /// </summary>
         public static MarkupString HinduPredictiveAstrologyCredit = new("<p class=\"fst-italic fw-light\"><small>(Source Credit: Hindu Predictive Astrology by B.V.Raman)</small></p>");
+
         public static MarkupString MuhurthaCredit = new("<p class=\"fst-italic fw-light\"><small>(Source Credit: Muhurtha by B.V.Raman)</small></p>");
 
         /// <summary>
         /// Represents the currently logged in User
         /// If null then nobody logged in, default Empty/Public User
         /// </summary>
-        public static UserData CurrentUser { get; set; } = UserData.Empty;
+        public static UserData CurrentUser { get; set; } = UserData.Guest;
 
         /// <summary>
+        /// default to 101, though it should be updated when running, else must be error
         /// A copy of this visitor's ID, set when logging new visit
         /// Different from User Id in current user
         /// Used to log user flow
         /// Note: defaults to empty string
         /// </summary>
-        public static string? VisitorId { get; set; } = "";
-
+        public static string VisitorId { get; set; } = "101";
 
         /// <summary>
         /// Place where global event data list is stored for quick access
         /// loaded in main layout
         /// </summary>
         public static List<XElement>? HoroscopeDataList { get; set; }
-        
+
         public static Stream? HoroscopeDataListStream { get; set; }
 
         /// <summary>
@@ -57,13 +60,13 @@ namespace Website
         public static List<XElement> ReferenceList { get; set; }
 
         public static SearchResult SearchPage { get; set; }
-        
+
         /// <summary>
         /// Note access via try get person list
         /// To clear & get fresh on next call set null
         /// </summary>
         public static List<Person>? PersonList { get; set; }
-        
+
         /// <summary>
         /// If true new Visitor is first visit (theoretically)
         /// Sets true on every page refresh
@@ -73,18 +76,17 @@ namespace Website
         /// <summary>
         /// Origin URL set by MainLayout
         /// </summary>
-        public static Task<string> OriginUrl =>  JsRuntime.GetOriginUrl();
+        public static Task<string> OriginUrl => JsRuntime.GetOriginUrl();
 
         /// <summary>
         /// Gets latest current page URL using JS
         /// </summary>
         public static Task<string> CurrentUrlJS => JsRuntime.GetCurrentUrl();
 
-
         /// <summary>
         /// Return true if User ID is 101
         /// </summary>
-        public static bool IsGuestUser => AppData.CurrentUser?.Id == UserData.Empty.Id;
+        public static bool IsGuestUser => AppData.CurrentUser?.Id == UserData.Guest.Id;
 
         public static bool DarkMode { get; set; } = false;
 
@@ -111,7 +113,7 @@ namespace Website
         /// <summary>
         /// If true login is success
         /// </summary>
-        public static bool IsLoginSuccess => AppData.CurrentUser != UserData.Empty;
+        public static bool IsLoginSuccess => AppData.CurrentUser != UserData.Guest;
 
         /// <summary>
         /// set by when app starts
@@ -123,14 +125,33 @@ namespace Website
         /// </summary>
         public static HttpClient HttpClient { get; set; }
 
+        /// <summary>
+        /// Default icon size used in pages
+        /// </summary>
+        public static int DefaultIconSize => 38;
 
         /// <summary>
-        /// Hard coded max width used in pages 
+        /// updated every time location is set by user, when making new geo location this is used as default
         /// </summary>
-        public const string MaxWidth = "693px";
+        public static string? LastUsedLocation { get; set; } = DefaultLocationCountry;
 
-        public const string MaxContentWidthPx = "443px";
-        
+        /// <summary>
+        /// image html of loading icon ready to be used razor page (shortcut method)
+        /// </summary>
+        public static RenderFragment LoadingImage => (builder) =>
+        {
+            builder.AddMarkupContent(0, $"<img style=\"position: relative; left: 39%; top: 30%;\" src=\"images/loading-animation-progress-transparent.gif\" />");
+        };
+
+        /// <summary>
+        /// filled when loading app via Google API IP location detect
+        /// used as backup location for selector
+        /// </summary>
+        public static GeoLocation ClientLocation { get; set; }
+
+        public static string DefaultLocationCountry = "Singapore";
+
+
         /// <summary>
         /// Base address currently used by App,
         /// could be http://localhost / www.vedastro.org / vedastro.org / beta.vedastro.org
@@ -138,6 +159,16 @@ namespace Website
         public static Uri? BaseAddress;
 
         private static IJSRuntime _jsRuntime;
+
+        /// <summary>
+        /// Counts the number of times the stamp was clicked
+        /// </summary>
+        public static int StampClickCount;
+
+        /// <summary>
+        /// manager to access everything API
+        /// </summary>
+        public static VedAstroAPI API;
 
 
         /// <summary>
@@ -162,7 +193,6 @@ namespace Website
             //else get fresh copy from server
             AppData.HoroscopeDataList = await WebsiteTools.GetXmlFile("data/HoroscopeDataList.xml");
             return AppData.HoroscopeDataList;
-
         }
 
         /// <summary>
@@ -173,7 +203,7 @@ namespace Website
             try
             {
                 //get value from JS and save it, for others if needed
-                AppData.DarkMode = await jsRuntime.InvokeAsync<bool>("window.DarkMode.isActivated");
+                AppData.DarkMode = await jsRuntime.InvokeAsync<bool>(JS.DarkMode_isActivated);
             }
             catch (Exception e)
             {
@@ -195,38 +225,11 @@ namespace Website
             //_waitingInLineCount = 0;
         }
 
-        /// <summary>
-        /// data may be cached or from API
-        /// Sorted alphabetically
-        /// </summary>
-        public static async Task<List<Person>> TryGetPersonListSortedAZ()
-        {
-            var unsorted = await AppData.TryGetPersonList();
-            var sortedList = unsorted.OrderBy(person => person.Name).ToList();
-            return sortedList;
-
-        }
-        public static async Task<List<Person>> TryGetPersonList()
-        {
-
-            //check if people list already loaded before
-            if (AppData.PersonList == null)
-            {
-                Console.WriteLine("BLZ:Get Fresh PersonList");
-                AppData.PersonList = await WebsiteTools.GetPeopleList();
-            }
-            else
-            {
-                Console.WriteLine("BLZ:Using PersonList Cache");
-            }
-
-            return AppData.PersonList;
-        }
 
         /// <summary>
         /// When called clears person list from memory, so new list is auto loaded from API on next get
         /// </summary>
-        public static void ClearPersonList() => AppData.PersonList = null;
+        //public static void ClearPersonList() => AppData.PersonList = null;
 
     }
 }

@@ -1,85 +1,161 @@
-﻿@attribute [Route(PageRoute.QuickGuide)]
+﻿@using VedAstro.Library
+@attribute [Route(PageRoute.QuickGuide)]
 
 
-<PageTitle>Quick Guide</PageTitle>
+<PageTitle>Hitchhiker's Guide To VedAstro</PageTitle>
 
-<PageTop Title="Quick Guide" IconName="flat-color-icons:reading">
-    <Description>
-        VedAstro is a WebApp designed to help people 
-        use Vedic Astrology in their daily life.
-    </Description>
-    <ButtonsRow>
-        <IconButton IconName="akar-icons:chat-question" ButtonText="Ask Question" ClickUrl="@PageRoute.Contact"></IconButton>
-    </ButtonsRow>
-</PageTop>
-
-<div>
-
-    <h4 class="fw-bold">How To Use?</h4>
-    <p class="text-justify gap-2" style="max-width:@AppData.MaxWidth;">
-        <span class="fw-bold">Step 1:</span> Sign In, to save your data for later use<br/>
-        <span class="fw-bold">Step 2:</span> Go to <a href="@PageRoute.PersonList" class="link-primary fw-bold">Person List</a>
-                                            page and click "Add Person" (birth time &amp; place)<br/>
-        <span class="fw-bold">Step 3:</span> Go to <a href="@PageRoute.CalculatorList" class="link-primary fw-bold">Calculator List</a> page and
-        choose a calculator, for example  <a href="@PageRoute.Match" class="link-primary fw-bold">Match</a><br />
-    </p>
-
-
-    <h4 class="fw-bold">What is a calculator?</h4>
-    <p class="text-justify" style="max-width:@AppData.MaxWidth;">
-        This project is a collection of Vedic astrological tools called calculators.There is a list of them in the home page.
-        For example <span class="fw-bold">Match</span> is a calculator for marriage compatibility.
-        <span class="fw-bold">Muhurtha</span> is used for good timing and using the <span class="fw-bold">Dasa</span> calculator
-        you can make life predictions up to 120 years. These cloud calculators are available for free for all.
-        Cost of development and hosting VedAstro is paid for by users like you.
-    </p>
-
-   <h4 class="fw-bold">Unexpected errors?</h4>
-   <p class="text-justify" style="max-width:@AppData.MaxWidth;">
-       Click &quot;Refresh&quot;, several times. This will clear the cache.
-       Since there are new updates to the VedAstro WebApp almost <a target="_blank" rel="noopener noreferrer" href="https://github.com/gen-so/Genso.Astrology/commits/master" class="link-primary fw-bold">everyday!</a>
-       The browser caches the old version, which causes errors
-       as it fails to work with the updated API Server.
-       Do a hard refresh &amp; clear your cache.
-       This will solve 99% of the errors you face.
-   </p>
-
-
-   <h4 class="fw-bold">Who is this for?</h4>
-    <p class="text-justify" style="max-width:@AppData.MaxWidth;">
-        Both an average person and expert astrologer can find VedAstro useful. There are complex calculators 
-        like Dasa that experts can use and there are easy to use calculators like Match that require 
-        no astrological knowledge.
-    </p>
-
-    <p class="text-justify" style="max-width:@AppData.MaxWidth;">
-        These calculators a constantly being improved. The ideal goal of this project is to make all Vedic Astrological 
-        calculators easily usable by anybody. So if you find any of the calculator too difficult to use, 
-        just leave a comment and it might be better the next time you visit.
-    </p>
+<PageTop Title="Quick Guide"
+         ImageName="quick-guide-banner.svg"
+         DescriptionText="This is a web app to help you use vedic astrology. It is designed to work like an app running in the cloud."/>
     
-    <h4 class="fw-bold">Must I login to use?</h4>
-    <p class="text-justify" style="max-width:@AppData.MaxWidth;">
-        @*No. VedAstro was designed with ease and speed in mind.So all tools are available 
-        for use without login.But *@If you don't login, we can't save the data you add.
-        For example, if you add a Person profile it will only be available the next time you 
-        visit if you login first. Else it will be deleted when you close &amp; clear cache. 
-        We've simplified the login process using Google &amp; Facebook Sign In. So you don't have to waste 
-        your time creating a new account with boring passwords to remember.
-    </p>
 
-   <h4 class="fw-bold">Info For Coders</h4>
-    <p class="text-justify" style="max-width:@AppData.MaxWidth;">
-        Under the hood, VedAstro is a hybrid Blazor WebAssembly + JS web application. 
-        The cloud method of using VedAstro is the recommended way for most users. 
-        But if you're feeling adventurous, try out VedAstro in Windows & API. 
-        You can find the Windows exe build in our github repo. And for now the best way you can
-        learn to use the API is to read the code in our repo. As we have yet to reach the documentation stage of this project.
-        If you need help with our API or Code, just drop us a mail.
-    </p>
+<div class="vstack gap-4" style="max-width:@GR.W667px;">
 
+    <ArticleBlock Title="How To Use?" IconName="flat-color-icons:close-up-mode">
+        <TextHTML>
+            <div class="container ">
+                <div class="row row-cols-3 align-items-center justify-content-start">
+                    <div class="col-auto p-0">
+                        <kbd>STEP 1</kbd>
+                    </div>
+                    <div class="col-6">
+                        <span>Choose or add person's horoscope</span>
+                    </div>
+                    <div class="col">
+                        <PersonSelectorBox HideTitle="true" @ref="_peopleSelectorBox" />
+                    </div>
+                </div>
+                <div class="mt-3 row row-cols-3 align-items-center justify-content-start">
+                    <div class="col-auto p-0">
+                        <kbd>STEP 2</kbd>
+                    </div>
+                    <div class="col-6">
+                        <span>Choose calculator to use</span>
+                    </div>
+                    <div class="col">
+                        <select @bind="SelectedCalculator" class="form-control" style="width: 225px; height: @GR.W37px;">
+                            @*width made to fit name above box*@
+                            <option value="Match">Match</option>
+                            <option value="Horoscope">Horoscope</option>
+                            <option value="LifePredictor">Life Predictor</option>
+                            <option value="Muhurtha">Muhurtha</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="mt-3 row row-cols-3 align-items-center justify-content-start">
+                    <div class="col-auto p-0">
+                        <kbd>STEP 3</kbd>
+                    </div>
+                    <div class="col-6">
+                        <span>Click calculate to view predictions. <strong style="color: #007e21;">Easy!</strong></span>
+                    </div>
+                    <div class="col">
+                        <IconButton SmallSize="true" ButtonText="Goto Calculator" OnClickCallback="OnClickCalculateEasypeasy" TooltipText="Goto Calculator Page" TextCenter="true" IconName="gg:calendar-next" />
+                    </div>
+                </div>
+            </div>
+        </TextHTML>
+    </ArticleBlock>
+
+    <ArticleBlock Title="What is a calculator?" IconName="icon-park:calculator">
+        <ButtonRow>
+            <IconButton SmallSize="true" ButtonText="View All" IconName="fluent:calculator-multiple-24-regular" ClickUrl="@PageRoute.CalculatorList" />
+        </ButtonRow>
+        <TextHTML>
+            Each calculator shows aspect of astrology. For example <BoldLink URL="@PageRoute.Match">Match</BoldLink> is a calculator for
+            checking marriage or friendship compatibility. <BoldLink URL="@PageRoute.Muhurtha">Muhurtha</BoldLink> is used for finding good
+            timing and using the <BoldLink URL="@PageRoute.LifePredictor">Life Predictor</BoldLink> you can make predictions up to 120 years.
+            Explore each calculator to get a deep understanding of Vedic Astrology.
+        </TextHTML>
+    </ArticleBlock>
+
+    <ArticleBlock Title="Unexpected errors?" IconName="flat-color-icons:broken-link">
+        <TextHTML>
+            Press <kbd>CTRL + SHIFT + R</kbd> This will clear the old copy (cache), and
+            solve 90% of the errors you face.
+            VedAstro WebApp gets new updates almost <BoldLink URL="@URL.GitHubCommits">everyday!</BoldLink>
+            So it's important that you're using the latest version.
+            The browser caches the old version, which causes errors as it fails to work with the updated API Server.
+            For Mac OSX users, try <kbd>COMMAND + SHIFT + R</kbd> in Chrome.
+        </TextHTML>
+
+    </ArticleBlock>
+
+    <ArticleBlock Title="Who is this for?" IconName="flat-color-icons:conference-call">
+        <TextHTML>
+
+            <p class="text-justify">
+                Both an <strong>average</strong> person and expert astrologer can find VedAstro useful. There are complex calculators
+                like Dasa that <strong>experts</strong> can use and there are easy to use calculators like Match that require
+                no astrological knowledge.
+            </p>
+            <p class="text-justify">
+                These calculators a constantly being improved. The ideal goal of this project is to make all tools <strong>easily usable</strong> by anybody.
+                So if you find any of the calculator too difficult, just leave a comment and it might be better the next time you visit.
+            </p>
+        </TextHTML>
+
+    </ArticleBlock>
+
+    <ArticleBlock Title="Must I login to use?" IconName="flat-color-icons:neutral-decision">
+        <TextHTML>
+            <p>
+                <strong>No</strong>. VedAstro was designed with <strong>ease and speed</strong> in mind. So all tools are available
+                for use without login. But if you don't login, we can't save the data you add.
+                For example, if you add a Person profile it will only be available the next time you
+                visit if you login first.
+            </p>
+            <p>
+                Else it <strong>will be deleted</strong> when you close &amp; clear cache.
+                To login is very simple using <BoldLink OpenInNewTab="false" URL="@PageRoute.Login">Google &amp; Facebook</BoldLink>. So you don't have to waste
+                your time creating a new account with boring passwords to remember. We strongly believe in user <strong>privacy</strong>.
+                So we <strong>don't collect or connect</strong> to any data from your Google or Facebook account, it is only to authenticate your access.
+                You can verify this in the open source code.
+            </p>
+        </TextHTML>
+
+    </ArticleBlock>
+
+    <ArticleBlock Title="Info For Coders" IconName="flat-color-icons:engineering">
+        <TextHTML>
+
+            <p>
+                Under the hood, VedAstro is a hybrid Blazor WebAssembly + JS web application.
+                The cloud method of using VedAstro is the recommended way for most users.
+                But if you're feeling adventurous, try out VedAstro in Windows & API.
+            </p>
+
+            <img src="images/4-parts-of-vedastro.jpg" width="@GR.W667px" class="img-thumbnail my-3" alt="...">
+
+            <p>
+                You can find the Windows exe build in our github repo. And for now the best way you can
+                learn to use the API is to read the code in our repo. As we have yet to reach the documentation stage of this project.
+                If you need help with our API or Code, just drop us a mail.
+            </p>
+        </TextHTML>
+
+    </ArticleBlock>
 
 
 </div>
 
+@code
+{
+    private PersonSelectorBox? _peopleSelectorBox;
+    private string? SelectedCalculator;
 
+    private void OnClickCalculateEasypeasy()
+    {
+
+        var personId = _peopleSelectorBox?.SelectedPersonId ?? "101";
+
+        switch (SelectedCalculator)
+        {
+            case "Horoscope": _navigation.NavigateTo($"{PageRoute.Horoscope}/{personId}"); break;
+            case "LifePredictor": _navigation.NavigateTo($"{PageRoute.LifePredictor}/{personId}"); break;
+            case "Match": _navigation.NavigateTo($"{PageRoute.Match}/{personId}"); break; //fill only first name
+            case "Muhurtha": _navigation.NavigateTo($"{PageRoute.Muhurtha}/{personId}"); break; //fill only first name
+        }
+
+    }
+}
