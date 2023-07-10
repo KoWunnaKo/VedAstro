@@ -16,17 +16,12 @@
 </div>
 
 
+<SkyChartViewer @ref="skyChartViewer" />
+
 @if (isReady)
 {
-    <IconButton/>
-    <img src="@GetUrl("SkyChart")" class="my-2">
-
-    <hr />
-    <img src="@GetUrl("SkyChartGIF")" class="my-2">
-
-
     <IconTitle Title="Vedic" IconName="ph:star-of-david-duotone" />
-    <table class="table-striped table-hover table-bordered mb-5">
+    <table class="table-striped table-hover table-bordered mb-5" style="text-wrap: nowrap;">
         <thead>
             <tr>
                 <th scope="col" class="p-1">Data</th>
@@ -46,7 +41,7 @@
 
 
     <IconTitle Title="Astronomy" IconName="streamline:ecology-science-planet-solar-system-ring-planet-saturn-space-astronomy" />
-    <table class="table-striped table-hover table-bordered">
+    <table class="table table-striped table-hover table-bordered" style="text-wrap: nowrap;">
         <thead>
             <tr>
                 <th scope="col">Data</th>
@@ -71,16 +66,11 @@ else
 
 <hr />
 
-<div>
-    <figure style="cursor: pointer;" class="text-center mt-5" @onclick="() => _jsRuntime.OpenNewTab(URL.CarlSaganWiki)">
-        <blockquote class="blockquote">
-            <p>We're made of star stuff</p>
-        </blockquote>
-        <figcaption class="blockquote-footer">
-            Carl Sagan
-        </figcaption>
-    </figure>
-</div>
+
+<QuoteTextBlock Author="Carl Sagan" URL="@URL.CarlSaganWiki">
+    We're made of star stuff
+</QuoteTextBlock>
+
 
 
 @code {
@@ -90,6 +80,7 @@ else
     private List<APIFunctionResult> astrologyCalcs;
     private List<APIFunctionResult> astronomyCalcs;
 
+    private SkyChartViewer? skyChartViewer;
     private Time finalTime = Time.Empty;
     private GeoLocation finalGeoLocation = GeoLocation.Empty;
     private TimeInputSimple _timeInput;
@@ -105,7 +96,7 @@ else
     }
 
 
-    private async Task RefreshData()
+    public async Task RefreshData()
     {
         //trigger loading icon
         isReady = false;
@@ -115,10 +106,12 @@ else
         finalGeoLocation = _geoLocationInput.GetGeoLocation();
         finalTime = await _timeInput.GetTime(finalGeoLocation);
 
-        //get all methods that have only time as input
-        astronomyCalcs = AutoCalculator.ExecuteFunctions(Category.Astronomical, finalTime);
-        astrologyCalcs = AutoCalculator.ExecuteFunctions(Category.StarsAboveMe, finalTime);
+        //update sky chart
+         await skyChartViewer?.Update(finalTime);
 
+        //get all methods that have only time as input
+        astronomyCalcs = AutoCalculator.FindAndExecuteFunctions(Category.Astronomical, finalTime);
+        astrologyCalcs = AutoCalculator.FindAndExecuteFunctions(Category.StarsAboveMe, finalTime);
 
         isReady = true;
 
@@ -126,13 +119,5 @@ else
 
     }
 
-    private string GetUrl(string ending)
-    {
-        var locationName = Tools.RemoveWhiteSpace(_geoLocationInput.GetGeoLocation().GetName());
-        var url = $"https://beta.api.vedastro.org/Location/{locationName}/Time/{_timeInput.GetUrlString()}/{ending}";
-
-
-        return url;
-    }
 
 }

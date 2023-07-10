@@ -8,6 +8,7 @@
 <PageTop Title="Match Report" IconName="bi:arrow-through-heart-fill" />
 
 
+
 @*only show once report ready*@
 @if (_report != null)
 {
@@ -41,7 +42,7 @@
                     </a>
                 </li>
                 <li>
-                    <a class="dropdown-item hstack gap-1" @onclick="@(() => WebsiteTools.OnClickShareFacebook(PdfFileName, matchReportElement))">
+                    <a class="dropdown-item hstack gap-1" @onclick="@(() => WebsiteTools.ShareCurrentPageOnFacebook())">
                         <Icon ExtraClass="me-2 mt-1" NextToText="true" IconName="uil:facebook" />
                         <span>Facebook</span>
                     </a>
@@ -90,7 +91,7 @@
                         <td scope="row">
                             <b style="font-size: 22px;">@prediction.FormattedName</b>
                             <p style="margin: 0px; font-size: 15px;">@prediction.Description</p>
-                            <IconButton Outline="@true" ExtraClass=" my-1" SmallSize="true" ButtonText="More Info" OnClickCallback="@(() => OnClickMoreInfo(@prediction.Name.ToString()))" />
+                            <IconButton Outline="@true" ExtraClass=" my-1" SmallSize="true" ButtonText="More Info" OnClickCallback="@(() => _jsRuntime.ScrollToDivById(prediction.Name.ToString()))" /> @* id her has to match help text id *@
                         </td>
 
                         <td>
@@ -107,6 +108,12 @@
 
     </div>
 }
+else
+{
+    @AppData.LoadingImage
+}
+
+
 
 @*HELP SECTION*@
 <PageHelpSection @ref="_helpSection" DefaultVisible="true">
@@ -423,7 +430,10 @@
 </PageHelpSection>
 
 
+
+
 @code {
+
 
     //VARIABLES
     private ElementReference matchReportElement;
@@ -504,6 +514,9 @@
             );
         var webResult = await ServerManager.WriteToServerXmlReply(AppData.URL.GetMatchReportApi, rootXml);
 
+        //play sound for better ux
+        _jsRuntime.PlayDoneSound();
+
         //check the results, if fail let user know
         if (!webResult.IsPass)
         {
@@ -573,11 +586,6 @@
     }
 
 
-    private void OnClickMoreInfo(string predictionName)
-    {
-        //make scroll movement to place
-        _jsRuntime.InvokeVoidAsync(JS.scrollToDiv, "#" + predictionName);
-    }
 
     private async Task OnClickPrintPDF()
     {
@@ -631,14 +639,8 @@
             //tell user to login
             await _jsRuntime.ShowAlert("success", "Please login first", AlertText.FunnyLoginText());
 
-
-            //remember this page to come back to after login
-            //saved in browser, so doesn't get deleted by refresh
-            var afterLoginPage = _navigation.Uri;
-            await _jsRuntime.SetProperty("PreviousPage", afterLoginPage);
-
             //now go to login page
-            _navigation.NavigateTo(PageRoute.Login);
+            AppData.Go(PageRoute.Login);
         }
         //only start the save if already logged in
         else

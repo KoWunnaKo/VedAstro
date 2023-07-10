@@ -21,8 +21,276 @@ export var showAccordion = (id) => $(id).collapse("show");
 export var toggleAccordion = (id) => $(id).collapse("toggle"); //Uses Bootstrap Jquery plugin to toggle any collapsible component by id
 export var scrollIntoView = (id) => $(id)[0].scrollIntoView(); //scrolls element by id into view
 
+const RETRY_COUNT = 5;
+
+
+
+//--------------------------CALENDAR INPUT SELECTOR CODE
+    //DESCRIPTION
+    //This file stores all code fo js date picker (VanillaCalendar)
+    //To use: first load file via blazor
+    //then call LoadCalendar
+    //make sure empty calendar div exists
+
+export function InitCalendarPicker() {
+
+    //global space to store calendar related refs
+    window.Calendar = {};
+
+    //date input element
+    window.Calendar.hourInputId = '#HourInput';
+    window.Calendar.minuteInputId = '#MinuteInput';
+    window.Calendar.meridianInputId = '#MeridianInput';
+    window.Calendar.dateInputId = '#DateInput';
+    window.Calendar.monthInputId = '#MonthInput';
+    window.Calendar.yearInputId = '#YearInput';
+
+    window.Calendar.calendarPickerHolderId = '#CalendarPickerHolder';
+
+    window.Calendar.hourInputElm = document.querySelector(window.Calendar.hourInputId);
+    window.Calendar.minuteInputElm = document.querySelector(window.Calendar.minuteInputId);
+    window.Calendar.meridianInputElm = document.querySelector(window.Calendar.meridianInputId);
+    window.Calendar.dateInputElm = document.querySelector(window.Calendar.dateInputId);
+    window.Calendar.monthInputElm = document.querySelector(window.Calendar.monthInputId);
+    window.Calendar.yearInputElm = document.querySelector(window.Calendar.yearInputId);
+
+    //date picker holder element
+    window.Calendar.calendarDatepickerPopupEl = document.querySelector(window.Calendar.calendarPickerHolderId);
+
+}
+
+//sets the input dates and initializes the calendar
+export function LoadCalendar(hour12, minute, meridian, date, month, year) {
+    // CSS Selector
+    window.Calendar.calendar = new VanillaCalendar(window.Calendar.calendarPickerHolderId, {
+        // Options
+        date: {
+            //set the date to show when calendar opens
+            today: new Date(`${year}-${month}-${date}`),
+        },
+        settings: {
+            range: {
+                min: '0001-01-01',
+                max: '9999-01-01'
+            },
+            selection: {
+                time: 12, //AM/PM format
+            },
+            selected: {
+                //set the time to show when calendar opens
+                time: `${hour12}:${minute} ${meridian}`,
+            },
+        },
+        actions: {
+            changeTime(e, time, hours, minutes, keeping) {
+                window.Calendar.hourInputElm.value = hours;
+                window.Calendar.minuteInputElm.value = minutes;
+                window.Calendar.meridianInputElm.value = keeping;
+            },
+            clickDay(e, dates) {
+                //if date selected, hide date picker
+                if (dates[0]) {
+                    window.Calendar.calendarDatepickerPopupEl.classList.add('visually-hidden');
+                }
+
+                //check needed because random clicks get through
+                if (dates[0] !== undefined) {
+                    //format the selected date for blazor
+                    const choppedTimeData = dates[0].split("-");
+                    var year = choppedTimeData[0];
+                    var month = choppedTimeData[1];
+                    var day = choppedTimeData[2];
+
+                    //inject the values into the text input
+                    window.Calendar.dateInputElm.value = day;
+                    window.Calendar.monthInputElm.value = month;
+                    window.Calendar.yearInputElm.value = year;
+                }
+
+            },
+            //update year & month immediately even though not yet click date
+            //allows user to change only month or year
+            clickMonth(e, month) {
+                month = month + 1; //correction for jb lib bug
+                var with0 = ('0' + month).slice(-2);//change 9 to 09
+                window.Calendar.monthInputElm.value = with0;
+            },
+            clickYear(e, year) { window.Calendar.yearInputElm.value = year; }
+        },
+    });
+
+    //when module is loaded, calendar is initialized but not visible
+    //click event in blazor will make picker visible
+    window.Calendar.calendar.init();
+
+    //handle clicks outside of picker
+    document.addEventListener('click', autoHidePicker, { capture: true });
+
+
+
+
+    //----------------------------------------------------LOCAL FUNCS
+
+    //if click is outside picker & input then hide it
+    function autoHidePicker(e) {
+
+        //check if click was outside input
+        const pickerHolder = e.target.closest(window.Calendar.calendarPickerHolderId);
+        const timeInput = e.target.closest("#TimeInputHolder"); //reference in Blazor
+
+        //if click is not on either inputs then hide picker
+        if (!(timeInput || pickerHolder)) {
+            window.Calendar.calendarDatepickerPopupEl.classList.add('visually-hidden');
+        }
+    }
+
+}
+
+export function SaveAsFile(filename, data) {
+    var link = document.createElement('a');
+    link.download = filename;
+    link.href = data;
+    document.body.appendChild(link); // Needed for Firefox
+    link.click();
+    document.body.removeChild(link);
+}
+
+
+//TODO MARKED FOR DELETION SINCE CAN TOGGLE VIA CLASS IN BLAZOR
+//export function togglePopup(e) {
+//    const input = e.target.closest(dateInputId);
+//    const calendar = e.target.closest(calendarPickerHolderId);
+
+//    var timeInput = (input && !input.classList.contains('input_focus'));
+//    if (timeInput || calendar) {
+//        calendarDatepickerPopupEl.classList.remove('visually-hidden');
+//    } else {
+//        calendarDatepickerPopupEl.classList.add('visually-hidden');
+//    }
+//};
+
+
+
+
 //-----------------------FOR JSFetchWrapper
 //calls to server from blazor come here not via blazor http client, reliable
+export async function SkyChartInit(imageHolder, SkyChartUrl) {
+
+    console.log("SKY CHART AUTO PREVIEW");
+
+    //remove previous on multiple calculates
+    $(imageHolder).empty();
+
+    //make page loading icon visible
+    var loadingIcon = $('#SkyChartLoadingIcon');
+
+    loadingIcon.show();
+
+
+    await MultiTry(LoadSvg); //load normal image first
+
+    //let it go without wait
+    MultiTry(LoadGif); //load svg
+
+
+
+
+    //--------------------------------------
+
+    async function MultiTry(failableFunction) {
+        //number of tries to retry getting GIF
+        //this is cached call, so expect failure as norm here
+        let count = 10;
+        while (count > 0) {
+
+            //run code to get image that could fail on 1st call
+            try { await failableFunction(); count = 0; }
+
+            //on fail show messsage and try again
+            catch (error) { console.log("JS: SKY CHART ERROR : TRY AGAIN"); }
+
+            count -= 1;
+        }
+
+    }
+
+    function TurnOnAutoGIFPreview() {
+
+        //show and hide animated version automatically
+        $(imageHolder).on("mouseout", function () {
+
+            $('#SkyChartBlobGIF').show();
+            $('#SkyChartBlob').hide();
+        });
+
+        $(imageHolder).on("mouseover", function () {
+            $('#SkyChartBlobGIF').hide();
+            $('#SkyChartBlob').show();
+        });
+
+    }
+
+    async function LoadGif() {
+        var res = await fetch(SkyChartUrl + "GIF");
+        var myBlob = await res.blob();
+
+        //window.SkyChartBlobGIF = myBlob;
+        console.log("SKY CHART GIF LOADED");
+
+        var imagesrc = URL.createObjectURL(myBlob);
+        window.SkyChartBlobGIF = $('<img  />', { id: 'SkyChartBlobGIF', src: imagesrc });
+        window.SkyChartBlobGIF.appendTo($(imageHolder));
+        //img.css("position", "absolute");
+
+        //show animation first since most likely user's mouse hasn't graced chart
+        window.SkyChartBlobGIF.show();
+
+        //show as soon as available
+        window.SkyChartBlob?.hide();
+        window.window.SkyChartBlobGIF?.show();
+
+        //once loaded, turn on auto preview
+        TurnOnAutoGIFPreview();
+    }
+
+    async function LoadSvg() {
+        //now load normal image to show when cursor is placed over
+        var res = await fetch(SkyChartUrl);
+        var myBlob = await res.blob();
+
+        window.SkyChartBlob = myBlob;
+        console.log("SKY CHART SVG LOADED");
+
+        var imagesrc = URL.createObjectURL(myBlob);
+        window.SkyChartBlob = $('<img />', { id: 'SkyChartBlob', src: imagesrc });
+        window.SkyChartBlob.appendTo($(imageHolder));
+
+        //show as soon as available
+        window?.SkyChartBlob?.show();
+        window.window?.SkyChartBlobGIF?.hide();
+
+        loadingIcon.hide();
+
+    }
+
+}
+
+export async function SkyChartAnimate(imageHolder, SkyChartUrl) {
+
+    var img = $('<img />', { src: SkyChartUrl });
+    img.appendTo($(imageHolder));
+
+    console.log("Normal loaded");
+    $(imageHolder).on("mouseleave", function () {
+        $("#log").append("<div>Handler for `mouseleave` called.</div>");
+    });
+
+    $(imageHolder);
+    var img = $('<img />', { src: SkyChartUrl + 'GIF' });
+    img.appendTo($(imageHolder));
+
+}
+
 export async function postWrapper(url, payloadXml) {
     console.log("JS > Sending POST request...");
 
@@ -32,9 +300,95 @@ export async function postWrapper(url, payloadXml) {
         "method": "POST"
     });
 
-    var responseText = await response.text();
+    var responseText = await response?.text();
 
-    return responseText;
+    return responseText ?? "";
+}
+
+
+//give a relative URL will play
+export async function PlaySoundFromUrl(fileUrl) {
+
+    console.log("JS > Notification Play");
+
+    var $audio = $("#NotificationPlayer");
+    $audio.attr("src", fileUrl);
+    /****************/
+    $audio[0].pause();
+    $audio[0].load();//suspends and restores all audio element
+    $audio[0].oncanplaythrough = $audio[0].play();
+    /****************/
+}
+
+//only give response if header says ok
+//todo special to hadnle empty person list
+export async function ReadOnlyIfPassJson(url) {
+    console.log("JS > Read Only If Pass Json...");
+
+    var response = await fetch(url, {
+        "headers": { "accept": "*/*", "Connection": "keep-alive" },
+        "method": "GET"
+    });
+
+    var callStatus = response.headers.get('Call-Status');
+
+    if (callStatus === "Pass") {
+
+        var responseText = await response?.text();
+
+        var payload = { Status: "Pass", Payload: responseText };
+
+        return payload;
+
+    } else if (callStatus == "Fail") {
+
+        var payload = { Status: "Fail", Payload: null };
+
+        return payload;
+    }
+
+    //call should not come here
+    else {
+        console.log("ERROR: No Call Status Found!");
+        var payload = { Status: "Fail", Payload: null };
+        return payload;
+    }
+
+}
+
+//will auto set GET or POST on if data to send is provided
+//only gets data once done
+export async function ReadOnlyIfPassString(url, dataToSend) {
+    console.log("JS > Read Only If Pass String...");
+
+    //make get or post based on if got data to send or not
+    var httpCallProtocol = dataToSend == null ? "GET" : "POST";
+
+    var callStatus = "";
+    while (callStatus !== "Pass") { //must be pass
+
+
+        //make call
+        var response = await fetch(url, {
+            "headers": { "accept": "*/*", "Connection": "keep-alive" },
+            "method": httpCallProtocol,
+            "body": dataToSend
+        });
+
+        var callStatus = response.headers.get('Call-Status');
+
+        //easy debug
+        console.log(`API SAID : ${callStatus}`);
+
+        //if pass end here send data to caller
+        if (callStatus === "Pass") {
+            var responseText = await response?.text();
+
+            return responseText;
+        }
+        if (callStatus === "Fail") { return null; } //don't bang API if said fail, tell caller with null
+    }
+
 }
 
 //gets current page url

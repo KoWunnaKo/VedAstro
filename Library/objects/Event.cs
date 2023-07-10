@@ -7,7 +7,10 @@ using System.Xml.Linq;
 
 namespace VedAstro.Library
 {
-    public class Event : IHasName, IToXml
+    /// <summary>
+    /// Represents a period of time "Event" with start, end time and data related
+    /// </summary>
+    public class Event : IToXml
     {
         /// <summary>
         /// Returns an Empty Time instance meant to be used as null/void filler
@@ -38,7 +41,7 @@ namespace VedAstro.Library
         //PROPERTIES
         //Note: Created mainly for ease of use with WPF binding
         public EventName Name => _name;
-        public string FormattedName => Format.FormatName(this);
+        public string FormattedName => Format.FormatName(this.Name);
         public string Description => HttpUtility.HtmlDecode(_description);
         public EventNature Nature => _nature;
         public Time StartTime => _startTime;
@@ -172,14 +175,14 @@ namespace VedAstro.Library
             {
 
                 var nameXml = eventXml.Element("Name")?.Element(typeof(EventName).FullName);
-                var name =  Enum.Parse<EventName>(nameXml.Value);
+                var name = Enum.Parse<EventName>(nameXml.Value);
 
                 var natureXml = eventXml.Element("Nature")?.Element(typeof(EventNature).FullName);
                 var nature = Enum.Parse<EventNature>(natureXml.Value);
 
                 var descriptionXml = eventXml.Element("Description")?.Element(typeof(String).FullName);
                 var description = descriptionXml.Value;
-                
+
                 var startTimeXml = eventXml.Element("StartTime").Element("Time");
                 var startTime = Time.FromXml(startTimeXml);
 
@@ -187,7 +190,7 @@ namespace VedAstro.Library
                 var endTime = Time.FromXml(endTimeXml);
 
 
-                var parsedPerson = new Event( name,  nature,  description,  startTime,  endTime);
+                var parsedPerson = new Event(name, nature, description, startTime, endTime);
 
                 return parsedPerson;
 
@@ -257,11 +260,11 @@ namespace VedAstro.Library
 
         /// <summary>
         /// gets all planets that this event is influenced by
-        /// extracted from name
+        /// extracted from name, if no house in name, then returns empty list
         /// </summary>
         public List<HouseName> GetRelatedHouse()
         {
-            //every time planet is mentioned add to list
+            //every time house name is mentioned add to list
             var eventName = this.Name.ToString().ToLower(); //take without spacing
             var returnList = new List<HouseName>();
             foreach (var houseName in House.AllHouses)

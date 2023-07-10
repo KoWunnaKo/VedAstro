@@ -1,0 +1,77 @@
+﻿@namespace Website.Pages
+@using VedAstro.Library;
+@using System.Xml.Linq
+
+
+
+<div>
+    @if (isReady)
+    {
+        <IconTitle Title="Sky Chart" IconName="twemoji:ringed-planet" TitleHolder="h4" />
+    }
+    <div class="vstack">
+        <div @ref="imageHolder" class="vstack" style="width: fit-content;">
+        </div>
+        <div id="SkyChartLoadingIcon" style="display: none;">
+            @AppData.LoadingImage
+        </div>
+
+        @if (isReady)
+        {
+            @*BUTTON ROW*@
+            @*         <div class="hstack gap-2 px-1 p-1 ms-1 rounded-3 border shadow d-flex  align-items-center">
+        <IconButton SmallSize="true" TooltipText="Play" IconName="ph:play-bold" />
+        <IconButton SmallSize="true" TooltipText="Previous" IconName="fluent:previous-24-filled" />
+        <IconButton SmallSize="true" TooltipText="Next" IconName="fluent:next-24-filled" />
+
+        <IconButton SmallSize="true" Outline="true" TooltipText="Print" IconName="flat-color-icons:print" />
+        <IconButton SmallSize="true" Outline="true" TooltipText="Save as Image" IconName="emojione:floppy-disk" />
+        <IconButton SmallSize="true" Outline="true" TooltipText="Embed in app or website" IconName="dashicons:embed-photo" />
+        </div>
+        *@  }
+    </div>
+
+</div>
+
+
+
+@code {
+
+    private ElementReference imageHolder;
+    private bool isReady { get; set; } = false;//start as not ready
+
+    private Time? time { get; set; }
+    private string SkyChartUrl { get; set; } = "#";
+    private string SkyChartUrlGif { get; set; } = "#";
+
+    private string GetUrl(string ending)
+    {
+        var stringWithSpace = time?.GetGeoLocation().GetName();
+
+        //if null end here
+        if (string.IsNullOrEmpty(stringWithSpace)) { return ""; }
+
+        var locationName = Tools.RemoveWhiteSpace(stringWithSpace);
+        var url = $"{AppData.URL.ApiUrl}/Location/{locationName}/Time/{time?.GetUrlString()}/{ending}";
+        return url;
+
+    }
+
+    public async Task Update(Time finalTime)
+    {
+        isReady = false;
+
+        time = finalTime; //save value to be access later
+        SkyChartUrl = GetUrl("SkyChart");
+        SkyChartUrlGif = GetUrl("SkyChartGIF");
+
+        await _jsRuntime.InvokeVoidAsync(JS.SkyChartInit, imageHolder, SkyChartUrl);
+
+        isReady = true;
+
+        //needed to make appear else no change will appear
+        StateHasChanged();
+    }
+
+
+}

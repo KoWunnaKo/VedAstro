@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using System.Runtime.CompilerServices;
 using Microsoft.JSInterop;
 using System.Net;
+using Microsoft.AspNetCore.Components;
 
 namespace Website
 {
@@ -24,20 +25,17 @@ namespace Website
                 //wait forever
                 Timeout = new TimeSpan(0, 0, 0, 0, Timeout.Infinite),
                 BaseAddress = new Uri(builder.HostEnvironment.BaseAddress),
-                DefaultRequestHeaders = { ConnectionClose = false } //keep alive
+                //DefaultRequestHeaders = { ConnectionClose = false } //keep alive
             };
 
             //specify to use TLS 1.2 as default connection
-            ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
+            //ServicePointManager.SecurityProtocol = SecurityProtocolType.Tls12;
             builder.Services.AddScoped(sp => httpClient);
 
             //setup for getting location from browser
             //used by geolocation input
             builder.Services.AddSingleton<LocationService>();
-
-            //service used to place data in browser's localstorage
-            //todo marked deletion
-            //builder.Services.AddSingleton<ILocalStorage, LocalStorageManager>();
+            
 
             //ERROR HANDLING
 
@@ -70,6 +68,17 @@ namespace Website
             //make the JS runtime globally accessible
             var jsRuntime = webAssemblyHost.Services.GetRequiredService<IJSRuntime>();
             AppData.JsRuntime = jsRuntime;
+
+            //make wrapping for BLAZOR navigation easy, also overrides 
+            var navigation = webAssemblyHost.Services.GetRequiredService<NavigationManager>();
+            AppData.Navigation = navigation;
+
+#if DEBUG
+            foreach (var builderService in builder.Services)
+            {
+                Console.WriteLine(builderService.ToString());
+            }
+#endif
 
             //run like the wind, Bullseye!
             await webAssemblyHost.RunAsync();

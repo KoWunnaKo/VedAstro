@@ -1,8 +1,13 @@
 ﻿using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
-using Microsoft.DurableTask.Client;
 using System.Xml.Linq;
 using VedAstro.Library;
+using System.Net.Mime;
+using System.Net;
+using Azure.Storage.Blobs;
+using Microsoft.Bing.ImageSearch;
+using Microsoft.Bing.ImageSearch.Models;
+using Newtonsoft.Json.Linq;
 
 namespace API
 {
@@ -23,54 +28,86 @@ namespace API
             return APITools.SendTextToCaller(APIHomePageTxt, incomingRequest);
         }
 
-
         /// <summary>
-        /// Call here after calling prepare chart or anything with ID
+        /// API Home page
         /// </summary>
-        [Function(nameof(GetCallStatus))]
-        public static async Task<HttpResponseData> GetCallStatus(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "GetCallStatus/{callerId}")]
-            HttpRequestData incomingRequest,
-            [DurableClient] DurableTaskClient client,
-            string callerId
-        )
+        [Function(nameof(SearchImage))]
+        public static async Task<HttpResponseData> SearchImage([HttpTrigger(AuthorizationLevel.Anonymous, "get",
+            Route = "SearchImage/Keywords/{keywords}")] HttpRequestData incomingRequest,
+            string keywords)
         {
-            try
-            {
-                //try to get cached version, if not available then make new one
-                var result = await client.GetInstanceAsync(callerId, false, CancellationToken.None);
-                var statusMessage = result?.RuntimeStatus.ToString() ?? "No Exist";
+            //IMPORTANT: replace this variable with your Cognitive Services subscription key
+            string subscriptionKey = Secrets.BING_IMAGE_SEARCH;
+            //stores the image results returned by Bing
+            Images imageResults = null;
 
-                return APITools.PassMessageJson(statusMessage, incomingRequest);
+            var client = new ImageSearchClient(new ApiKeyServiceClientCredentials(subscriptionKey));
 
+            // make the search request to the Bing Image API, and get the results"
+            imageResults = await client.Images.SearchAsync(query: keywords); //search query
+
+            //get only jpeg images for ease of handling down the road
+            var jpegOnly = imageResults.Value.Where(x => x.EncodingFormat == "jpeg");
+
+
+            var possibleImages = new JArray();
+            foreach (var image in jpegOnly)
+            {            
+                //pack data nicely
+                var temp = new JObject();
+                temp["Name"] = image.Name; //keywords to image
+                temp["URL"] = image.ThumbnailUrl; //show as number
+
+                //add to main list
+                possibleImages.Add(temp);
             }
-            catch (Exception e)
-            {
-                //log error
-                await APILogger.Error(e, incomingRequest);
 
-                //format error nicely to show user
-                return APITools.FailMessage(e, incomingRequest);
-            }
+            return APITools.PassMessageJson(possibleImages, incomingRequest);
 
         }
 
 
+
+
         /// <summary>
-        /// Clears all cache, run manually when code is updated and new data is needed
+        /// designed to be called directly, getting ANY and ALL needed data in one simple GET call
         /// </summary>
-        [Function(nameof(ClearCache))]
-        public static async Task<HttpResponseData> ClearCache(
-            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)]
+        [Function(nameof(GetCallData))]
+        public static async Task<HttpResponseData> GetCallData(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "GetCallData/CallerId/{callerId}/Format/{formatName}")]
             HttpRequestData req,
-            [DurableClient] DurableTaskClient client)
+            string callerId, string formatName)
         {
-            var purgeInstancesFilter = new PurgeInstancesFilter(DateTimeOffset.MinValue); //get all
-            var result = await client.PurgeAllInstancesAsync(purgeInstancesFilter, CancellationToken.None);
 
-            var message = $"CLEARED COUNT:{result.PurgedInstanceCount}";
+            if (formatName.ToLower() == "json")
+            {
+                string jsonText = await AzureCache.GetData<string>(callerId);
 
-            return APITools.PassMessageJson(message, req);
+                var response = req.CreateResponse(HttpStatusCode.OK);
+                response.Headers.Add("Content-Type", MediaTypeNames.Application.Json);
+
+                //place in response body
+                await response.WriteStringAsync(jsonText);
+
+                return response;
+            }
+
+            else if (formatName.ToLower() == "gif")
+            {
+                //for images get and send direct with as less operations as possible
+                var fileBlobClient = await AzureCache.GetData<BlobClient>(callerId);
+
+                return APITools.SendFileToCaller(fileBlobClient, req, MediaTypeNames.Image.Gif);
+            }
+            else if (formatName.ToLower() == "svg")
+            {
+                //for images get and send direct with as less operations as possible
+                var fileBlobClient = await AzureCache.GetData<BlobClient>(callerId);
+
+                return APITools.SendFileToCaller(fileBlobClient, req, "image/svg+xml");
+            }
+
+            throw new Exception("END OF THE LINE");
         }
 
 
@@ -166,7 +203,7 @@ namespace API
             try
             {
                 //get visitor log from storage
-                var visitorLogDocument = await APITools.GetXmlFileFromAzureStorage(APITools.VisitorLogFile, APITools.BlobContainerName);
+                var visitorLogDocument = await Tools.GetXmlFileFromAzureStorage(APITools.VisitorLogFile, Tools.BlobContainerName);
 
                 //unique visitors
                 var uniqueList = APITools.GetOnlineVisitors(visitorLogDocument);
@@ -219,5 +256,6 @@ namespace API
             }
 
         }
+
     }
 }

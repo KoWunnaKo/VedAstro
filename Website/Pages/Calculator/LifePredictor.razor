@@ -4,6 +4,7 @@
 
 <PageTitle>@_pageTitle</PageTitle>
 
+@* EXAMPLE OF DYNAMIC IMAGE *@
 <PageTop ImageName="life-predictor-banner.png"
          Title="Life Predictor"
          DescriptionText="Each life is a story. Advanced computation algorithms fused with ancient astrology makes this chart possible.
@@ -15,227 +16,326 @@
 Know good and bad periods of your life years ahead.*@
 
 
-<div>
-    <div class="d-flex justify-content-between">
-        <div class="me-md-5" style="width: @GR.W412px;">
-            @*TAB BUTTONS*@
-            <ul class="nav nav-tabs" id="myTab" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="easy-tab" data-bs-toggle="tab" data-bs-target="#easy" type="button" role="tab" aria-controls="easy" aria-selected="true">
-                        <Icon IconName="maki:school" />
-                        Easy
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="advanced-tab" data-bs-toggle="tab" data-bs-target="#advanced" type="button" role="tab" aria-controls="advanced" aria-selected="false">
-                        <Icon IconName="tabler:school" />
-                        Advanced
-                    </button>
-                </li>
-                @*                <li class="nav-item" role="presentation">
-                <button @onclick="OnClickSavedTab" class="nav-link" id="saved-tab" data-bs-toggle="tab" data-bs-target="#saved" type="button" role="tab" aria-controls="saved" aria-selected="false">
-                <Icon IconName="prime:save" />
-                Saved
-                </button>
-                </li>
-                *@
-            </ul>
+@* SELECTOR AND INFO BOXES*@
+<div class="d-md-flex justify-content-between">
 
-            @*TAB CONTENT*@
-            @*all border except top*@
-            <div class="tab-content border" id="myTabContent">
+    @*SELECTOR*@
+    <div class="me-5">
+        <div class="vstack gap-3 p-3">
 
-                @*EASY*@
-                <div class="tab-pane fade show active" id="easy" role="tabpanel" aria-labelledby="easy-tab">
-                    <div class="vstack gap-3 p-3">
-                        <PersonSelectorBox @ref="_easyPersonSelectorBox" />
+            <PersonSelectorBox @ref="_easyPersonSelectorBox" @bind-SelectedPersonId="@SelectedPersonId" />
 
-                        <div>
-                            <label class="form-label">Time Range<HelpIconTooltip SmallIcon="true" HelpText="@HelpText.DasaTimeRange" /></label>
-                            <select @bind="_selectedTimeRange" class="form-control" style="width: fit-content; min-width: 273px;">
-                                <option value="FullLife">Full Life</option>
-                                <option value="Age1to25">Age 1 to 25</option>
-                                <option value="Age10to35">Age 10 to 35</option>
-                                <option value="Age25to50">Age 25 to 50</option>
-                                <option value="Age35to60">Age 35 to 60</option>
-                                <option value="Age50to75">Age 50 to 75</option>
-                                <option value="Age60to85">Age 60 to 85</option>
-                                <option value="Age75to100">Age 75 to 100</option>
-                            </select>
-                        </div>
-
-                        <IconButton SmallSize="true" IconName="uim:process" ButtonText="Calculate" OnClickCallback="OnClickCalculateEasy" ShowDelayWarning="true"></IconButton>
-
-                    </div>
-                </div>
-
-                @*ADVANCED*@
-                <div class="tab-pane fade" id="advanced" role="tabpanel" aria-labelledby="advanced-tab">
-                    <div class="vstack gap-3 p-3">
-                        @*PERSON SELECTOR
-                        note: selector placed here because multiple components use it
-                        *@
-                        <PersonSelectorBox @ref="_peopleSelectorBox" />
-                        <MonthYearSelectorBox LabelText="Start" @ref="_startTimeSelector" />
-                        <MonthYearSelectorBox LabelText="End" @ref="_endTimeSelector" />
-
-                        @*CALCULATE BTN*@
-                        <IconButton SmallSize="true" IconName="uim:process" ButtonText="Calculate" OnClickCallback="OnClickCalculate" ShowDelayWarning="true"></IconButton>
-
-                    </div>
-                </div>
-
-                @*SAVED*@
-                @*                <div class="tab-pane fade" id="saved" role="tabpanel" aria-labelledby="saved-tab">
-                <div class="vstack gap-3 p-3">
-                <div class="input-group mb-3">
-                <label class="input-group-text" for="inputGroupSelect01">Saved Chart</label>
-                <select class="form-select" @bind="_selectedChartId" id="inputGroupSelect01">
-                <option selected>Choose...</option>
-                @foreach (var chart in _allChartList)
-                {
-                <option value="@(chart.ChartId)">@(chart.Name)</option>
-                }
+            <div>
+                <label class="form-label">Time Range<HelpIconTooltip SmallIcon="true" HelpText="@HelpText.DasaTimeRange" /></label>
+                <select @bind="SelectedTimeRangePreset" class="form-control" style="width: @GR.W255px;">
+                    <option value="FullLife">Full Life</option>
+                    <option value="1day">+/- 1 Day</option>
+                    <option value="1week">+/- 1 Week</option>
+                    <option value="1month">+/- 1 Month</option>
+                    <option value="6month">+/- 6 Months</option>
+                    <option value="1year">+/- 1 Year</option>
+                    <option value="5year">+/- 5 Year</option>
+                    <option value="10year">+/- 10 Year</option>
+                    <option value="Age1to50">Age 1 to 50</option>
+                    <option value="Age50to100">Age 50 to 100</option>
+                    <option style=" font-weight: bold; color: #0d6efd; " value="selectyear">Custom Year</option>
+                    <option style=" font-weight: bold; color: #0d6efd; " value="selectage">Custom Age</option>
                 </select>
-                </div>
-                <IconButton SmallSize="true" IconName="ant-design:folder-view-outlined" ButtonText="Show" OnClickCallback="OnClickShowSaved"></IconButton>
-                </div>
-                </div>
-                *@
             </div>
 
-        </div>
+            @* YEAR SELECTOR *@
+            @if (SelectedTimeRangePreset == "selectyear")
+            {
+                <div>
+                    <div class="input-group mb-3" style="width: @GR.W255px;">
+                        <label class="input-group-text" style="width: @GR.W60px;">Start</label>
+                        <select @bind="SelectedLifeYearStart" class="form-select">
+                            <option selected>Choose...</option>
+                            @foreach (var year in lifeYearList)
+                            {
+                                <option value="@year">@year</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="input-group mb-3" style="width: @GR.W255px;">
+                        <label class="input-group-text" style="width: @GR.W60px">End</label>
+                        <select @bind="SelectedLifeYearEnd" class="form-select">
+                            <option selected>Choose...</option>
+                            @foreach (var year in lifeYearList)
+                            {
+                                <option value="@year">@year</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+            }
 
-        <div>
-            <InfoBox Title="Accurate" FullWidth="true" MaxWidth="@((int)(GR.W255+GR.W157))" IconName="noto-v1:direct-hit">
-                <DescriptionHTML>
-                    Predict your life with zero astrological knowledge
-                </DescriptionHTML>
-                <ImageHTML>
-                    <img class="img-thumbnail" src="images/life-predictor-alertbox-examples.jpg" />
-                </ImageHTML>
-            </InfoBox>
-        </div>
+            @* AGE SELECTOR *@
+            @if (SelectedTimeRangePreset == "selectage")
+            {
+                <div>
+                    <div class="input-group mb-3" style="width: @GR.W255px;">
+                        <label class="input-group-text">Start</label>
+                        <select @bind="SelectedLifeAgeStart" class="form-select">
+                            <option selected>Choose...</option>
+                            @foreach (var age in lifeAgeList)
+                            {
+                                <option value="@age">@age</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="input-group mb-3" style="width: @GR.W255px;">
+                        <label class="input-group-text">End</label>
+                        <select @bind="SelectedLifeAgeEnd" class="form-select">
+                            <option selected>Choose...</option>
+                            @foreach (var age in lifeAgeList)
+                            {
+                                <option value="@age">@age</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+            }
 
+            <IconButton SmallSize="true" IconName="uim:process" ButtonText="Calculate" Color="success" OnClickCallback="OnClickCalculateEasy" ShowDelayWarning="true"></IconButton>
+        </div>
     </div>
 
-</div>
-
-<hr>
-
-@*DASA VIEW BOX*@
-@*hide until ready but initialized as well*@
-<div style="@(_isResultReady?"":"display:none;")">
-    <div @ref="_holderDiv">
-        <EventsChartViewer @ref="_eventsChartViewer" />
+    @*SIDEBAR*@
+    <div class="mt-md-0 mt-4 me-md-5">
+        <InfoBox Title="Accurate" FullWidth="true" MaxWidth="@GR.W412" IconName="noto-v1:direct-hit">
+            <DescriptionHTML>
+                Easy prediction of your life events
+            </DescriptionHTML>
+            <ImageHTML>
+                <img class="img-thumbnail" src="images/life-predictor-alertbox-examples.jpg" />
+            </ImageHTML>
+        </InfoBox>
     </div>
 </div>
 
-<div class="gap-3 mt-3" style="max-width: @GR.W667px">
-    
+
+@* CHART DISPLAY HERE *@
+<div>
+    <hr>
+    @*hide until ready but initialized as well*@
+    <div style="@(_isResultReady?"":"display:none;")">
+        <div @ref="_holderDiv">
+            <EventsChartViewer @ref="_eventsChartViewer" />
+        </div>
+    </div>
+
+    @* PLACE HOLDER MESSAGE *@
+    @* hide when loaded *@
+    <div class="d-flex justify-content-center" style="@((!_isResultReady) ? "" : "display:none !important;")">
+        @* important needed to override flex *@
+        <span class="" style="color: @AppData.Grey; font-size: 14px;">Chart will appear here after you click calculate</span>
+    </div>
+    <hr />
+</div>
+
+
+@* ARTICLE HELP TEXTS *@
+<div class="gap-3 mt-5" style="max-width: @GR.W667px">
+
     <ArticleBlock Title="Colors" IconName="noto-v1:artist-palette">
         <TextHTML>
             <p class="text-justify">
-                Our eyes and brain process color much more easily than text. That is why we converted complicated predictions into easy to
-                understand colors. <span style="color: red;font-weight: 900;">RED</span> is for bad life events, <span style="color: green;font-weight: 900;">GREEN</span> is
-                for good. Quickly read your life chart with <strong>zero</strong> astrological knowledge. No manuals needed.
+                Our eyes and brain can <strong>process and understand</strong> colors much more easily than text.
+                That is why we converted complicated predictions into easy understandable colors.
+            </p>
+
+            <img src="images/life-predictor-image-1.jpg" class="img-thumbnail mb-3 mt-1" alt="...">
+
+            <p class="text-justify">
+                @RED is for bad life events, @GREEN is for good. This makes it possible to quickly read with
+                <strong>zero</strong> astrological knowledge. No manuals needed.
             </p>
         </TextHTML>
     </ArticleBlock>
 
+    <ArticleBlock Title="Smart Summary" IconName="emojione:level-slider">
+        <TextHTML>
+            <p class="text-justify">
+                Look carefully at the "<strong>Smart Summary</strong>" row, to see how <strong>good or bad</strong> the life event is going to be.
+                The intensity of the @RED or @GREEN is different.
+                When it is very <span style="color: darkred;font-weight: 900;">dark red</span> and no green lines around, it means that a very bad event will happen then.
+                What exactly will happen will depend on past and present karma.
+            </p>
+            <img src="images/life-predictor-connection.jpg" class="img-thumbnail mt-2 mb-3" alt="...">
+            <p>
+                What we can say <strong>for sure</strong>:- during @RED period a native
+                will never say "I'm perfectly happy in life now". When it says @RED, something will be poking you. Maybe it is big, maybe small.
+                But if the chart says it is there, it will be there. Prepare!
+            </p>
+        </TextHTML>
+    </ArticleBlock>
+
+    <ArticleBlock Title="Perfect Predictions" IconName="noto-v1:direct-hit">
+        <TextHTML>
+            <img class="img-thumbnail" src="images/life-predictor-alertbox-examples.jpg" />
+        </TextHTML>
+    </ArticleBlock>
+
+    <ArticleBlock Title="Tis Fate Then?" IconName="twemoji:cloud-with-lightning-and-rain">
+        <TextHTML>
+            <p>
+                <strong>No!</strong> This is astrological weather forecast. That is all.
+                The planets are <BoldLink URL="@URL.StarsThatDontGiveDam">not interested</BoldLink> in your personal life, to attribute good or evil to them is illogical.
+                <BoldLink URL="@URL.SwamiRamaWiki">Swami Rama</BoldLink> of the himalayas, has written many accounts
+                of masters <strong>dodging karmic bullets</strong> like play things.
+                How is it possible, if it is fate?
+            </p>
+            <p>
+                You cannot choose when thunderstorms come. <strong>But you can choose</strong> to sit at home dry or to
+                get wet outside. Don't take risks or make big changes in life during @RED periods (<strong>thunderstorm</strong>).
+                And when you see @GREEN make good use of it. Thus you will sail life untouched by the storms that rage on.
+            </p>
+
+        </TextHTML>
+
+    </ArticleBlock>
+
+    <ArticleBlock Title="Astro Umbrella" IconName="emojione:umbrella">
+        <TextHTML>
+            <p>
+                The power of gems and metals to fight the planets pull should never be underestimated.
+                Wear the remedies before your @RED period starts and never take it off during this period.
+            </p>
+            <p>
+                Even <BoldLink URL="@URL.MahatmaGandhiWiki">Mahatma Gandhi</BoldLink> noted in his writing that his father just before
+                death, awoke one night from sleep <strong>took off the astro bangle</strong> he had worn for decades. Threw it
+                across the room and only then did he die.
+            </p>
+            <p>
+                This is but one of many public records from all corners of the globe, proving the power of
+                gems &amp; metals to change you karma. <BoldLink URL="@PageRoute.Remedy">Read more</BoldLink> about astro remedies written by Yukteswar himself.
+            </p>
+        </TextHTML>
+    </ArticleBlock>
+
+    <ArticleBlock Title="Mind Predict" IconName="icon-park:brain">
+        <TextHTML>
+            <p>
+                We use the aspect of "<strong>Mind</strong>" in astrology to make this chart. <strong>Why?</strong>
+                because anything that effects your mind will make a difference to you. For your awareness of reality
+                is through your mind.
+            </p>
+            <p>
+                For instance we can make a chart to predict only "<strong>Weather</strong>" over your head,
+                but if you live in the city and don't really care about rain or shine.
+                Than what use is that complex chart to you. Most people will say the prediction is wrong.
+                Of course it never effected them, can't tell even if correct.
+            </p>
+        </TextHTML>
+    </ArticleBlock>
+
+    <ArticleBlock Title="Fear Death Date?" IconName="mdi:death">
+        <TextHTML>
+            <p>
+                There are many recorded accounts of people through history dying peacefully in their sleep.
+                Death will not be a tragedy to everybody, <strong>just not possible</strong>.
+                It is only a transition date, to be afraid of it is like being <strong>afraid of your birthday</strong>.
+                Life will not be fun that way, we have all tried it.
+                And know very well what life without knowing tomorrows tragedy is like.
+            </p>
+            <p>
+                Even death during @GREEN period will be happy or peaceful and never tragic.
+                Keep in mind this algorithm does "<strong>NOT</strong>" count <strong>death</strong> as a bad life event, 
+                it is <strong>how</strong> you die that is predicted to be good or bad.
+                Some say, "I like not knowing". We say, "<strong>Good luck</strong>".
+            </p>
+        </TextHTML>
+    </ArticleBlock>
+
+    <ArticleBlock Title="Winning The Lotto" IconName="noto-v1:money-bag">
+        <TextHTML>
+            <p>
+                Since it is without doubt that we can predict when will a person smile or frown. Than it is possible to predict when a person
+                will win the lottery. The "<strong>lottery prize</strong>" is different for every person. Not everybody wants money. Some people are very
+                happy when they are with others. When lonely they are sad and dont't like it.
+            </p>
+            <p>
+                For example, for this person we can accurately predict
+                that when @RED lines appear that this person will most likely be left alone,
+                hence causing their <strong>lottery loss</strong>. Ergo we predict with confidence, that a person will win a <strong>real cash lottery</strong>
+                if only money is equal to happiness to him. The fact is, most people want not just "cash", but also good <strong>Wife or Fame or Career or Education</strong>
+                for actual happiness. Hence also proving why most people don't win the lottery in real life.
+            </p>
+        </TextHTML>
+    </ArticleBlock>
+    
+    <ArticleBlock Title="Future of Humanity" IconName="twemoji:globe-showing-europe-africa">
+        <TextHTML>
+            <p>
+                This tool above all holds great potential for the progress of humanity.
+                Imagine a world with no accidents, a world with no tragedies, no setbacks.
+                Never has has there been a time in human history, where the need has been greater.
+            </p>
+            <p>
+                More and more is at stake at dime's turn. In our age a mere moment of lapse
+                in judgment of a human can cost more to the whole of humanity then it ever did before.
+                Imagine a world where laughter abounds &amp; fear stands still.
+                "<strong>You may say I'm a dreamer, but I'm not the only one</strong>", John Lenon.
+            </p>
+        </TextHTML>
+    </ArticleBlock>
+
+
+    <ArticleBlock Title="Source of Code" IconName="noto-v1:backhand-index-pointing-up">
+        <TextHTML>
+            <p>
+                The people should know, the source behind many of the algorithmic patterns used to make this chart.
+                It was gained only during deep prayers and dreams. This is <strong>nothing new</strong> nor surprising.
+                <BoldLink URL="@URL.RamanujanQuoteWiki">Ramanujan</BoldLink> also credits his theorems to the dreams of the goddess Namagiri.
+                An example of this <strong>divine guidance</strong> can be seen below.
+            </p>
+
+            <img src="images/ChartV11vsChartV12.jpg" class="img-thumbnail mt-2 mb-3" alt="...">
+
+            <p>
+                The code needed to solve V11 inaccuracy only came in the dream of the programmer.
+                At first the solution seemed <strong>technically not logical</strong>, it was implemented only because of faith.
+                Exactly as <BoldLink URL="@URL.StPaulWiki">St. Paul</BoldLink> said, "<strong>faith is the proof of things unseen</strong>".
+                The programmer who wrote the solution did not think it would work at the time of development.
+                And when the chart came out better than before, we doubted no more.
+            </p>
+
+            <QuoteTextBlock Author="Emerson" URL="@URL.EmersonWiki">
+                Did the wires generate the galvanism?
+            </QuoteTextBlock>
+
+        </TextHTML>
+
+    </ArticleBlock>
+
+
+    @*     <QuoteTextBlock Author="Srinivasa Ramanujan" URL="@URL.RamanujanQuoteWiki">While asleep,
+    I had an unusual experience.
+    There was a red screen formed by flowing blood, as it were. I was observing it. Suddenly a hand began to write on the screen.
+    I became all attention.
+    That hand wrote a number of elliptic integrals. They stuck to my mind. As soon as I woke up,
+    I committed them to writing.</QuoteTextBlock>
+    *@
+
 </div>
 
-
-@*<div class="mt-4">
-    SHOW RAW HOROSCOPE & PREDICTION DATA VIA TABS
-    <HoroscopeInfoView @ref="_horoscopeInfoView" />
-</div>
-*@
-
-@*HELP SECTION*@
-@*<PageHelpSection @ref="_helpSection">
-    <Content>
-
-        <h4 class="fw-bold">Purpose?</h4>
-        <p class="text-justify mb-4">
-            The vexed question of timing events is solved to a great
-            extent by the Dasa system. From a scientific point of view,
-            we cannot say with any sort of definiteness, upon what basis
-            each planet is allotted a certain number of years as its term of Dasa.
-            But in actual practice, the Dasa system yields very satisfactory result
-        </p>
-
-        <h4 class="fw-bold">What Dasa system do you use?</h4>
-        <p class="text-justify mb-4">
-            There are any number of Dasas in general use,
-            but we propose to deal with Vimshottari. In the
-            choice of any particular type of Dasa, the criterion must be
-            that of experience and Vimshottari has answered this test.
-        </p>
-
-        <h4 class="fw-bold">How to calculate?</h4>
-        <p class="text-justify mb-4">
-            The position of the Moon at birth is important in the
-            calculation of the Dasas. Every constellation covers 13.3°
-            degrees of the zodiacal space. Each nakshatra has a planet
-            assigned as its lord and the Dasa at birth is determined rather
-            indicated by the constellation occupied by the Moon at the
-            moment of birth.
-        </p>
-
-
-        <ul class="list-group">
-            <li class="list-group-item active" aria-current="true">Tips to read dasa</li>
-            <li class="list-group-item">
-                1. For instance
-                political success may be predicted in the Dasa of the Sun, if
-                he is in Aries in the 10th house. This political success will be
-                at its maximum provided the Sun is not aspected by malefics
-                and his position is equally strong in the Navamsa. If he is
-                aspected by Saturn who may be in Aquarius, then in spite of
-                the Sun being in Aries, complete political success cannot be
-                and ought not to be predicted.
-            </li>
-            <li class="list-group-item">
-                2. The Dasa results stand to be modified by the effect of
-                Gochara or transiting planets.
-            </li>
-            <li class="list-group-item">
-                3. If the lord is well placed as already explained above,
-                be will do good regarding the house or houses with which he
-                may have anything to do either by way of ownership or aspect
-                or location during his period. while if the lord is weak and ill placed,
-                he will inflict misery.
-            </li>
-            <li class="list-group-item">
-                4. The lord of the Dasa has a quality of his own stamped
-                upon him. This will again be modified by the nature of the
-                house, the nature of the sign, the nature of the aspecting
-                bodies, the nature of the lord of the constellation the Dasa
-                lord is in, the favourable and unfavourable situation of the
-                lord of Dasa in the Navamsa
-            </li>
-            <li class="list-group-item">
-                5. ln the course of a Dasa, a planet produces such results
-                as it indicates by virtue of ownership, association, location
-                and aspect. For instance, favourable position of the lord of
-                the 2nd will give good income and wealth during his Dasa.
-            </li>
-            <li class="list-group-item">
-                6. The general effect of the Dasa (major period) get
-                modified by the planet that rules the particular Bhukti (sub-period).
-                In such a case, however, the influences of both the
-                planets are to be compounded and the relation between them
-                taken into account
-            </li>
-        </ul>
-        @AppData.HinduPredictiveAstrologyCredit
-
-    </Content>
-</PageHelpSection>
-*@
 
 @code {
+
+    /// <summary>
+    /// shortcut for red text
+    /// </summary>
+    private RenderFragment RED = @<span style="color: red; font-weight: 900;">RED</span>;
+    private RenderFragment GREEN = @<span style="color: green; font-weight: 900;">GREEN</span>;
+
+    private string SelectedLifeYearStart;
+    private string SelectedLifeYearEnd;
+    private string SelectedLifeAgeStart;
+    private string SelectedLifeAgeEnd;
+
+    private List<string> lifeYearList = new List<string>();
+    private List<string> lifeAgeList = GetAgeSelectionRange();
 
     /// <summary>
     /// Param used in URL to set Person ID via URL
@@ -248,35 +348,98 @@ Know good and bad periods of your life years ahead.*@
 
     private ElementReference _holderDiv;
 
-    private string _pageTitle = "Dasa";
+    private string _pageTitle = "Life Predictor";
     //--------------------FIELDS
     private string _selectedTimeRange = "FullLife"; //1st in list
     private string _selectedChartId = "";
 
     private PageHelpSection _helpSection;
 
-    private PersonSelectorBox? _peopleSelectorBox;
     private PersonSelectorBox? _easyPersonSelectorBox;
 
     private EventsChartViewer? _eventsChartViewer;
 
     public Person SelectedPerson { get; set; }
-    public GeoLocation SelectedLocation { get; set; }
+
+    public string SelectedTimeRangePreset
+    {
+        get => _selectedTimeRange;
+
+        //hide and show easy options based on selection
+        set
+        {
+            //log it or better analytics
+            WebLogger.Data($"Selected Time Range:{value}");
+
+            _selectedTimeRange = value;
+        }
+    }
+
     private bool _isResultReady = false; //marks if the page ready to loaded
     private MonthYearSelectorBox _startTimeSelector;
     private MonthYearSelectorBox _endTimeSelector;
 
     private List<ChartName> _allChartList = new List<ChartName>();
+    private string? _selectedPersonId;
 
+    //linked to selector box
+    public string? SelectedPersonId
+    {
+        get => _selectedPersonId;
+        set
+        {
+            //update year select to make sense
+            UpdateYearSelectionRange(value);
+            _selectedPersonId = value;
+        }
+    }
+
+
+    /// <summary>
+    /// Gets possible year list for selection 120 years
+    /// </summary>
+    private async Task UpdateYearSelectionRange(string personId)
+    {
+
+        var compiledList = new List<string>();
+        //generate year list, birth plus 120
+        var person = await WebsiteTools.GetPersonById(personId, _jsRuntime);
+        var startYear = person.BirthYear;
+
+        for (int i = 0; i < 120; i++)
+        {
+            compiledList.Add(startYear.ToString());
+            //increment
+            startYear++;
+        }
+
+        //make visible
+        lifeYearList = compiledList;
+
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Gets possible age list for selection 120 years
+    /// </summary>
+    private static List<string> GetAgeSelectionRange()
+    {
+        var compiledList = new List<string>();
+
+        for (int i = 1; i < 120; i++)
+        {
+            compiledList.Add(i.ToString());
+        }
+
+        //make visible
+        return compiledList;
+    }
 
     //█░░ █ █▀▀ █▀▀ █▀▀ █▄█ █▀▀ █░░ █▀▀   █▀▄▀█ █▀▀ ▀█▀ █░█ █▀█ █▀▄ █▀
     //█▄▄ █ █▀░ ██▄ █▄▄ ░█░ █▄▄ █▄▄ ██▄   █░▀░█ ██▄ ░█░ █▀█ █▄█ █▄▀ ▄█
     //METHODS THAT CAN IMPLEMENT ASYNC ERROR HANDLER
 
 
-
-    private async Task OnClickCalculate() => await InvokeAsync(async () => await _OnClickCalculate()).Try(_jsRuntime);
-    private async Task OnClickShowSaved() => await InvokeAsync(async () => await _OnClickShowSaved()).Try(_jsRuntime);
     private async Task OnClickCalculateEasy() => await InvokeAsync(async () => await _OnClickCalculateEasy()).Try(_jsRuntime);
     protected override async Task OnAfterRenderAsync(bool firstRender) => await InvokeAsync(async () => await _OnAfterRenderAsync(firstRender)).Try(_jsRuntime);
 
@@ -286,18 +449,15 @@ Know good and bad periods of your life years ahead.*@
 
     private async Task _OnAfterRenderAsync(bool firstRender)
     {
+
         //if parameter has been set then auto load person data as
-        //though person was selected and calculate was clicked
+        //though person was selected and don't do click cause we don't know where user whats to click
         if (PersonIdUrl != null && firstRender)
         {
             await _jsRuntime.ShowLoading();
 
             //programmatically select the person
-            await _peopleSelectorBox.SetPerson(PersonIdUrl);
-
-            //start the same process as show button click
-            //todo loading box disappears here, needs fix
-            await _OnClickCalculate();
+            await _easyPersonSelectorBox.SetPerson(PersonIdUrl);
 
             //needed to see updates because any changes in OnAfterRender
             //have to be manually set
@@ -307,84 +467,11 @@ Know good and bad periods of your life years ahead.*@
         }
     }
 
-
-    /// <summary>
-    /// Saves current chart to local storage
-    /// </summary>
-    /// <returns></returns>
-    private async Task _OnClickShowSaved()
-    {
-        await _jsRuntime.ShowLoading();
-
-        //todo make sure a chart is selected
-        //if (!ValidationPassed()) { return; }
-
-        //mark page as NOT ready (when button clicked 2nd time)
-        _isResultReady = false;
-
-        //show saved chart
-        await _eventsChartViewer?.ShowSavedChart(_selectedChartId)!;
-
-        //this is needed to generate data charts below
-        //note gets person from ID stored in chart name
-        SelectedPerson = _eventsChartViewer.SelectedPerson;
-
-        //put person name into tab title for easy multi-tabbing
-        //await _jsRuntime.SetTitle($"Dasa | {SelectedPerson.Name}");
-        _pageTitle = $"Dasa | {SelectedPerson.Name}";
-
-
-        //mark page as ready to show results
-        _isResultReady = true;
-
-        _jsRuntime.HideLoading();
-    }
-
-    private async Task _OnClickCalculate()
-    {
-        await _jsRuntime.ShowLoading();
-
-        //only continue if passed input field validation
-        if (!ValidationPassed()) { return; }
-
-        //mark page as NOT ready (when button clicked 2nd time)
-        _isResultReady = false;
-
-        //get data from inputs and save it for use by other components
-        SelectedPerson = await _peopleSelectorBox.GetSelectedPerson();
-
-        //put person name into tab title for easy multi-tabbing
-        _pageTitle = $"Dasa | {SelectedPerson.Name}";
-
-        //set data into dasa viewer
-        dynamic timeRange = ComputeStartEndTimeFromInput();
-        var startTime = timeRange.Start;
-        var endTime = timeRange.End;
-
-        //generate the events row & time header row
-        var inputedEventTags = new List<EventTag> { EventTag.Dasa, EventTag.Bhukti, EventTag.Antaram, EventTag.Sukshma, EventTag.Prana, EventTag.Gochara };
-
-        //pump data into chart
-        await _eventsChartViewer.ShowChart(SelectedPerson, startTime, endTime, inputedEventTags);
-
-        //mark page as ready to show results
-        _isResultReady = true;
-
-        //only set url if not already set
-        //note:this improves UX, as links can lead faster to data
-        PersonIdUrl = SelectedPerson.Id; //save local copy
-        _navigation.NavigateTo($"{PageRoute.LifePredictor}/{PersonIdUrl}"); //change url
-
-
-        //inject selected person into component to show horoscope data
-        //do last so that loading box is not closed too soon
-        //await horoscopeInfoView?.SetPerson(SelectedPerson);
-
-        _jsRuntime.HideAlert();
-    }
-
     private async Task _OnClickCalculateEasy()
     {
+        //keep copy of selected time range else gets reset, on re-render
+        var backUpSelection = SelectedTimeRangePreset;
+
         await _jsRuntime.ShowLoading();
 
         //only continue if passed input field validation
@@ -398,98 +485,52 @@ Know good and bad periods of your life years ahead.*@
         SelectedPerson = await _easyPersonSelectorBox.GetSelectedPerson();
 
         //put person name into tab title for easy multi-tabbing
-        _pageTitle = $"Dasa | {SelectedPerson.Name}";
+        _pageTitle = $"Life Predictor | {SelectedPerson.Name}";
 
         //set data into dasa viewer
-        dynamic timeRange = AutoCalculateTimeRangeYear();
-        var startTime = timeRange.start;
-        var endTime = timeRange.end;
+        var timeRange = GetTimeRange();
 
         //generate the events row & time header row
-        var dasaEventTags = new List<EventTag> { EventTag.Dasa, EventTag.Bhukti, EventTag.Antaram, EventTag.Sukshma, EventTag.Prana, EventTag.Gochara };
+        var dasaEventTags = new List<EventTag>
+        {
+            EventTag.PD1, EventTag.PD2, EventTag.PD3, EventTag.PD4,
+            EventTag.PD5, EventTag.PD6,
+            EventTag.Gochara
+        };
 
         //pump data into chart
-        await _eventsChartViewer.ShowChart(SelectedPerson, startTime, endTime, dasaEventTags);
+        await _eventsChartViewer.ShowChart(SelectedPerson, timeRange, dasaEventTags);
+
+        //only set url if not already set
+        //note:this improves UX, as links can lead faster to data
+        PersonIdUrl = SelectedPerson.Id; //save local copy
+        AppData.Go($"{PageRoute.LifePredictor}/{PersonIdUrl}"); //change url
 
         //mark page as ready to show results
         _isResultReady = true;
 
-        //inject selected person into component to show horoscope data
-        //do last so that loading box is not closed too soon
-        //await horoscopeInfoView?.SetPerson(SelectedPerson);
-
         _jsRuntime.HideAlert();
 
-        //LOCAL FUNCTIONS
-        object AutoCalculateTimeRangeYear()
-        {
-            Time start, end;
-            var birthDateMonthYear = SelectedPerson.BirthDateMonthYear;
-
-            //note the use of system timezone and not birth timezone
-            //birth time is adjusted to show for clients timezone
-            var birthTimeStr = $"00:00 {birthDateMonthYear} {Tools.GetSystemTimezoneStr()}";
-            var birthTimeClient = new Time(birthTimeStr, SelectedPerson.GetBirthLocation());
-
-
-            switch (_selectedTimeRange)
-            {
-                case "Age1to25":
-                    start = birthTimeClient;
-                    end = birthTimeClient.AddYears(25);
-                    return new { start = start, end = end };
-                case "Age10to35":
-                    start = birthTimeClient.AddYears(10);
-                    end = birthTimeClient.AddYears(35);
-                    return new { start = start, end = end };
-                case "Age25to50":
-                    start = birthTimeClient.AddYears(25);
-                    end = birthTimeClient.AddYears(50);
-                    return new { start = start, end = end };
-                case "Age35to60":
-                    start = birthTimeClient.AddYears(35);
-                    end = birthTimeClient.AddYears(60);
-                    return new { start = start, end = end };
-                case "Age50to75":
-                    start = birthTimeClient.AddYears(50);
-                    end = birthTimeClient.AddYears(75);
-                    return new { start = start, end = end };
-                case "Age60to85":
-                    start = birthTimeClient.AddYears(60);
-                    end = birthTimeClient.AddYears(85);
-                    return new { start = start, end = end };
-                case "Age75to100":
-                    start = birthTimeClient.AddYears(75);
-                    end = birthTimeClient.AddYears(100);
-                    return new { start = start, end = end };
-                case "FullLife":
-                    start = birthTimeClient;
-                    end = birthTimeClient.AddYears(100);
-                    return new { start = start, end = end };
-                default:
-                    return new { start = Time.Empty, end = Time.Empty };
-            }
-        }
+        //place time preset value back
+        SelectedTimeRangePreset = backUpSelection;
 
     }
 
     /// <summary>
-    /// Checks if validation of all input fields
+    /// Gets parsed time from users crazy input
     /// </summary>
-    private bool ValidationPassed()
+    /// <returns></returns>
+    private TimeRange GetTimeRange()
     {
-        //TEST 1
-        //if person not selected, invalid
-        if (!_peopleSelectorBox.IsPersonSelected)
-        {
-            //mark invalid & alert user
-            _jsRuntime.ShowAlert("error", AlertText.SelectName, true);
-            return false;
-        }
+        var systemTimezone = Tools.GetSystemTimezone();
 
+        //if user selected indiviual year than make new preset is placed in format that can be read by parser 
+        if (SelectedTimeRangePreset == "selectyear") { SelectedTimeRangePreset = $"{SelectedLifeYearStart}-{SelectedLifeYearEnd}"; } //exp 2000-2010
+        else if (SelectedTimeRangePreset == "selectage"){SelectedTimeRangePreset = $"age{SelectedLifeAgeStart}to{SelectedLifeAgeEnd}";} //exp age4to50
 
-        //if control reaches here than, it's valid
-        return true;
+        var timeRange = EventChartTools.AutoCalculateTimeRange(SelectedPerson, SelectedTimeRangePreset, systemTimezone);
+
+        return timeRange;
     }
 
     /// <summary>
@@ -511,7 +552,7 @@ Know good and bad periods of your life years ahead.*@
         return true;
     }
 
-    private object ComputeStartEndTimeFromInput()
+    private TimeRange ComputeStartEndTimeFromInput()
     {
         var startMonthYear = _startTimeSelector.GetSelectedTimeText();
         //note the use of system timezone and not birth
@@ -523,7 +564,11 @@ Know good and bad periods of your life years ahead.*@
         var y = $"11:59 {GetLastDay(endMonthYear)}/{endMonthYear} {Tools.GetSystemTimezoneStr()}";
         var endTime = new Time(y, SelectedPerson.GetBirthLocation());
 
-        return new { Start = startTime, End = endTime };
+        return new TimeRange(startTime, endTime);
+
+
+
+        //-------------------------------
 
         //gets last day of any month at any time
         int GetLastDay(string monthYearText)
@@ -540,37 +585,5 @@ Know good and bad periods of your life years ahead.*@
     }
 
 
-    /// <summary>
-    /// Load chart name list when user clicks saved tab, if none show message to user
-    /// </summary>
-    private async Task OnClickSavedTab()
-    {
-        await _jsRuntime.ShowLoading();
 
-        //reload list before showing
-        //load a list of saved charts
-        _allChartList = await WebsiteTools.GetSavedChartNameList();
-
-        //if no saved charts let user know
-        if (!_allChartList.Any())
-        {
-            await _jsRuntime.ShowAlert("info", "No saved charts found, click \"Save to Cloud\" to add new.", false, 3000);
-        }
-
-        _jsRuntime.HideLoading();
-
-    }
-
-    private static string GetFriendlyChartName(string rawName)
-    {
-        //get data out
-        var split = rawName.Split("|");
-        var hash = split[0];
-        var date = split[1];
-        var keyword = split[2];
-        var personName = split[3];
-
-        //construct new name
-        return $"{personName} - {date}";
-    }
 }

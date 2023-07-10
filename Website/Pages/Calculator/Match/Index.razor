@@ -13,19 +13,21 @@
 </PageTop>
 
 
-<div class="d-flex justify-content-between mb-5">
+<div class="d-md-flex justify-content-between">
     @*SELECTOR*@
-    <div>
-        <div class="vstack gap-3 me-5">
+    <div class="me-5">
+        <div class="vstack gap-3">
             <PersonSelectorBox @ref="_malePeopleSelector" @bind-SelectedPersonId="@SelectedMale" Label="Male" />
             <PersonSelectorBox @ref="_femalePeopleSelector" @bind-SelectedPersonId="@SelectedFemale" Label="Female" />
-            <IconButton IconName="uim:process" ExtraClass="mt-1" Color="success" ButtonText="Calculate" OnClickCallback="OnClickCalculate" />
+            <IconButton IconName="uim:process" ExtraClass="mt-1" Color="success" ButtonText="Calculate" OnClickCallback="@OnClickSubmitButton" />
         </div>
     </div>
     @*SIDEBAR*@
-    <div class="gap-3 me-md-4">
-        <InfoBox Title="Find Perfect Match" Description="Your soulmate is out there. Start a search in our global database" Color="#ffbdf7" ClickUrl="@PageRoute.MatchFinder" MaxWidth="365" FullWidth="@true" IconName="emojione:heart-with-arrow" />
-        <InfoBox Title="Full Check" Description="16 astrological factors used to make this accurate prediction" Color="#d1e7dd" MaxWidth="365" FullWidth="@true" IconName="line-md:check-list-3-twotone" />
+    <div class="mt-md-0 mt-4 me-md-5"><!--when small give at top-->
+        <div class="vstack gap-0 gap-md-2">
+            <InfoBox Title="Find Perfect Match" Description="Your soulmate is out there. Start a search in our global database" Color="#ffbdf7" ClickUrl="@PageRoute.MatchFinder" MaxWidth="365" FullWidth="@true" IconName="emojione:heart-with-arrow"/>
+            <InfoBox Title="Full Check" Description="16 astrological factors used to make this accurate prediction" Color="#d1e7dd" MaxWidth="365" FullWidth="@true" IconName="line-md:check-list-3-twotone"/>
+        </div>
     </div>
 </div>
 
@@ -35,9 +37,12 @@
     <MatchReportListViewer @ref="savedMatchReportList" />
 </div>
 
-<div class="mt-3" style="max-width: @GR.W667px">
+<div class="vstack gap-3" style="max-width: @GR.W764px">
 
     <ArticleBlock Title="Marriage Karma" IconName="mdi:state-machine">
+        <ButtonRow>
+            <IconButton IconName="wpf:wedding-cake" ButtonText="Predict Marriage" ClickUrl="@PageRoute.LifePredictor" SmallSize="true" Outline="true" />
+        </ButtonRow>
         <TextHTML>
             <p class="text-justify">
                 In each life the probability for marriage <strong>comes and goes</strong> multiple times. During the high period,
@@ -56,6 +61,9 @@
 
 
     <ArticleBlock Title="Imagine Perfect Marriages" IconName="emojione:heart-with-arrow">
+        <ButtonRow>
+            <IconButton IconName="mdi:find-love" ButtonText="Find Match" ClickUrl="@PageRoute.MatchFinder" SmallSize="true" Outline="true" />
+        </ButtonRow>
         <TextHTML>
             <p>
                 Do we need <strong>more proof?</strong> Is it not high time, for us as a human species to stop hunting for partners blindly like
@@ -66,18 +74,10 @@
                 The age of "imperfection", the age of <BoldLink OpenInNewTab="false" URL="@PageRoute.NowInDwapara">"Kali" is over</BoldLink>. We have before us a new age of thinking men, the age of "<BoldLink OpenInNewTab="false" URL="@PageRoute.NowInDwapara">Dwarpara</BoldLink>". Gone are the ways of old.
                 Just imagine a world with <strong>no divorces</strong>, a world where <strong>happy marriages</strong> is common sight. Where laughter abounds &amp; fear stands still.
             </p>
-
-            <div>
-                <figure class="text-center mt-5" style="cursor: pointer;" @onclick="() => _jsRuntime.OpenNewTab(URL.JohnLenonImagine)">
-                    <blockquote class="blockquote">
-                        <p>You may say I'm dreamer, <br /> but I'm not the only one.</p>
-                    </blockquote>
-                    <figcaption class="blockquote-footer">
-                        John Lenon @*<cite title="Source Title">Singer Beatles 60'</cite>*@
-                    </figcaption>
-                </figure>
-            </div>
-
+            
+            <QuoteTextBlock Author="John Lenon" URL="@URL.JohnLenonImagine">
+                You may say I'm dreamer, <br /> but I'm not the only one.
+            </QuoteTextBlock>
         </TextHTML>
     </ArticleBlock>
 
@@ -93,6 +93,7 @@
     private PersonSelectorBox _femalePeopleSelector;
     private PersonSelectorBox _SavedMatchReport;
     private MatchReportListViewer savedMatchReportList;
+    private bool NothingToShow = false; //start by showing when start
 
 
 
@@ -103,47 +104,28 @@
     {
         if (firstRender)
         {
-            var exampleReport = await WebsiteTools.GetSavedMatchList("101", "101");
+            var exampleReport = await WebsiteTools.GetSavedMatchList("101", "101"); //public list used for showing examples
             savedMatchReportList.Show(exampleReport);
         }
     }
 
-    private async Task<List<MatchReport>> GetExampleReports()
-    {
-        var returnVal = new List<MatchReport>()
-        {
-            //Kristen Bell  Dax Shepard
-            await WebsiteTools.GetCompatibilityReport("70d6a995dec84c0aa74211ac9ff50d29", "8e9b5804e68a4b82a1a975ebee1643dc"),
-            //Matt Damon  Luciana Barroso
-            await WebsiteTools.GetCompatibilityReport("696c62d1f429469aaf8111fc1418f7ce", "ef97500191d248cd92bc43d32fed6093"),
-            //Napoleon Bonaparte  Joséphine de Beau.
-            await WebsiteTools.GetCompatibilityReport("54041d1ffb49479997f7987ecfchf08b5", "7faa6fe13ac5442d9d3dba972daa9af2"),
-            //Brad Pitt  Angelina Jolie
-            await WebsiteTools.GetCompatibilityReport("70d6a995dec84c0aa74211ac9ff50d29", "8e9b5804e68a4b82a1a975ebee1643dc"),
-            //John Lennon  Yoko Ono
-            await WebsiteTools.GetCompatibilityReport("70d6a995dec84c0aa74211ac9ff50d29", "8e9b5804e68a4b82a1a975ebee1643dc"),
-        };
-
-        return returnVal;
-    }
 
 
-
-    private async Task OnClickCalculate()
+    private async Task OnClickSubmitButton()
     {
         await _jsRuntime.ShowLoading();
 
         //only continue if passed input field validation
-        if (!ValidationPassed()) { return; }
+        if (!(await IsValidationPassed())) { return; } //if nothing than back to normal
 
         //navigate page to match report
-        _navigation.NavigateTo($"{PageRoute.MatchReport}/{SelectedMale}/{SelectedFemale}");
+        AppData.Go($"{PageRoute.MatchReport}/{SelectedMale}/{SelectedFemale}");
     }
 
     /// <summary>
     /// Checks if validation of all input fields
     /// </summary>
-    private bool ValidationPassed()
+    private async Task<bool> IsValidationPassed()
     {
 
         //TEST 1
@@ -151,8 +133,8 @@
         if (!_malePeopleSelector.IsPersonSelected)
         {
             //mark invalid & alert user
-            var msg = $"Select male person name!";
-            _jsRuntime.ShowAlert("error", msg, true);
+            var msg = $"Select 1st person";
+            await _jsRuntime.ShowAlert("error", msg, "How to check match if you don't select a person?");
             return false;
 
         }
@@ -162,10 +144,62 @@
         if (!_femalePeopleSelector.IsPersonSelected)
         {
             //mark invalid & alert user
-            var msg = $"Select female person name!";
-            _jsRuntime.ShowAlert("error", msg, true);
+            var msg = $"Select 2nd person";
+            await _jsRuntime.ShowAlert("error", msg, "We need two people minimum to tango.");
             return false;
         }
+
+        //TEST 3 : same person knock knock?
+        var isSamePerson = _femalePeopleSelector.SelectedPersonId == _malePeopleSelector.SelectedPersonId;
+        if (isSamePerson)
+        {
+
+            //prepare question to ask user
+            var alertData = new
+            {
+                icon = "question",
+                title = $"Are you sure?",
+                html = $"You selected the <strong>same person</strong> for both. Seriously, what's the point of checking match then?",
+                showCancelButton = true,
+                confirmButtonColor = "#3085d6",
+                cancelButtonColor = "#d33",
+                confirmButtonText = "Yes, sure!"
+            };
+            var sweetAlertResult = await _jsRuntime.ShowAlertResult(alertData);
+
+            //if user clicked continue, then 00:00 is correct, so pass validation
+            var continueClicked = sweetAlertResult.GetProperty("isConfirmed").GetBoolean();
+            if (!continueClicked) { return false; }
+
+        }
+
+
+        //TEST 4 : reversed?
+        var isMaleFemale = _malePeopleSelector.SelectedPerson.Gender == Gender.Female;
+        var isFemaleMale = _malePeopleSelector.SelectedPerson.Gender == Gender.Female;
+        var isReversed = isMaleFemale && isFemaleMale;
+        if (isReversed)
+        {
+
+            //prepare question to ask user
+            var alertData = new
+            {
+                icon = "question",
+                title = $"Are you sure?",
+                html = $@"<strong>{_malePeopleSelector.SelectedPerson.Name}</strong> is Female but in selected as Male!",
+                showCancelButton = true,
+                confirmButtonColor = "#3085d6",
+                cancelButtonColor = "#d33",
+                confirmButtonText = "Yes, sure!"
+            };
+            var sweetAlertResult = await _jsRuntime.ShowAlertResult(alertData);
+
+            //if user clicked continue, then 00:00 is correct, so pass validation
+            var continueClicked = sweetAlertResult.GetProperty("isConfirmed").GetBoolean();
+            if (!continueClicked) { return false; }
+
+        }
+
 
 
         //if control reaches here than, it's valid

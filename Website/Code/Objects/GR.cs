@@ -19,17 +19,35 @@
         public static double W1080 => 1080;
         public static string W1080px => $"{W1080}px";
 
+        public static double W824 => GR.W667 + GR.W157;
+        public static string W824px => $"{W824}px";
+
+        public static double W764 => GR.W667 + GR.W97;
+        public static string W764px => $"{W764}px";
+
         public static double W667 => Math.Round(W1080 / GoldenRatio, 1);
         public static string W667px => $"{W667}px";
 
+        public static double W509 => W412 + W97;
+        public static string W509px => $"{W509}px";
+
         public static double W412 => Math.Round(W667 / GoldenRatio, 1);
         public static string W412px => $"{W412}px";
+
+        public static double W352 => W255 + W97;
+        public static string W352px => $"{W352}px";
+
+        public static double W291 => W157 + W134;
+        public static string W291px => $"{W291}px";
 
         public static double W255 => Math.Round(W412 / GoldenRatio, 1);
         public static string W255px => $"{W255}px";
 
         public static double W157 => Math.Round(W255 / GoldenRatio, 1);
         public static string W157px => $"{W157}px";
+
+        public static double W134 => GR.W97 + GR.W37;
+        public static string W134px => $"{W134}px";
 
         public static double W97 => Math.Round(W157 / GoldenRatio, 1);
         public static string W97px => $"{W97}px";

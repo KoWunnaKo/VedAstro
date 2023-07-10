@@ -15,10 +15,14 @@ using System.Threading.Tasks;
 using System.Xml;
 using System.Xml.Linq;
 using System.Xml.Serialization;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SwissEphNet;
 using Formatting = Newtonsoft.Json.Formatting;
+using Azure.Storage.Blobs.Models;
+using Azure.Storage.Blobs;
+
 
 namespace VedAstro.Library
 {
@@ -28,6 +32,200 @@ namespace VedAstro.Library
     /// </summary>
     public static class Tools
     {
+
+        /// <summary>
+        /// Converts raw call from API via URL to parsed Time
+        /// </summary>
+        public static async Task<Time> ParseTime(string locationName,
+            string hhmmStr,
+            string dateStr,
+            string monthStr,
+            string yearStr,
+            string offsetStr)
+        {
+            WebResult<GeoLocation>? geoLocationResult = await Tools.AddressToGeoLocation(locationName);
+            var geoLocation = geoLocationResult.Payload;
+
+            //clean time text
+            var timeStr = $"{hhmmStr} {dateStr}/{monthStr}/{yearStr} {offsetStr}";
+            var parsedTime = new Time(timeStr, geoLocation);
+
+            return parsedTime;
+        }
+
+        /// <summary>
+        /// deletes old person record by ID and saves in new one as updated
+        /// </summary>
+        public static async Task UpdatePersonRecord(Person updatedPersonData)
+        {
+            //get the person record that needs to be updated
+            var originalPerson = await Tools.FindPersonXMLById(updatedPersonData.Id);
+
+            //NOTE:
+            //only way it works is to
+            //delete the previous person record
+            //add new record at bottom
+
+            //delete the old person record,
+            await Tools.DeleteXElementFromXDocumentAzure(originalPerson, Tools.PersonListFile, Tools.BlobContainerName);
+
+            //and insert updated record in the updated as new
+            //add new person to main list
+            await Tools.AddXElementToXDocumentAzure(updatedPersonData.ToXml(), Tools.PersonListFile, Tools.BlobContainerName);
+
+        }
+
+        /// <summary>
+        /// Adds an XML element to XML document in by file & container name
+        /// and saves files directly to Azure blob store
+        /// </summary>
+        public static async Task AddXElementToXDocumentAzure(XElement dataXml, string fileName, string containerName)
+        {
+            //get user data list file (UserDataList.xml) Azure storage
+            var fileClient = await Tools.GetBlobClientAzure(fileName, containerName);
+
+            //add new log to main list
+            var updatedListXml = await AddXElementToXDocument(fileClient, dataXml);
+
+            //upload modified list to storage
+            await OverwriteBlobData(fileClient, updatedListXml);
+        }
+        public static void AddXElementToXDocumentAzure(XElement dataXml, ref XDocument xDocument)
+        {
+
+            //add new log to main list
+            AddXElementToXDocument(dataXml, ref xDocument);
+
+        }
+
+
+        /// <summary>
+        /// Overwrites new XML data to a blob file
+        /// </summary>
+        public static async Task OverwriteBlobData(BlobClient blobClient, XDocument newData)
+        {
+            //convert xml data to string
+            var dataString = newData.ToString();
+
+            //convert xml string to stream
+            var dataStream = GenerateStreamFromString(dataString);
+
+            var blobUploadOptions = new BlobUploadOptions();
+            blobUploadOptions.AccessTier = AccessTier.Cool; //save money!
+
+            //upload stream to blob
+            //note: no override needed because specifying BlobUploadOptions, is auto override
+            await blobClient.UploadAsync(dataStream, options: blobUploadOptions);
+
+            //auto correct content type from wrongly set "octet/stream"
+            var blobHttpHeaders = new BlobHttpHeaders { ContentType = "text/xml" };
+            await blobClient.SetHttpHeadersAsync(blobHttpHeaders);
+        }
+        public static Stream GenerateStreamFromString(string s)
+        {
+            var stream = new MemoryStream();
+            var writer = new StreamWriter(stream);
+            writer.Write(s);
+            writer.Flush();
+            stream.Position = 0;
+            return stream;
+        }
+
+
+        /// <summary>
+        /// Adds an XML element to XML document in blob form
+        /// </summary>
+        public static async Task<XDocument> AddXElementToXDocument(BlobClient xDocuBlobClient, XElement newElement)
+        {
+            //get person list from storage
+            var xDocument = await Tools.DownloadToXDoc(xDocuBlobClient);
+
+            //add new person to list
+            xDocument.Root.Add(newElement);
+
+            return xDocument;
+        }
+        public static void AddXElementToXDocument(XElement newElement, ref XDocument xDocument)
+        {
+            //add new person to list
+            xDocument.Root.Add(newElement);
+        }
+
+        /// <summary>
+        /// Deletes an XML element from an XML document in by file & container name
+        /// and saves files directly to Azure blob store
+        /// </summary>
+        public static async Task DeleteXElementFromXDocumentAzure(XElement dataXmlToDelete, string fileName, string containerName)
+        {
+            //access to file
+            var fileClient = await Tools.GetBlobClientAzure(fileName, containerName);
+            
+            //get xml file
+            var xmlDocFile = await Tools.DownloadToXDoc(fileClient);
+
+            //check if record to delete exists
+            //if not found, raise alarm
+            var xmlRecordList = xmlDocFile.Root.Elements();
+            var personToDelete = Person.FromXml(dataXmlToDelete);
+            var foundRecords = xmlRecordList.Where(x => Person.FromXml(x).Id == personToDelete.Id);
+            if (!foundRecords.Any()) { throw new Exception("Could not find XML record to delete in main list!"); }
+
+            //continue with delete
+            foundRecords.First().Remove();
+
+            //upload modified list to storage
+            await OverwriteBlobData(fileClient, xmlDocFile);
+        }
+
+        /// <summary>
+        /// deletes by using same reference to limit unnecessary calls to storage
+        /// used in maintenance scripts
+        /// deletes by ID not HASH
+        /// </summary>
+        public static void DeleteXElementFromXDocumentAzure(XElement dataXmlToDelete, ref XDocument xmlDocFile)
+        {
+
+            //check if record to delete exists
+            //if not found, raise alarm
+            var xmlRecordList = xmlDocFile.Root.Elements();
+            var personToDelete = Person.FromXml(dataXmlToDelete);
+            var foundRecords = xmlRecordList.Where(x => Person.FromXml(x).Id == personToDelete.Id);
+            if (!foundRecords.Any()) { throw new Exception("Could not find XML record to delete in main list!"); }
+
+            //continue with delete
+            foundRecords.First().Remove();
+
+        }
+
+
+        public static async Task<EventsChart> GenerateNewChart(Person foundPerson, TimeRange timeRange, double daysPerPixel, List<EventTag> eventTags)
+        {
+            //from person get svg report
+            var eventsChartSvgString = await EventsChartManager.GenerateEventsChart(foundPerson, timeRange, daysPerPixel, eventTags);
+
+            //a new chart is born
+            var newChartId = Tools.GenerateId();
+            var newChart = new EventsChart(newChartId, eventsChartSvgString, foundPerson.Id, timeRange, daysPerPixel, eventTags);
+
+            return newChart;
+        }
+
+
+        /// <summary>
+        /// used for finding uncertain time in certain birth day
+        /// split a person's day into precision based slices of possible birth times
+        /// </summary>
+        public static List<Time> GetTimeSlicesOnBirthDay(Person person, double precisionInHours)
+        {
+            //start of day till end of day
+            var dayStart = new Time($"00:00 {person.BirthDateMonthYear} {person.BirthTimeZone}", person.GetBirthLocation());
+            var dayEnd = new Time($"23:59 {person.BirthDateMonthYear} {person.BirthTimeZone}", person.GetBirthLocation());
+
+            var finalList = Time.GetTimeListFromRange(dayStart, dayEnd, precisionInHours);
+
+            return finalList;
+        }
+
         public static async Task<T> DelayedResultTask<T>(TimeSpan delay, Func<T> fallbackMaker)
         {
             await Task.Delay(delay);
@@ -78,13 +276,13 @@ namespace VedAstro.Library
         /// <summary>
         /// Gets all horoscope predictions for a person
         /// </summary>
-        public static async Task<List<HoroscopePrediction>> GetHoroscopePrediction(Person person, string fileUrl)
+        public static async Task<List<HoroscopePrediction>> GetHoroscopePrediction(Time birthTime, string fileUrl)
         {
             //get list of horoscope data (file from wwwroot)
             var horoscopeDataList = await GetHoroscopeDataList(fileUrl);
 
             //start calculating predictions (mix with time by person's birth date)
-            var predictionList = calculate(person, horoscopeDataList);
+            var predictionList = calculate(birthTime, horoscopeDataList);
 
             return predictionList;
 
@@ -92,7 +290,7 @@ namespace VedAstro.Library
             /// Get list of predictions occurring in a time period for all the
             /// inputed prediction types aka "prediction data"
             /// </summary>
-            List<HoroscopePrediction> calculate(Person person, List<HoroscopeData> horoscopeDataList)
+            List<HoroscopePrediction> calculate(Time birthTime, List<HoroscopeData> horoscopeDataList)
             {
                 //get data to instantiate muhurtha time period
                 //get start & end times
@@ -105,7 +303,7 @@ namespace VedAstro.Library
                     foreach (var horoscopeData in horoscopeDataList)
                     {
                         //only add if occuring
-                        var isOccuring = horoscopeData.IsEventOccuring(person.BirthTime, person);
+                        var isOccuring = horoscopeData.IsEventOccuring(birthTime);
                         if (isOccuring)
                         {
                             var newHoroscopePrediction = new HoroscopePrediction(horoscopeData.Name, horoscopeData.Description, horoscopeData.RelatedBody);
@@ -965,6 +1163,18 @@ namespace VedAstro.Library
             return msgList[randomIndexNumber];
         }
 
+        public static int GetRandomNumber(int maxNumber)
+        {
+            // Create a Random object  
+            Random rand = new Random();
+
+            // Generate a random index less than the size of the array.  
+            int randomIndexNumber = rand.Next(maxNumber);
+
+            //return random text from list to caller
+            return randomIndexNumber;
+        }
+
         /// <summary>
         /// Split string by character count
         /// </summary>
@@ -1132,12 +1342,20 @@ namespace VedAstro.Library
         /// allowed chars : periods (.) and hyphens (-), space ( )
         /// SRC:https://learn.microsoft.com/en-us/dotnet/standard/base-types/how-to-strip-invalid-characters-from-a-string
         /// </summary>
-        public static string CleanNameText(string nameInput)
+        public static string CleanAndFormatNameText(string nameInput)
         {
             // Replace invalid characters with empty strings.
             try
             {
+                //remove invalid
                 var cleanText = Regex.Replace(nameInput, @"[^\w\.\s*-]", "", RegexOptions.None, TimeSpan.FromSeconds(2));
+
+                var textinfo = new CultureInfo("en-US", false).TextInfo;
+
+                //tit le case it!, needs all small else will fail when some nut puts all as capital 
+                cleanText = cleanText.ToLower(); //lower
+                cleanText = textinfo.ToTitleCase(cleanText); //convert
+
                 return cleanText;
             }
             // If we timeout when replacing invalid characters,
@@ -1233,12 +1451,11 @@ namespace VedAstro.Library
             }
             else if (planetName == PlanetName.Rahu)
             {
-                planet = SwissEph.SE_MEAN_NODE;
+                planet = SwissEph.SE_TRUE_NODE;
             }
             else if (planetName == PlanetName.Ketu)
             {
-                //TODO CHECK HERE + REF BV RAMAN ADD 180 TO ketu to get rahu
-                planet = SwissEph.SE_MEAN_NODE;
+                planet = SwissEph.SE_TRUE_NODE; //ask for rahu values then add 180 later
             }
 
             return planet;
@@ -1440,9 +1657,6 @@ namespace VedAstro.Library
         {
             var calculatorClass = typeof(AstronomicalCalculator);
             var foundMethod = calculatorClass.GetMethods().Where(x => Tools.GetAPISpecialName(x) == methodName).FirstOrDefault();
-
-            //place the data from all possible methods nicely in JSON
-            var rootPayloadJson = new JObject(); //each call below adds to this root
 
             //if method not found, possible outdated API call link, end call here
             if (foundMethod == null)
@@ -1874,9 +2088,16 @@ namespace VedAstro.Library
             }
         }
 
+        /// <summary>
+        /// given a time zone will return famous cities using said timezone
+        /// </summary>
         public static string TimeZoneToLocation(string timeZone)
         {
-            throw new NotImplementedException();
+            return "Earth";
+            //switch (timeZone)
+            //{
+               
+            //}
         }
 
         public static async Task<JObject> ReadServer(string receiverAddress)
@@ -1922,6 +2143,211 @@ namespace VedAstro.Library
             //return data as JSON as expected from API 
             return JObject.Parse(dataReturned);
         }
+
+        /// <summary>
+        /// for open api AstronomicalCalculator
+        /// </summary>
+        public static MethodInfo MethodNameToMethodInfo(string methodName)
+        {
+            var calculatorClass = typeof(AstronomicalCalculator);
+            var foundMethod = calculatorClass.GetMethods().Where(x => Tools.GetAPISpecialName(x) == methodName).FirstOrDefault();
+
+            return foundMethod;
+
+        }
+
+
+        /// <summary>
+        /// Given a id will return parsed person from main list
+        /// Returns empty person if, no person found
+        /// </summary>
+        public static async Task<Person> GetPersonById(string personId)
+        {
+            //get the raw data of person
+            var foundPersonXml = await FindPersonXMLById(personId);
+
+            if (foundPersonXml == null) { return Person.Empty; }
+
+            var foundPerson = Person.FromXml(foundPersonXml);
+
+            return foundPerson;
+        }
+
+        /// <summary>
+        /// Gets person XML given ID direct from storage
+        /// </summary>
+        public static async Task<XElement?> FindPersonXMLById(string personIdToFind)
+        {
+            try
+            {
+                //get latest file from server
+                //note how this creates & destroys per call to method
+                //might cost little extra cycles but it's a functionality
+                //to always get the latest list
+                var personListXmlDoc = await GetPersonListFile();
+
+                //list of person XMLs
+                var personXmlList = personListXmlDoc?.Root?.Elements() ?? new List<XElement>();
+
+                //do the finding (default empty)
+                var foundPerson = personXmlList?.Where(MatchPersonId)?.First();
+
+                //log it (should not occur all the time)
+                if (foundPerson == null)
+                {
+                    await LibLogger.Error($"No person found with ID : {personIdToFind}");
+                    //return empty value so caller will know
+                    foundPerson = null;
+                }
+
+                return foundPerson;
+            }
+            catch (Exception e)
+            {
+                //if fail log it and return empty value so caller will know
+                await LibLogger.Error(e);
+                return null;
+            }
+
+            //--------
+            //do the finding, for id both case should match, but stored in upper case because looks nice
+            //but user might pump in with mixed case, who knows, so compensate.
+            bool MatchPersonId(XElement personXml)
+            {
+                if (personXml == null) { return false; }
+
+                var inputPersonId = personXml?.Element("PersonId")?.Value ?? ""; //todo PersonId has to be just Id
+
+                //lower case it before checking
+                var isMatch = inputPersonId == personIdToFind; //hoisting alert
+
+                return isMatch;
+            }
+        }
+
+        /// <summary>
+        /// Reference version of above method
+        /// used in scripts
+        /// </summary>
+        public static XElement FindPersonXMLById(string personIdToFind, ref XDocument personListXmlDoc)
+        {
+            try
+            {
+                //list of person XMLs
+                var personXmlList = personListXmlDoc?.Root?.Elements() ?? new List<XElement>();
+
+                //do the finding (default empty)
+                var foundPerson = personXmlList?.Where(MatchPersonId)?.First();
+
+                //log it (should not occur all the time)
+                if (foundPerson == null)
+                {
+                    //return empty value so caller will know
+                    foundPerson = null;
+                }
+
+                return foundPerson;
+            }
+            catch (Exception e)
+            {
+                //if fail log it and return empty value so caller will know
+                return null;
+            }
+
+            //--------
+            //do the finding, for id both case should match, but stored in upper case because looks nice
+            //but user might pump in with mixed case, who knows, so compensate.
+            bool MatchPersonId(XElement personXml)
+            {
+                if (personXml == null) { return false; }
+
+                var inputPersonId = personXml?.Element("PersonId")?.Value ?? ""; //todo PersonId has to be just Id
+
+                //lower case it before checking
+                var isMatch = inputPersonId == personIdToFind; //hoisting alert
+
+                return isMatch;
+            }
+        }
+
+
+        public const string BlobContainerName = "vedastro-site-data";
+
+        public const string PersonListFile = "PersonList.xml";
+
+        /// <summary>
+        /// Gets main person list xml doc file
+        /// </summary>
+        /// <returns></returns>
+        public static async Task<XDocument> GetPersonListFile()
+        {
+            var personListXml = await GetXmlFileFromAzureStorage(PersonListFile, BlobContainerName);
+
+            return personListXml;
+        }
+
+        /// <summary>
+        /// Gets XML file from Azure blob storage
+        /// </summary>
+        public static async Task<XDocument> GetXmlFileFromAzureStorage(string fileName, string blobContainerName)
+        {
+            var fileClient = await GetBlobClientAzure(fileName, blobContainerName);
+            var xmlFile = await DownloadToXDoc(fileClient);
+
+            return xmlFile;
+        }
+
+        /// <summary>
+        /// Converts a blob client of a file to an XML document
+        /// </summary>
+        public static async Task<XDocument> DownloadToXDoc(BlobClient blobClient)
+        {
+            var isFileExist = (await blobClient.ExistsAsync()).Value;
+
+            if (isFileExist)
+            {
+                XDocument xDoc;
+                await using (var stream = (await blobClient.DownloadStreamingAsync()).Value.Content)
+                {
+                    xDoc = await XDocument.LoadAsync(stream, LoadOptions.None, CancellationToken.None);
+                }
+
+#if DEBUG
+                Console.WriteLine($"Downloaded: {blobClient.Name}");
+#endif
+
+                return xDoc;
+            }
+            else
+            {
+                //will be logged by caller
+                throw new Exception($"No File in Cloud! : {blobClient.Name}");
+            }
+
+        }
+
+
+        /// <summary>
+        /// Gets file blob client from azure storage by name
+        /// </summary>
+        public static async Task<BlobClient> GetBlobClientAzure(string fileName, string blobContainerName)
+        {
+            //get the connection string stored separately (for security reasons)
+            //note: dark art secrets are in local.settings.json
+            var storageConnectionString = Secrets.API_STORAGE;
+
+            //get image from storage
+            var blobContainerClient = new BlobContainerClient(storageConnectionString, blobContainerName);
+            var fileBlobClient = blobContainerClient.GetBlobClient(fileName);
+
+            return fileBlobClient;
+
+            //var returnStream = new MemoryStream();
+            //await fileBlobClient.DownloadToAsync(returnStream);
+
+            //return returnStream;
+        }
+
     }
 
 

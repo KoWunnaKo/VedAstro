@@ -15,6 +15,15 @@ namespace VedAstro.Library
     /// </summary>
     public class LifeEvent : IToXml
     {
+        public static LifeEvent Empty = new LifeEvent()
+        {
+            Name = "New Life Event",
+            Description = "Event Description",
+            StartTime = Time.Empty,
+            Id = Tools.GenerateId(),
+            Nature = "Neutral",
+            Weight = "Normal"
+        };
         private string _name;
         private string _description;
 
@@ -50,18 +59,8 @@ namespace VedAstro.Library
             set => _description = HttpUtility.HtmlEncode(value);
         }
 
-        /// <summary>
-        /// Format : 10:10 10/10/2010
-        /// Note the absence of offset, compensated by location
-        /// </summary>
         [JsonPropertyName("StartTime")]
-        public string StartTime { get; set; }
-
-        /// <summary>
-        /// Must follow standard time formatting 
-        /// </summary>
-        [JsonPropertyName("Location")]
-        public string Location { get; set; }
+        public Time StartTime { get; set; }
 
         /// <summary>
         /// must be Good, Neutral or Bad only
@@ -70,30 +69,37 @@ namespace VedAstro.Library
         public string Nature { get; set; }
 
         /// <summary>
-        /// Auto set by code when not available using Google API
+        /// must be Major, Normal and Minor
         /// </summary>
-        [JsonPropertyName("Timezone")]
-        public string Timezone { get; set; } = ""; //detect empty string later
+        [JsonPropertyName("Weight")]
+        public string Weight { get; set; }
 
-        ///// </summary>
-        //[JsonPropertyName("Timezone")]
-        //public string Timezone
-        //{
-        //    get
-        //    {
-        //        //get from API if no saved 
-        //        var savedExists = !string.IsNullOrEmpty(_timezone);
-        //        if (!savedExists)
-        //        {
-        //            //get timezone from Google API
-        //            var lifeEvtTimeNoTimezone = DateTime.ParseExact(this.StartTime, Time.DateTimeFormatNoTimezone, null);
-        //            _timezone = Tools.GetTimezoneOffsetString(this.Location, lifeEvtTimeNoTimezone, "AIzaSyDqBWCqzU1BJenneravNabDUGIHotMBsgE");
-        //        }
+        /// <summary>
+        /// unique ID stamped at creation
+        /// </summary>
+        [JsonPropertyName("Id")]
+        public string Id { get; set; }
 
-        //        return _timezone;
-        //    }
-        //    set => _timezone = value;
-        //}
+        /// <summary>
+        /// combined all text in life event used for search
+        /// </summary>
+        public string SearchText
+        {
+            get
+            {
+                var compiledText = "";
+
+                //add in all stuff
+                compiledText += Name;
+                compiledText += Description;
+                compiledText += StartTime;
+                compiledText += Nature;
+                compiledText += Weight;
+
+                return compiledText;
+            }
+        }
+
 
 
         //░█▀▄▀█ ░█▀▀▀ ▀▀█▀▀ ░█─░█ ░█▀▀▀█ ░█▀▀▄ ░█▀▀▀█ 
@@ -104,12 +110,12 @@ namespace VedAstro.Library
         public JObject ToJson()
         {
             var temp = new JObject();
+            temp["Id"] = this.Id;
             temp["Name"] = this.Name;
-            temp["StartTime"] = this.StartTime;
-            temp["Timezone"] = this.Timezone;
-            temp["Location"] = this.Location;
+            temp["StartTime"] = this.StartTime.ToJson();
             temp["Description"] = this.Description;
             temp["Nature"] = this.Nature;
+            temp["Weight"] = this.Weight;
 
             //compile into an JSON array
             return temp;
@@ -120,14 +126,14 @@ namespace VedAstro.Library
         public XElement ToXml()
         {
             var lifeEventXml = new XElement("LifeEvent");
+            var idXml = new XElement("Id", this.Id);
             var nameXml = new XElement("Name", this.Name);
-            var startTimeXml = new XElement("StartTime", this.StartTime);
-            var timezoneXml = new XElement("Timezone", this.Timezone);
-            var locationXml = new XElement("Location", this.Location);
+            var startTimeXml = new XElement("StartTime", this.StartTime.ToXml());
             var descriptionXml = new XElement("Description", this.Description);
             var natureXml = new XElement("Nature", this.Nature);
+            var weightXml = new XElement("Weight", this?.Weight ?? "Normal");
 
-            lifeEventXml.Add(nameXml, startTimeXml, timezoneXml, locationXml, descriptionXml, natureXml);
+            lifeEventXml.Add(idXml, nameXml, startTimeXml, descriptionXml, natureXml, weightXml);
 
             return lifeEventXml;
         }
@@ -146,14 +152,12 @@ namespace VedAstro.Library
             var lifeEventParsed = new LifeEvent();
 
             //try get data from xml else use empty string
+            lifeEventParsed.Id = !string.IsNullOrEmpty(lifeEventXml.Element("Id")?.Value) ? lifeEventXml?.Element("Id")?.Value : ""; //leave empty to detect
             lifeEventParsed.Name = !string.IsNullOrEmpty(lifeEventXml.Element("Name")?.Value) ? lifeEventXml?.Element("Name")?.Value : "";
-            lifeEventParsed.StartTime = !string.IsNullOrEmpty(lifeEventXml.Element("StartTime")?.Value) ? lifeEventXml?.Element("StartTime")?.Value : "";
-            lifeEventParsed.Timezone = !string.IsNullOrEmpty(lifeEventXml.Element("Timezone")?.Value) ? lifeEventXml?.Element("Timezone")?.Value : ""; //keep it empty so that can be detected and filled in later
-            const string defaultLocation = "Singapore"; //backup location for error free operation
-            lifeEventParsed.Location = !string.IsNullOrEmpty(lifeEventXml.Element("Location")?.Value) ? lifeEventXml?.Element("Location")?.Value : defaultLocation;
             lifeEventParsed.Description = !string.IsNullOrEmpty(lifeEventXml.Element("Description")?.Value) ? lifeEventXml?.Element("Description")?.Value : "";
             lifeEventParsed.Nature = !string.IsNullOrEmpty(lifeEventXml.Element("Nature")?.Value) ? lifeEventXml?.Element("Nature")?.Value : "";
-
+            lifeEventParsed.Weight = !string.IsNullOrEmpty(lifeEventXml.Element("Weight")?.Value) ? lifeEventXml?.Element("Weight")?.Value : "Normal";
+            lifeEventParsed.StartTime = Time.FromXml(lifeEventXml.Element("StartTime")?.Element("Time"));
 
             return lifeEventParsed;
 
@@ -170,12 +174,12 @@ namespace VedAstro.Library
             {
                 var temp = new LifeEvent();
 
+                temp.Id = lifeEvent["Id"].Value<string>();
                 temp.Name = lifeEvent["Name"].Value<string>();
-                temp.StartTime = lifeEvent["StartTime"].Value<string>();
-                temp.Timezone = lifeEvent["Timezone"].Value<string>();
-                temp.Location = lifeEvent["Location"].Value<string>();
+                temp.StartTime = Time.FromJson(lifeEvent["StartTime"]); ;
                 temp.Description = lifeEvent["Description"].Value<string>();
                 temp.Nature = lifeEvent["Nature"].Value<string>();
+                temp.Weight = lifeEvent["Weight"]?.Value<string>() ?? "Normal";
 
                 returnList.Add(temp);
             }
@@ -215,7 +219,7 @@ namespace VedAstro.Library
         public override string ToString()
         {
             //prepare string
-            var returnString = $"{this.Name} - {this.Nature} - {this.StartTime} - {this.Location} - {this.Description}";
+            var returnString = $"{this.Name} - {this.Nature} - {this.Weight} - {this.StartTime} - {this.Description}";
 
             //return string to caller
             return returnString;
@@ -227,98 +231,17 @@ namespace VedAstro.Library
         public override int GetHashCode()
         {
             //get hash of all the fields & combine them
+            var hash0 = Tools.GetStringHashCode(this.Id);
             var hash1 = Tools.GetStringHashCode(this.Name);
-            var hash2 = Tools.GetStringHashCode(this.StartTime);
-            var hash3 = Tools.GetStringHashCode(this.Timezone);
-            var hash4 = Tools.GetStringHashCode(this.Location);
+            var hash2 = this.StartTime.GetHashCode();
             var hash5 = Tools.GetStringHashCode(this.Description);
             var hash6 = Tools.GetStringHashCode(this.Nature);
+            var hash7 = Tools.GetStringHashCode(this.Weight);
 
             //take out negative before returning
-            return Math.Abs(hash1 + hash2 + hash3 + hash4 + hash5 + hash6);
+            return Math.Abs(hash0 + hash1 + hash2 + hash5 + hash6 + hash7);
         }
 
-
-        /// <summary>
-        /// TODO all events should have offset data on entry, as such google API here is a hack
-        /// TODO MARKED FOR DELETION use non async version
-        /// Gets the exact time with offset at the place where this event happened
-        /// Parses a event start time into DateTimeOffset
-        /// uses GOOGLE API
-        /// NOTE:
-        /// - standard time (STD) at the location at that time
-        /// </summary>
-        public async Task<DateTimeOffset> GetDateTimeOffsetAsync()
-        {
-            //get timezone from api and save it to local instance so that it can saved later
-            //only use API if timezone data not yet set, to save unnecessary slow calls to Google
-            this.Timezone = string.IsNullOrEmpty(this.Timezone)
-                ? await Tools.GetTimezoneOffsetString(this.Location, this.StartTime)
-                : this.Timezone;
-
-            //get start time of life event and find the position of it in slices (same as now line)
-            //so that this life event line can be placed exactly on the report where it happened
-            var lifeEvtTimeStr = $"{this.StartTime} {this.Timezone}"; //add offset 0 only for parsing, not used by API to get timezone
-            var lifeEvtTime = DateTimeOffset.ParseExact(lifeEvtTimeStr, Time.DateTimeFormat, null);
-
-            return lifeEvtTime;
-        }
-
-        public DateTimeOffset GetDateTimeOffset()
-        {
-            //get timezone from api and save it to local instance so that it can saved later
-            //only use API if timezone data not yet set, to save unnecessary slow calls to Google
-            this.Timezone = string.IsNullOrEmpty(this.Timezone)
-                ? throw new Exception($"Timezone data for event \"{this.Name}\" missing!")
-                : this.Timezone;
-
-            //get start time of life event and find the position of it in slices (same as now line)
-            //so that this life event line can be placed exactly on the report where it happened
-            var lifeEvtTimeStr = $"{this.StartTime} {this.Timezone}"; //add offset 0 only for parsing, not used by API to get timezone
-            var lifeEvtTime = DateTimeOffset.ParseExact(lifeEvtTimeStr, Time.DateTimeFormat, null);
-
-            return lifeEvtTime;
-        }
-
-
-        /// <summary>
-        /// Gets exact time event occurred without API
-        /// note: if timezone not filled, time zone set to +00:00
-        /// </summary>
-        /// <returns></returns>
-        public DateTimeOffset GetDateTimeOffsetLocal()
-        {
-            //used saved time zone or use the birth time zone as quick backup
-            this.Timezone = string.IsNullOrEmpty(this.Timezone)
-                ? "+00:00"
-                : this.Timezone;
-
-            //get start time of life event and find the position of it in slices (same as now line)
-            //so that this life event line can be placed exactly on the report where it happened
-            var lifeEvtTimeStr = $"{this.StartTime} {this.Timezone}"; //add offset 0 only for parsing, not used by API to get timezone
-            var lifeEvtTime = DateTimeOffset.ParseExact(lifeEvtTimeStr, Time.DateTimeFormat, null);
-
-            return lifeEvtTime;
-        }
-
-
-        /// <summary>
-        /// Note this call uses Google API everytime
-        /// </summary>
-        /// <returns></returns>
-        public async Task<Time> GetTime()
-        {
-            var stdTimeLocation = await this.GetDateTimeOffsetAsync();
-            var location = await this.GetGeoLocation();
-            var newTime = new Time(stdTimeLocation, location);
-            return newTime;
-        }
-
-        /// <summary>
-        /// Gets geo location instance for this event, uses Google API
-        /// </summary>
-        /// <returns></returns>
-        public async Task<GeoLocation> GetGeoLocation() => await GeoLocation.FromName(this.Location);
 
         /// <summary>
         /// compare logic to sort according to time
@@ -328,9 +251,9 @@ namespace VedAstro.Library
         /// </summary>
         public int CompareTo(LifeEvent lifeEvent)
         {
-            var inputTime = lifeEvent.GetDateTimeOffsetLocal();
+            var inputTime = lifeEvent.StartTime.GetStdDateTimeOffset();
 
-            var currentTime = this.GetDateTimeOffsetLocal();
+            var currentTime = this.StartTime.GetStdDateTimeOffset();
 
             //compare with time
             return currentTime.CompareTo(inputTime);

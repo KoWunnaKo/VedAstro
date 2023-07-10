@@ -10,6 +10,7 @@
     /// </summary>
     public static class JS
     {
+        public const string PlaySoundFromUrl = "Interop.PlaySoundFromUrl";
         public const string addOptionToSelectDropdown = "Interop.addOptionToSelectDropdown";
         public const string getProperty = "Interop.getProperty";
         public const string removeProperty = "Interop.removeProperty";
@@ -62,9 +63,20 @@
         public const string scrollIntoView = "Interop.scrollIntoView";
         public const string getAllLocalStorageKeys = "Interop.getAllLocalStorageKeys";
         public const string postWrapper = "Interop.postWrapper";
+        public const string SkyChartAnimate = "Interop.SkyChartAnimate";
+        public const string SkyChartInit = "Interop.SkyChartInit";
+        public const string SaveAsFile = "Interop.SaveAsFile";
         public const string getScreenData = "Interop.getScreenData";
         public const string shareDialogFacebook = "Interop.shareDialogFacebook";
 
+
+        //
+        public const string ReadOnlyIfPassJson = "Interop.ReadOnlyIfPassJson";
+        public const string ReadOnlyIfPassString = "Interop.ReadOnlyIfPassString";
+
+
+
+        //CHART
 
         public const string Swal_fire = "Swal.fire";
         public const string Swal_close = "Swal.close";
@@ -79,7 +91,8 @@
         public const string tippy = "tippy";
 
         //TIMEINPUT.JS
-        public const string LoadCalendar = "LoadCalendar";
+        public const string LoadCalendar = "Interop.LoadCalendar";
+        public const string InitCalendarPicker = "Interop.InitCalendarPicker";
 
 
         //BOOTSTRAP JS
@@ -87,6 +100,8 @@
         //SPECIAL SIGN IN FUNCS RESIDE IN index.html
         public const string facebookLogin = "window.facebookLogin";
         public const string SetSignInButtonInstance = "window.SetSignInButtonInstance";
+        public const string ResizeGoogleLoginButton = "window.ResizeGoogleLoginButton";
+
         /// <summary>
         /// can't use window. needs direct method name
         /// declared in index.html, no dots just direct method name
@@ -95,11 +110,6 @@
 
         //SPECIAL APP.JS FUNCS
         public const string GetInteropFuncList = "window.GetInteropFuncList";
-
-
-        //SPECIAL EVENTS CHART JS TODO CALLED INSIDE EVENTS CHART
-        public const string ChartFromSvgString = "ChartFromSvgString";
-        public const string DownloadChartFileSVG = "DownloadChartFileSVG";
 
 
 
@@ -111,7 +121,7 @@
         public const string import = "import";
 
 
-        public const string ChartFromGenerateDataXML = "window.API.ChartFromGenerateDataXML";
+        public const string ChartFromSVG = "window.API.ChartFromSVG";
 
     }
 }

@@ -117,18 +117,6 @@ namespace VedAstro.Library
                     ? (longitude + Angle.Degrees360) - birthAyanamsa
                     : longitude - birthAyanamsa;
 
-                //Calculates Kethu with inital values from Rahu
-                if (planetName == PlanetName.Ketu)
-                {
-                    //TODO unsure code, if below should u add 360 as done above instead of changing minus order?
-#if DEBUG_LOG
-                    LibLogger.Debug("!!!Running untested code!!! in GetPlanetNirayanaLongitude");
-#endif
-                    returnValue = returnValue < Angle.Degrees180
-                        ? Angle.Degrees180 - returnValue
-                        : returnValue - Angle.Degrees180;
-                }
-
 
                 return returnValue;
             }
@@ -1759,6 +1747,14 @@ namespace VedAstro.Library
         [API("PlanetRelationshipWithSign")]
         public static PlanetToSignRelationship GetPlanetRelationshipWithSign(PlanetName planetName, ZodiacName zodiacSignName, Time time)
         {
+
+            //no calculation for rahu and ketu here
+            var isRahu = planetName.Name == PlanetName.PlanetNameEnum.Rahu;
+            var isKetu = planetName.Name == PlanetName.PlanetNameEnum.Ketu;
+            var isRahuKetu = isRahu || isKetu;
+            if (isRahuKetu) { return PlanetToSignRelationship.Empty; }
+
+
             //types of relationship
             //Swavarga - own varga
             //Samavarga - neutral's varga
@@ -1809,6 +1805,16 @@ namespace VedAstro.Library
         [API("PlanetCombinedRelationshipWithPlanet")]
         public static PlanetToPlanetRelationship GetPlanetCombinedRelationshipWithPlanet(PlanetName mainPlanet, PlanetName secondaryPlanet, Time time)
         {
+
+            //no calculation for rahu and ketu here
+            var isRahu = mainPlanet.Name == PlanetName.PlanetNameEnum.Rahu;
+            var isKetu = mainPlanet.Name == PlanetName.PlanetNameEnum.Ketu;
+            var isRahu2 = secondaryPlanet.Name == PlanetName.PlanetNameEnum.Rahu;
+            var isKetu2 = secondaryPlanet.Name == PlanetName.PlanetNameEnum.Ketu;
+            var isRahuKetu = isRahu || isKetu || isRahu2 || isKetu2;
+            if (isRahuKetu) { return PlanetToPlanetRelationship.Empty; }
+
+
             //if main planet & secondary planet is same, then it is own plant (same planet), end here
             if (mainPlanet == secondaryPlanet) { return PlanetToPlanetRelationship.SamePlanet; }
 
@@ -2648,6 +2654,13 @@ namespace VedAstro.Library
         [API("PlanetSthanaBalaNeutralPoint", "", Category.Astronomical)]
         public static double GetPlanetSthanaBalaNeutralPoint(PlanetName planet)
         {
+            //no calculation for rahu and ketu here
+            var isRahu = planet.Name == PlanetName.PlanetNameEnum.Rahu;
+            var isKetu = planet.Name == PlanetName.PlanetNameEnum.Ketu;
+            var isRahuKetu = isRahu || isKetu;
+            if (isRahuKetu) { return 0; }
+
+
             //CACHE MECHANISM
             return CacheManager.GetCache(new CacheKey("GetPlanetSthanaBalaNeutralPoint", planet), _getPlanetSthanaBalaNeutralPoint);
 
@@ -2689,6 +2702,14 @@ namespace VedAstro.Library
         [API("ShadvargaBalaNeutralPoint")]
         public static double GetPlanetShadvargaBalaNeutralPoint(PlanetName planet)
         {
+
+            //no calculation for rahu and ketu here
+            var isRahu = planet.Name == PlanetName.PlanetNameEnum.Rahu;
+            var isKetu = planet.Name == PlanetName.PlanetNameEnum.Ketu;
+            var isRahuKetu = isRahu || isKetu;
+            if (isRahuKetu) { return 0; }
+
+
             //CACHE MECHANISM
             return CacheManager.GetCache(new CacheKey(nameof(GetPlanetShadvargaBalaNeutralPoint), planet), _getPlanetShadvargaBalaNeutralPoint);
 
@@ -2721,16 +2742,18 @@ namespace VedAstro.Library
         }
 
         /// <summary>
-        /// Checks if a planet is in a kendra house (4,7,10)
+        /// Checks if a planet is in a kendra house (1,4,7,10)
         /// </summary>
         [API("InKendra")]
         public static bool IsPlanetInKendra(PlanetName planet, Time time)
         {
             //The 4th, the 7th and the 10th are the Kendras
-            var planetHouse = AstronomicalCalculator.GetHousePlanetIsIn(time, planet);
+            var planetHouse = GetHousePlanetIsIn(time, planet);
 
             //check if planet is in kendra
-            return planetHouse == 4 || planetHouse == 7 || planetHouse == 10;
+            var isPlanetInKendra = planetHouse == 1 || planetHouse == 4 || planetHouse == 7 || planetHouse == 10;
+
+            return isPlanetInKendra;
         }
 
         /// <summary>
@@ -3083,8 +3106,8 @@ namespace VedAstro.Library
         ///     the planet is exalted but in a particular degree
         ///     its exaltation is at the maximum level.
         /// </summary>
-        [API("Exaltated")]
-        public static bool IsPlanetExaltated(PlanetName planet, Time time)
+        [API("Exalted")]
+        public static bool IsPlanetExalted(PlanetName planet, Time time)
         {
             //get planet location
             var planetLongitude = GetPlanetNirayanaLongitude(time, planet);
@@ -3792,26 +3815,26 @@ namespace VedAstro.Library
             var calculatorClass = typeof(AstronomicalCalculator);
 
             var calculators1 = from calculatorInfo in calculatorClass.GetMethods()
-                let parameter = calculatorInfo.GetParameters()
-                where parameter.Length == 2 //only 2 params
-                      && parameter[0].ParameterType == typeof(HouseName)  //planet name
-                      && parameter[1].ParameterType == typeof(Time)        //birth time
-                select calculatorInfo;
+                               let parameter = calculatorInfo.GetParameters()
+                               where parameter.Length == 2 //only 2 params
+                                     && parameter[0].ParameterType == typeof(HouseName)  //planet name
+                                     && parameter[1].ParameterType == typeof(Time)        //birth time
+                               select calculatorInfo;
 
             //second possible order, technically should be aligned todo
             var calculators3 = from calculatorInfo in calculatorClass.GetMethods()
-                let parameter = calculatorInfo.GetParameters()
-                where parameter.Length == 2 //only 2 params
-                      && parameter[0].ParameterType == typeof(Time)  //birth time
-                      && parameter[1].ParameterType == typeof(HouseName)        //planet name
-                select calculatorInfo;
+                               let parameter = calculatorInfo.GetParameters()
+                               where parameter.Length == 2 //only 2 params
+                                     && parameter[0].ParameterType == typeof(Time)  //birth time
+                                     && parameter[1].ParameterType == typeof(HouseName)        //planet name
+                               select calculatorInfo;
 
             //these are for calculators with static tag data
             var calculators2 = from calculatorInfo in calculatorClass.GetMethods()
-                let parameter = calculatorInfo.GetParameters()
-                where parameter.Length == 1 //only 2 params
-                      && parameter[0].ParameterType == typeof(HouseName)  //planet name
-                select calculatorInfo;
+                               let parameter = calculatorInfo.GetParameters()
+                               where parameter.Length == 1 //only 2 params
+                                     && parameter[0].ParameterType == typeof(HouseName)  //planet name
+                               select calculatorInfo;
 
 
             returnList.AddRange(calculators1);
@@ -3819,6 +3842,124 @@ namespace VedAstro.Library
             returnList.AddRange(calculators3);
 
             return returnList;
+
+        }
+
+        /// <summary>
+        /// Based on Shadvarga get nature of house for a person,
+        /// nature in number form to for easy calculation into summary
+        /// good = 1, bad = -1, neutral = 0
+        /// specially made method for life chart summary
+        /// </summary>
+        public static int GetHouseNatureScore(Time personBirthTime, HouseName inputHouse)
+        {
+            //if no house then no score
+            if (inputHouse == HouseName.Empty)
+            {
+                return 0;
+            }
+
+            //get house score
+            var houseStrength = GetHouseStrength(inputHouse, personBirthTime).ToDouble();
+
+            //based on score determine final nature
+            switch (houseStrength)
+            {
+                //positive
+                case > 550: return 2; //extra for power
+                case >= 450: return 1;
+
+                //negative
+                case < 250: return -3; //if below is even worse
+                case < 350: return -2; //if below is even worse
+                case < 450: return -1;
+                default:
+                    throw new Exception("No Strength Power defined!");
+            }
+        }
+
+        /// <summary>
+        /// Based on Shadvarga get nature of planet for a person,
+        /// nature in number form to for easy calculation into summary
+        /// good = 1, bad = -1, neutral = 0
+        /// specially made method for life chart summary
+        /// </summary>
+        public static int GetPlanetNatureScore(Time personBirthTime, PlanetName inputPlanet)
+        {
+            //get house score
+            var planetStrength = GetPlanetShadbalaPinda(inputPlanet, personBirthTime).ToDouble();
+
+
+            //based on score determine final nature
+            switch (planetStrength)
+            {
+                //positive
+                case > 550: return 2; //extra for power
+                case >= 450: return 1;
+
+                //negative
+                case < 250: return -3; //if below is even worse
+                case < 350: return -2; //if below is even worse
+                case < 450: return -1;
+                default:
+                    throw new Exception("No Strength Power defined!");
+            }
+        }
+
+        public enum Varna
+        {
+            SudraServant = 1,
+            VaisyaWorkmen = 2,
+            KshatriyaWarrior = 3,
+            BrahminScholar = 4
+        }
+
+        /// <summary>
+        /// Get a person's varna or color
+        /// A person's varna can be observed in real life
+        /// </summary>
+        public static Varna GetBirthVarna(Time birthTime)
+        {
+            //get ruling sign
+            var ruleSign = AstronomicalCalculator.GetPlanetRasiSign(PlanetName.Moon, birthTime).GetSignName();
+
+            //get grade
+            var maleGrade = GetGrade(ruleSign);
+
+            return maleGrade;
+
+            //higher grade is higher class
+            Varna GetGrade(ZodiacName sign)
+            {
+                switch (sign)
+                {   //Pisces, Scorpio and Cancer represent the highest development - Brahmin 
+                    case ZodiacName.Pisces:
+                    case ZodiacName.Scorpio:
+                    case ZodiacName.Cancer:
+                        return Varna.BrahminScholar;
+
+                    //Leo, Sagittarius and Libra indicate the second grade - or Kshatriya;
+                    case ZodiacName.Leo:
+                    case ZodiacName.Sagittarius:
+                    case ZodiacName.Libra:
+                        return Varna.KshatriyaWarrior;
+
+                    //Aries, Gemini and Aquarius suggest the third or the Vaisya;
+                    case ZodiacName.Aries:
+                    case ZodiacName.Gemini:
+                    case ZodiacName.Aquarius:
+                        return Varna.VaisyaWorkmen;
+
+                    //while Taurus, Virgo and Capricorn indicate the last grade, viz., Sudra
+                    case ZodiacName.Taurus:
+                    case ZodiacName.Virgo:
+                    case ZodiacName.Capricornus:
+                        return Varna.SudraServant;
+
+                    default: throw new Exception("");
+                }
+            }
+
 
         }
     }

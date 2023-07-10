@@ -1,26 +1,60 @@
 ﻿@using VedAstro.Library
 @using Library.API
+@using Tools = Library.API.Tools
 @namespace Website.Pages
+
+
 
 @*
     BUTTONS USED IN SIDEBAR
 - have been separated so that can render unique nav bar for mobile
 *@
-
 <IconButton FullWidth="true" SmallSize="true" Outline="true" ButtonText="Home" IconName="ant-design:home-twotone" ClickUrl="@PageRoute.Home" />
-<IconButton FullWidth="true" SmallSize="true" Outline="true" ButtonText="Match Checker" IconName="bi:arrow-through-heart-fill" ClickUrl="@PageRoute.Match" />
-<IconButton FullWidth="true" SmallSize="true" Outline="true" ButtonText="Life Predictor" IconName="gis:map-time" ClickUrl="@PageRoute.LifePredictor" />
-<IconButton FullWidth="true" SmallSize="true" Outline="true" ButtonText="Match Finder" IconName="game-icons:lovers" ClickUrl="@PageRoute.MatchFinder" />
-<IconButton FullWidth="true" SmallSize="true" Outline="true" ButtonText="Horoscope" IconName="fluent:book-star-20-filled" ClickUrl="@PageRoute.Horoscope" />
-<IconButton FullWidth="true" SmallSize="true" Outline="true" ButtonText="Stars Above Me" IconName="solar:moon-stars-bold" ClickUrl="@PageRoute.StarsAboveMe" />
-<IconButton FullWidth="true" SmallSize="true" Outline="true" ButtonText="API Builder" IconName="mdi:cloud-tags" ClickUrl="@PageRoute.APIBuilder" />
+<IconButton FullWidth="true" SmallSize="true" Outline="true" ButtonText="Match Checker" IconName="bi:arrow-through-heart-fill" ClickUrl="@PageRoute.Match">
+    <div style="" class="vstack gap-2 w-100">
+        <img class="rounded-2" src="images/MatchCheckerPreviewTooltip.gif"/>
+        <p style="text-align: center; font-size: 18px; white-space: nowrap; margin: 4px; @AppData.DescriptionFont">Easy prediction of relationship's future.</p>
+    </div>
+</IconButton>
+<IconButton FullWidth="true" SmallSize="true" Outline="true" ButtonText="Life Predictor" IconName="gis:map-time" ClickUrl="@PageRoute.LifePredictor">
+    <div style="" class="vstack gap-2 w-100">
+        @* <img class="rounded-2" src="images/EasyAPIBuilderGuide.gif" /> *@
+        <p style="text-align: center;font-size: 18px;white-space: nowrap;margin: 4px; @AppData.DescriptionFont">Easy prediction of real life events</p>
+    </div>
+</IconButton>
+
+<IconButton FullWidth="true" SmallSize="true" Outline="true" ButtonText="Match Finder" IconName="game-icons:lovers" ClickUrl="@PageRoute.MatchFinder">
+    <div style="" class="vstack gap-2 w-100">
+        @* <img class="rounded-2" src="images/MatchCheckerPreviewTooltip.gif" /> *@
+        <p style="text-align: center;font-size: 18px;white-space: nowrap;margin: 4px; @AppData.DescriptionFont">Find your astrologically perfect match</p>
+    </div>
+</IconButton>
+<IconButton FullWidth="true" SmallSize="true" Outline="true" ButtonText="Horoscope" IconName="fluent:book-star-20-filled" ClickUrl="@PageRoute.Horoscope">
+    <div style="" class="vstack gap-2 w-100">
+        @* <img class="rounded-2" src="images/MatchCheckerPreviewTooltip.gif" /> *@
+        <p style="text-align: center;font-size: 18px;white-space: nowrap;margin: 4px; @AppData.DescriptionFont">Predict a peron's character &amp; nature</p>
+    </div>
+</IconButton>
+<IconButton FullWidth="true" SmallSize="true" Outline="true" ButtonText="Stars Above Me" IconName="solar:moon-stars-bold" ClickUrl="@PageRoute.StarsAboveMe">
+    <div style="" class="vstack gap-2 w-100">
+        @* <img class="rounded-2" src="images/MatchCheckerPreviewTooltip.gif" /> *@
+        <p style="text-align: center;font-size: 18px;white-space: nowrap;margin: 4px; @AppData.DescriptionFont">Info of stars and planets above you now</p>
+    </div>
+</IconButton>
+<IconButton FullWidth="true" SmallSize="true" Outline="true" ButtonText="API Builder" IconName="mdi:cloud-tags" ClickUrl="@PageRoute.APIBuilder">
+    <div style="" class="vstack gap-2 w-100">
+        <img class="rounded-2" src="images/EasyAPIBuilderGuide.gif" />
+        <p style="text-align: center;font-size: 18px;white-space: nowrap;margin: 4px; @AppData.DescriptionFont">Build your HTTP calls fast and easy</p>
+    </div>
+</IconButton>
 
 <IconButton FullWidth="true" SmallSize="true" Outline="true" ButtonText="Top Secret" IconName="mdi:treasure-chest">
     <DropDownList>
-@*        <IconButton FullWidth="true" SmallSize="true" Outline="true" ButtonText="Journal" IconName="game-icons:secret-book" ClickUrl="@PageRoute.Journal"/>
+        @*        <IconButton FullWidth="true" SmallSize="true" Outline="true" ButtonText="Journal" IconName="game-icons:secret-book" ClickUrl="@PageRoute.Journal"/>
         <IconButton FullWidth="true" SmallSize="true" Outline="true" ButtonText="Muhurtha" IconName="ic:twotone-event" ClickUrl="@PageRoute.Muhurtha"/>
         <IconButton FullWidth="true" SmallSize="true" Outline="true" ButtonText="Birth Time Finder" IconName="fa-solid:history" ClickUrl="@PageRoute.BirthTimeFinder"/>
-*@        <li><a class="dropdown-item" href="@PageRoute.Journal">Journal</a></li>
+        *@
+        <li><a class="dropdown-item" href="@PageRoute.Journal">Journal</a></li>
         <li><a class="dropdown-item" href="@PageRoute.Muhurtha">Muhurtha</a></li>
         <li><a class="dropdown-item" href="@PageRoute.BirthTimeFinder">Birth Time Finder</a></li>
         <li><a class="dropdown-item" href="@PageRoute.LocalMeanTime">Local Mean Time</a></li>
@@ -53,22 +87,14 @@ else
 
 @code {
 
+    private ElementReference MatchTooltip;
 
     private async Task OnClickSignOutButton() => await InvokeAsync(async () => await _OnClickSignOutButton()).Try(_jsRuntime);
 
-
-    private async Task OnClickNavBarLoginButton()
-    {
-
-        //remember previous page to come back to after login
-        //saved in browser, so doesn't get deleted by refresh
-        var afterLoginPage = _navigation.Uri;
-        await _jsRuntime.SetProperty("PreviousPage", afterLoginPage);
-
-        //goto page
-        _navigation.NavigateTo(PageRoute.Login);
-
-    }
+    /// <summary>
+    /// note will auto direct to caller page after login
+    /// </summary>
+    private void OnClickNavBarLoginButton() => AppData.Go(PageRoute.Login);
 
 
     private async Task _OnClickSignOutButton()
@@ -88,11 +114,18 @@ else
         AppData.API = new VedAstroAPI(AppData.CurrentUser.Id, AppData.VisitorId, _jsRuntime, AppData.URL);
 
         //before reload page let user know log out went well
-        await _jsRuntime.ShowAlert("success", "Logged out, we hope you come back", false, 3000);
+        var possibles = new[]
+        {
+            "we hope you come back",
+            "we will miss you"
+        };
+        var randoText = VedAstro.Library.Tools.RandomSelect(possibles);
+        await _jsRuntime.ShowAlert("success", $"Logged out, {randoText}", false, 3000);
 
         //refresh page
         await _jsRuntime.LoadPage(PageRoute.Home);
 
     }
+
 
 }

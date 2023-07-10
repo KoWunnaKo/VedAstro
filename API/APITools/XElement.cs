@@ -2,6 +2,7 @@
 using Azure.Storage.Blobs.Models;
 using Microsoft.Azure.Functions.Worker.Http;
 using System.Xml.Linq;
+using VedAstro.Library;
 
 namespace API
 {
@@ -10,24 +11,6 @@ namespace API
     /// </summary>
     public static partial class APITools
     {
-        /// <summary>
-        /// Overwrites new XML data to a blob file
-        /// </summary>
-        public static async Task OverwriteBlobData(BlobClient blobClient, XDocument newData)
-        {
-            //convert xml data to string
-            var dataString = newData.ToString();
-
-            //convert xml string to stream
-            var dataStream = GenerateStreamFromString(dataString);
-
-            //upload stream to blob
-            await blobClient.UploadAsync(dataStream, overwrite: true);
-
-            //auto correct content type from wrongly set "octet/stream"
-            var blobHttpHeaders = new BlobHttpHeaders { ContentType = "text/xml" };
-            await blobClient.SetHttpHeadersAsync(blobHttpHeaders);
-        }
 
         public static async Task<XElement> ExtractDataFromRequestXml(HttpRequestData request)
         {
@@ -38,19 +21,6 @@ namespace API
             var xml = XElement.Parse(xmlString);
 
             return xml;
-        }
-        /// <summary>
-        /// Adds an XML element to XML document in blob form
-        /// </summary>
-        public static async Task<XDocument> AddXElementToXDocument(BlobClient xDocuBlobClient, XElement newElement)
-        {
-            //get person list from storage
-            var xDocument = await DownloadToXDoc(xDocuBlobClient);
-
-            //add new person to list
-            xDocument.Root.Add(newElement);
-
-            return xDocument;
         }
 
         /// <summary>

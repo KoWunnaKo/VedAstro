@@ -1,4 +1,4 @@
-﻿@namespace Website.Pages
+@namespace Website.Pages
 @using VedAstro.Library;
 @using System.Xml.Linq
 
@@ -6,7 +6,7 @@
 @*DROP DOWN VERSION*@
 @if (IsDropDownMode)
 {
-    <div class="dropdown @ExtraClass">
+    <div style="font-family: '@AppData.TitleFont', serif !important;" class="dropdown @ExtraClass">
         @*extra class for dropdown direct to parent div*@
         <button style="@FinalCss" @ref="ElementReference" @onmouseover="OnMouseOver" @onclick="OnClickButton" class="@ButtonClassStr" type="button" data-bs-toggle="dropdown" aria-expanded="false">
             @*only show icon if specified*@
@@ -16,7 +16,8 @@
             }
             @ButtonText
         </button>
-        <ul style="cursor: pointer;" class="dropdown-menu w-100"> @*auto match size with button width*@
+        <ul style="cursor: pointer;" class="dropdown-menu w-100">
+            @*auto match size with button width*@
             @DropDownList
         </ul>
     </div>
@@ -24,7 +25,7 @@
 @*NORMAL BUTTON*@
 else
 {
-    <button style="@FinalCss" @ref="ElementReference" @onmouseover="OnMouseOver" @onclick="OnClickButton" class="@ButtonClassStr">
+    <button style="@FinalCss font-family: '@AppData.TitleFont', serif !important;" @ref="ElementReference" @onmouseover="OnMouseOver" @onclick="OnClickButton" class="@ButtonClassStr">
         @*SPECIAL LITTLE EXTRA INFO TEXT*@
         @if (!string.IsNullOrEmpty(RetinaText))
         {
@@ -34,19 +35,23 @@ else
         @*only show icon if specified*@
         @if (IconName != null)
         {
-            <span class="iconify" data-icon="@IconName" data-width="25"/>
+            <span class="iconify" data-icon="@IconName" data-width="25" />
         }
         @ButtonText
     </button>
 
 }
 
-
-
 @*text below button*@
 @if (ShowDelayWarning)
 {
-    <IconText FontColor="#8f8f8f" IconName="mdi:snail">Warning Slow</IconText>
+    <IconText ExtraStyle="margin-top:-10px" FontColor="@AppData.Grey" FontSize="11" IconName="mdi:snail">Warning Slow</IconText>
+}
+
+@if (ChildContent != null)
+{
+    @* wrap in div to get reference to dynamic element, z needed to make top *@
+    <div style="z-index: 999;" @ref="@TooltipHTML">@ChildContent</div>
 }
 
 @code {
@@ -81,6 +86,9 @@ else
     /// </summary>
     [Parameter]
     public bool Outline { get; set; } = false;
+
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
 
     /// <summary>
     /// adds align-self: self-end; which pushes it down bottom of parent
@@ -150,6 +158,23 @@ else
     [Parameter]
     public string? TooltipText { get; set; }
 
+    /// <summary>
+    /// Tooltip text in HTML format
+    /// </summary>
+    [Parameter]
+    public ElementReference TooltipHTML
+    {
+        get => _tooltipHtml;
+        set
+        {
+            Console.WriteLine("TOOLTIP SET");
+            isToolTip = true;
+            _tooltipHtml = value;
+        }
+    }
+
+    [Parameter]
+    public bool isToolTip { get; set; } = false;
 
     /// <summary>
     /// Function that is called on click of button
@@ -205,9 +230,11 @@ else
     [Parameter]
     public bool TextCenter { get; set; } = false;
 
+    /// <summary>
+    /// refernce to div holding
+    /// </summary>
     [Parameter]
     public ElementReference ElementReference { get; set; }
-
 
     /// <summary>
     /// if true will use Golden Ratio 60.1px
@@ -238,6 +265,12 @@ else
         }
     }
 
+    private ElementReference _tooltipHtml;
+
+
+
+    //------------------------------------------------------------FUNCTION
+
     protected override async Task OnAfterRenderAsync(bool firstRender) => await InvokeAsync(async () => await _OnAfterRender(firstRender)).Try(_jsRuntime);
 
     private async Task _OnAfterRender(bool firstRender)
@@ -247,12 +280,37 @@ else
             //attach tooltip lib element if tooltip provided
             if (!string.IsNullOrEmpty(TooltipText))
             {
-                await _jsRuntime.Tippy(ElementReference, new { content = this.TooltipText });
+
+                var tooltipData = new { content = TooltipText, placement = "right" };
+                await _jsRuntime.Tippy(ElementReference, tooltipData);
+            }
+
+            //BIG HTML version
+            else if (ChildContent != null)
+            {
+                //make pop up bigger for to show preview video clearly
+                var customSet = new { maxWidth = GR.W412px };
+                await _jsRuntime.InvokeVoidAsync("tippy.setDefaultProps", customSet);
+
+
+                //attach tooltip lib element if tooltip provided
+                //construct html to show image
+                var tooltipSettings =
+                    new
+                    {
+                        placement = "right",
+                        content = TooltipHTML,
+                        theme = "light",
+                        allowHTML = true,
+                        arrow = true,
+                        interactive = true //so that can click button
+                    };
+
+
+                await _jsRuntime.Tippy(ElementReference, tooltipSettings);
             }
         }
     }
-
-
 
     /// <summary>
     /// Default button click will send page to URL link if provided
@@ -271,17 +329,88 @@ else
         //else if URL has been specified use that
         else if (IsClickMode)
         {
+
+            //sometimes we need spread the butter little
+            //NOTES: quantum probability we can't predict every motion
+            //      we can only know for certain it will occur at a point
+            //      as such we send user to places not based on priority and not certainty
+            ClickUrl = OverriteNavigationUrlBasedPriority(ClickUrl ?? "");
+
+
+            //url is modified above first only then we check if same url
+            //don't stop navigation just little greet to user
+            await HandleSamePageClick(ClickUrl ?? "");
+
+
             //if specified opens link in new tab
             if (OpenNewTab) { _jsRuntime.OpenNewTab(ClickUrl); }
-            else { _navigation.NavigateTo(ClickUrl); }
+            else { AppData.Go(ClickUrl); }
+        }
+    }
+
+    //sometimes we need spread the butter little
+    //NOTES: quantum probability we can't predict every motion
+    //      we can only know for certain it will occur at a point
+    //      as such we send user to places not based on priority and not certainty
+    private string? OverriteNavigationUrlBasedPriority(string? inputRelativeUrl)
+    {
+        //get current page url
+        var xxx = _navigation.Uri;
+        var urlTool = new Uri(xxx);
+        var currentRelativePath = urlTool.PathAndQuery;
+
+        var sameUrl = currentRelativePath == Path.Combine("/", inputRelativeUrl);
+
+        //if no overrides then same url as usual
+        var returnVal = inputRelativeUrl;
+
+        if (sameUrl)
+        {
+            switch (inputRelativeUrl)
+            {
+                
+                // case PageRoute.OpenApi: returnVal = PageRoute.APIBuilder; break;
+                // case PageRoute.APIBuilder: returnVal = PageRoute.OpenApi; break;
+                //case PageRoute.OpenApi:
+                //case PageRoute.APIBuilder:
+                //    returnVal = Tools.RandomSelect(new[] { PageRoute.OpenApi, PageRoute.APIBuilder });
+                //    break;
+            }
+        }
+
+
+        return returnVal;
+    }
+
+    //if already on page wanting to go, then say something about it's pointlessness
+    // you just wasted a click, you are already on the Home page my friend
+    private async Task HandleSamePageClick(string inputRelativeUrl)
+    {
+        //get current page url
+        var urlTool = new Uri(_navigation.Uri);
+        var currentRelativePath = urlTool.PathAndQuery;
+
+        var possibleMsg = new[]
+        {
+            "You are already where you want to go, my friend",
+            "Looks like you're sleepy. Go take a break.",
+            "You just wasted a click. Never getting that back.",
+            "You have reached your destination instantly",
+    };
+
+        var sameUrl = currentRelativePath == Path.Combine("/", inputRelativeUrl);
+        if (sameUrl)
+        {
+            await _jsRuntime.ShowAlert("info", $"Already on <strong>{ButtonText}</strong>", Tools.RandomSelect(possibleMsg));
         }
 
     }
 
     private async Task OnMouseOver(MouseEventArgs obj)
     {
+        //todo only log if mouse hovered long, else not valid data from here
         //log this
-        Console.WriteLine("Mouse Over Button!");
+        //WebLogger.Data($"Almost Click : {this.ButtonText}");
 
     }
 

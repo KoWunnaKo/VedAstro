@@ -24,6 +24,7 @@ window.PDFOptions = {
 };
 
 
+
 //SOFT DATA
 //initialize separate worker thread to handle all logging
 //goes first to make sure logger is ready to catch everybody else
@@ -53,23 +54,26 @@ Tools.printConsoleMessage();
 //will only show if small screen
 await SmallScreenGreetingMessage();
 
+
 /*
       Customized JS for initializing Darkmode.js
  */
 
 const options = {
     mixColor: '#fff', // default: '#fff'
-    backgroundColor: '#fff',  // default: '#fff'
-    buttonColorDark: '#100f2c',  // default: '#100f2c'
+    backgroundColor: '#fff', // default: '#fff'
+    buttonColorDark: '#100f2c', // default: '#100f2c'
     buttonColorLight: '#fff', // default: '#fff'
     saveInCookies: true, // default: true,
     autoMatchOsTheme: false // default: true
-}
+};
 
 //makes dark mode toggle available to Blazor
 window.DarkMode = new Darkmode(options);
 
-
+//eyes on page logger
+window.MinutesPassed = 0.5;
+setInterval(EyesOnPageLogger, 30 * 1000);
 
 
 
@@ -79,9 +83,39 @@ window.DarkMode = new Darkmode(options);
 //█▀ █▀█ █▀▀ █▀▀ █ ▄▀█ █░░   █▀▀ █░█ █▄░█ █▀▀ █▀
 //▄█ █▀▀ ██▄ █▄▄ █ █▀█ █▄▄   █▀░ █▄█ █░▀█ █▄▄ ▄█
 
+
+
+//simple log on time spent on page analytic
+//track time spent to read page
+async function EyesOnPageLogger() {
+
+    //based on page make count of minutes
+    var onSamePage = window.MinutedPassedPage == window.location.href;
+    if (onSamePage) {
+        //increment time on page
+        window.MinutesPassed = window.MinutesPassed + 0.5;
+        window.MinutedPassedPage = window.location.href; //save page
+    } else {
+        //reset since new page
+        window.MinutedPassedPage = 0.5;
+        window.MinutedPassedPage = window.location.href; //save page
+    }
+
+    //if time exceed 10 min no count, call it quits will log too much
+    if (window.MinutesPassed > 10) { return; }
+
+    //current page url
+    var msg = `EYES ON PAGE ${window.MinutesPassed} MIN`;
+
+    //get log payload from blazor
+    var payload = await DotNet.invokeMethodAsync('Website', 'GetDataLogPayload', msg);
+
+    //send a copy to server for logging
+    window.LogThread.postMessage(payload);
+}
+
 //makes sure every function needed by blazor is ready to be called
 //this allows full scale gonzo development pattern
-
 window.GetInteropFuncList = () => {
     var list = Object.keys(Interop);
     return list;
@@ -89,15 +123,23 @@ window.GetInteropFuncList = () => {
 
 //will show warning message to users with small screen or windows
 //for site is better viewed above 1080p
-function SmallScreenGreetingMessage() {
+async function SmallScreenGreetingMessage() {
+
+    //only show warning once
+    var isShownBefore = "IsShownSmallScreenMessage" in localStorage ? JSON.parse(localStorage["IsShownSmallScreenMessage"]) : false;
 
     //check if screen is too small
-    var isTooSmall = window.innerWidth < 1080;
+    var isTooSmall = window.innerWidth < 720;
 
-    if (isTooSmall) {
+
+    if (isTooSmall && !isShownBefore) {
         //show special message
-        Swal.fire('Small Screen Warning!', 'This site might not work on such a <strong>small screen</strong>. Don\'t say we didn\'t warn you.', 'warning'); 
+        Swal.fire('Screen Little Small!', 'Use device with <strong>larger screen</strong> for best experience', 'info');
+
+        //don't bother user too much, note that message shown, so next time no need to show
+        localStorage["IsShownSmallScreenMessage"] = JSON.stringify(true);
     }
+
 }
 
 //allows to override browser default error handler

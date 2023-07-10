@@ -102,6 +102,15 @@ namespace Website
                 _jsRuntime = value;
             }
         }
+        public static NavigationManager Navigation
+        {
+            get { return _navigation; }
+            set
+            {
+                Console.WriteLine("BLZ:Global Navigation Manager Initialized");
+                _navigation = value;
+            }
+        }
 
         /// <summary>
         /// If true means, loading box is still in show mode
@@ -140,7 +149,7 @@ namespace Website
         /// </summary>
         public static RenderFragment LoadingImage => (builder) =>
         {
-            builder.AddMarkupContent(0, $"<img style=\"position: relative; left: 39%; top: 30%;\" src=\"images/loading-animation-progress-transparent.gif\" />");
+            builder.AddMarkupContent(0, $"<img style=\"position: relative; left: 39%; top: 30%; cursor: progress;\" src=\"images/loading-animation-progress-transparent.gif\" />");
         };
 
         /// <summary>
@@ -149,7 +158,35 @@ namespace Website
         /// </summary>
         public static GeoLocation ClientLocation { get; set; }
 
-        public static string DefaultLocationCountry = "Singapore";
+        public static PersonSelectorBox PersonSelectorBox
+        {
+            get => _personSelectorBox;
+            set
+            {
+                Console.WriteLine("EXP:PERSON SELECTOR LOADED!!!!!!!!!");
+                _personSelectorBox = value;
+            }
+        }
+
+        /// <summary>
+        /// starts false, set when search is used for the 1st time
+        /// </summary>
+        public static bool SearchFilesLoaded { get; set; }
+
+
+        /// <summary>
+        /// standardized grey used in small text 
+        /// </summary>
+        public const string Grey = "#8f8f8f"; //#969696
+
+        public const string DefaultLocationCountry = "Singapore";
+
+        public const string TitleFont = "Lexend Deca";
+
+        public const string DescriptionFont = "font-family: 'Gowun Dodum', serif;";
+
+        public const string ButtonFont = "Varta";
+        public const string CursiveFont = "Homemade Apple";
 
 
         /// <summary>
@@ -159,6 +196,7 @@ namespace Website
         public static Uri? BaseAddress;
 
         private static IJSRuntime _jsRuntime;
+        private static NavigationManager _navigation;
 
         /// <summary>
         /// Counts the number of times the stamp was clicked
@@ -169,6 +207,8 @@ namespace Website
         /// manager to access everything API
         /// </summary>
         public static VedAstroAPI API;
+
+        private static PersonSelectorBox _personSelectorBox;
 
 
         /// <summary>
@@ -226,10 +266,67 @@ namespace Website
         }
 
 
-        /// <summary>
-        /// When called clears person list from memory, so new list is auto loaded from API on next get
-        /// </summary>
-        //public static void ClearPersonList() => AppData.PersonList = null;
 
+        /// <summary>
+        /// Simple blazor navigation wrapper with standard logging
+        /// if going to login page will auto set come back url
+        /// receiving page must then choose to use come back url
+        /// </summary>
+        public static void Go(string url, bool forceReload = false, bool newTab = false, bool rememberMe = false)
+        {
+            WebLogger.Data($"NAVIGATE -> {url}"); //log
+
+            //if going to login page then obviously enable auto comeback
+            //NOTE: this only sets data into browser storage, page as to start comeback
+            //saved in browser, so doesn't get deleted by refresh
+            if (url == PageRoute.Login || rememberMe)
+            {
+                var comebackUrl = _navigation.Uri; //current page url
+                _jsRuntime.SetProperty("PreviousPage", comebackUrl);
+            }
+
+
+            //same tab navigation
+            if (!newTab)
+            {
+                Navigation.NavigateTo(url, forceReload);
+            }
+            //new tab navigation
+            else
+            {
+                JsRuntime.OpenNewTab(url);
+            }
+
+        }
+
+
+
+        public static async Task LoadSearchFiles()
+        {
+            //this data is used later search for fast loading
+            AppData.HoroscopeDataList = await WebsiteTools.GetXmlFile("data/HoroscopeDataList.xml");
+            AppData.EventDataList = await WebsiteTools.GetXmlFile("data/EventDataList.xml");
+            AppData.ReferenceList = await WebsiteTools.GetXmlFile("data/ReferenceList.xml");
+
+            //mark as loaded so on next search won't reload
+            AppData.SearchFilesLoaded = true;
+
+        }
+
+        /// <summary>
+        /// used for quick search, no need to load all
+        /// </summary>
+        /// <returns></returns>
+        public static async Task LoadReferenceSearchFiles()
+        {
+            //this data is used later search for fast loading
+            AppData.ReferenceList = await WebsiteTools.GetXmlFile("data/ReferenceList.xml");
+
+            //mark as loaded so on next search won't reload
+            AppData.ReferenceSearchFilesLoaded = true;
+
+        }
+
+        public static bool ReferenceSearchFilesLoaded { get; set; }
     }
 }

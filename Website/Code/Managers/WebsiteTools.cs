@@ -3,6 +3,8 @@ using VedAstro.Library;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using System.Threading;
+using Website.Pages;
+using System.Reflection;
 
 namespace Website
 {
@@ -33,11 +35,6 @@ namespace Website
             return rawPayload;
         }
 
-        public static async Task OnClickShareFacebook(string pdfFileName, ElementReference elementToConvert)
-        {
-            var currentUrl = await AppData.JsRuntime.GetCurrentUrl();
-            await AppData.JsRuntime.InvokeVoidAsync(JS.shareDialogFacebook, currentUrl);
-        }
 
         /// <summary>
         /// show box to get email and log for sending todo
@@ -48,7 +45,6 @@ namespace Website
             var emailFromAlert = await AppData.JsRuntime.ShowSendToEmail("Send PDF to...");
 
             //calls special JS lib to convert html version of the chart to PDF
-            //and initiated download as well, with 1 call
             var cleanFileName = Tools.RemoveWhiteSpace(pdfFileName); //remove spaces so that no errors and looks clean in URL
 
             //will also show complete alert after done
@@ -139,7 +135,8 @@ namespace Website
             var result = GetPersonById(personId, jsRuntime).Result;
             return result;
         }
-        
+
+
         /// <summary>
         /// Gets person from ID
         /// Checks user's person list,
@@ -160,7 +157,7 @@ namespace Website
             //user's person profile, which is allowed but also monitored
             await WebLogger.Data($"Direct Link Access:{personId}");
 
-            foundPerson = await AppData.API.GetPerson(personId);
+            foundPerson = await AppData.API.Person.GetPerson(personId);
 
             return foundPerson;
 
@@ -170,7 +167,7 @@ namespace Website
             async Task<Person> GetFromPersonList(string personId)
             {
                 //try to get from person's own user list
-                var personList = await AppData.API.GetPersonList();
+                var personList = await AppData.API.Person.GetPersonList();
                 var personFromId = personList.Where(p => p.Id == personId);
 
                 //will return Empty person if none found
@@ -196,23 +193,6 @@ namespace Website
 
         public static void ReloadPage(NavigationManager navigation) => navigation.NavigateTo(navigation.Uri, forceLoad: true);
 
-        /// <summary>
-        /// Gets Dasa events from API
-        /// </summary>
-        public static async Task<List<Event>?> GetDasaEvents(double _eventsPrecision, Time startTime, Time endTime, IJSRuntime _jsRuntime, Person person)
-            => await EventsByTag(EventTag.Dasa, _eventsPrecision, startTime, endTime, _jsRuntime, person);
-
-        /// <summary>
-        /// Gets Bhukti events from API
-        /// </summary>
-        public static async Task<List<Event>?> GetBhuktiEvents(double _eventsPrecision, Time startTime, Time endTime, IJSRuntime _jsRuntime, Person person)
-            => await EventsByTag(EventTag.Bhukti, _eventsPrecision, startTime, endTime, _jsRuntime, person);
-
-        /// <summary>
-        /// Gets Antaram events from API
-        /// </summary>
-        public static async Task<List<Event>?> GetAntaramEvents(double _eventsPrecision, Time startTime, Time endTime, IJSRuntime _jsRuntime, Person person)
-            => await EventsByTag(EventTag.Antaram, _eventsPrecision, startTime, endTime, _jsRuntime, person);
 
         /// <summary>
         /// gets events from server filtered by event tag
@@ -497,8 +477,84 @@ namespace Website
             }
         }
 
+        public static async Task ShareCurrentPageOnFacebook()
+        {
+            var currentUrl = await AppData.JsRuntime.GetCurrentUrl();
+            await AppData.JsRuntime.InvokeVoidAsync(JS.shareDialogFacebook, currentUrl);
+        }
 
-       
+        /// <summary>
+        /// given a component instance will make it appear
+        /// </summary>
+        public static RenderFragment RenderContent(ComponentBase instance)
+        {
+            var fragmentField = GetPrivateField(instance.GetType(), "_renderFragment");
 
+            var value = (RenderFragment)fragmentField.GetValue(instance);
+
+            return value;
+        }
+
+        //https://stackoverflow.com/a/48551735/66988
+        private static FieldInfo GetPrivateField(Type t, String name)
+        {
+            const BindingFlags bf = BindingFlags.Instance |
+                                    BindingFlags.NonPublic |
+                                    BindingFlags.DeclaredOnly;
+
+            FieldInfo fi;
+            while ((fi = t.GetField(name, bf)) == null && (t = t.BaseType) != null) ;
+
+            return fi;
+        }
+
+
+        /// <summary>
+        /// Adds a message to API server records from user
+        /// </summary>
+        public static async Task SendMailToAPI(string? title, string? description)
+        {
+            //package message data to be sent
+            var textXml = new XElement("Title", title);
+            var emailXml = new XElement("Text", description);
+            var userIdXml = new XElement("UserId", AppData.CurrentUser?.Id);
+            var visitorIdXml = new XElement("VisitorId", AppData.VisitorId);
+            var messageXml = new XElement("Message", userIdXml, visitorIdXml, emailXml, Tools.TimeStampSystemXml, Tools.TimeStampServerXml, textXml);
+
+            //send message to API server
+            await ServerManager.WriteToServerXmlReply(AppData.URL.AddMessageApi, messageXml);
+        }
+
+
+        /// <summary>
+        /// gets debug mode set in browser memory
+        /// false = disabled, enabled = true
+        /// </summary>
+        public static async Task<bool> GetDebugModeBool()
+        {
+            var dataInBrowser = await AppData.JsRuntime.GetProperty("DebugMode"); //enabled/disabled
+            var debugMode = string.IsNullOrEmpty(dataInBrowser) ? false : (dataInBrowser == "enabled" ? true : false);
+
+            return debugMode;
+        }
+
+        public static async Task<string> GetDebugModeText()
+        {
+            string selectedDebugMode;
+
+            //only continue if logged in
+            if (!AppData.IsGuestUser)
+            {
+                var debugMode = await WebsiteTools.GetDebugModeBool();
+                selectedDebugMode = debugMode ? "enabled" : "disabled";
+            }
+            //if not logged in then auto set disabled
+            else
+            {
+                selectedDebugMode = "disabled";
+            }
+
+            return selectedDebugMode;
+        }
     }
 }

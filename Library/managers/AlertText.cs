@@ -58,8 +58,63 @@ namespace VedAstro.Library
         /// </summary>
         public static string ObliviousErrors() => Tools.RandomSelect(new[] { Unexpected, SlowUnstableInternet, NewFeatures, ImproveWebsite });
         public static string FunnyLoginText() => Tools.RandomSelect(new[] { PleaseLogin1, PleaseLogin2, PleaseLogin3 });
-        public static string IsDoneText() => Tools.RandomSelect(new[] { "Your pizza is ready!", "Generated nicely!", "Bingo done!", "Oh yeah, its done!" });
+        public static string FunnyPleaseSelectText(string subject = "")
+        {
+            //list messages here for faster access
+            var msgList = new[]
+            {
+                $"We are not mind readers. Please select {subject} to continue.",
+            };
 
+            var isDoneText = Tools.RandomSelect(msgList);
+            return isDoneText;
+        }
 
+        /// <summary>
+        /// How was your day, darling?
+        /// </summary>
+        /// <returns></returns>
+        public static string RandomNoun()
+        {
+            //word below should nicely ryme with My darling, my dear,
+            //exp: if you don't login, how are we supposed get your data, darling?
+            //note: comma before question
+            //How was your day, darling? 
+            var msgList = new[]
+            {
+                "dear",
+                "madam",
+                "sir",
+                "darling",
+                "friend",
+                "sweetheart",
+            };
+
+            var isDoneText = Tools.RandomSelect(msgList);
+            return isDoneText;
+
+        }
+
+        public static string IsDoneText()
+        {
+            //list messages here for faster access
+            var msgList = new[]
+            {
+                "Your pizza is ready!",
+                "Ready, captain!",
+                "Shells away!",
+                "Fire in the hole!",
+                "Your cake is baked!",
+                "Generated nicely!",
+                "Bingo done!",
+                "Oh yeah, its done!",
+                "Ready to sail, captain!",
+                "We have liftoff!",
+                "Houston, we have liftoff!",
+            };
+
+            var isDoneText = Tools.RandomSelect(msgList);
+            return isDoneText;
+        }
     }
 }

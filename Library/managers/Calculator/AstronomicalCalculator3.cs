@@ -1,12 +1,83 @@
 ﻿
+//< !--Mona Lisa by Leonardo da Vinci
+
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!>''''''<!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!'''''`             ``'!!!!!!!!!!!!!!!!!!!!!!!!
+//!!!!!!!!!!!!!!!!!!!!!!!!''`          .....         `'!!!!!!!!!!!!!!!!!!!!!
+//!!!!!!!!!!!!!!!!!!!!!'`      .      :::::'            `'!!!!!!!!!!!!!!!!!!
+//!!!!!!!!!!!!!!!!!!!'     .   '     .::::'                `!!!!!!!!!!!!!!!!
+//!!!!!!!!!!!!!!!!!'      :          `````                   `!!!!!!!!!!!!!!
+//!!!!!!!!!!!!!!!!        ., cchcccccc,,.                       `!!!!!!!!!!!!
+//!!!!!!!!!!!!!!!     .-"?$$$$$$$$$$$$$$c,                      `!!!!!!!!!!!
+//!!!!!!!!!!!!!!    , ccc$$$$$$$$$$$$$$$$$$$,                     `!!!!!!!!!!
+//!!!!!!!!!!!!!    z$$$$$$$$$$$$$$$$$$$$$$$$;.                    `!!!!!!!!!
+//!!!!!!!!!!!!    < $$$$$$$$$$$$$$$$$$$$$$$$$$:.                    `!!!!!!!!
+//!!!!!!!!!!!$$$$$$$$$$$$$$$$$$$$$$$$$$$h;:.                   !!!!!!!!
+//!!!!!!!!!!'     $$$$$$$$$$$$$$$$$$$$$$$$$$$$$h;.                   !!!!!!!
+//!!!!!!!!!'     <$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$                   !!!!!!!
+//!!!!!!!!'      `$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$F                   `!!!!!!
+//!!!!!!!!        c$$$$???$$$$$$$P""  """??????"                      !!!!!!
+//!!!!!!!         `"" .,.. "$$$$F    .,zcr                            !!!!!!
+//!!!!!!!         .  dL    .?$$$   ., cc,      ., z$h.                  !!!!!!
+//!!!!!!!!        <. $$c= <$d$$$   <$$$$=-=+"$$$$$$$                  !!!!!!
+//!!!!!!!         d$$$hcccd$$$$$   d$$$hcccd$$$$$$$F                  `!!!!!
+//!!!!!!         ,$$$$$$$$$$$$$$h d$$$$$$$$$$$$$$$$                   `!!!!!
+//!!!!!          `$$$$$$$$$$$$$$$<$$$$$$$$$$$$$$$$'                    !!!!!
+//!!!!!          `$$$$$$$$$$$$$$$$"$$$$$$$$$$$$$P>                     !!!!!
+//!!!!!           ?$$$$$$$$$$$$??$c`$$$$$$$$$$$?>'                     `!!!!
+//!!!!!           `?$$$$$$I7?""    ,$$$$$$$$$?>>'                       !!!!
+//!!!!!.           <<?$$$$$$c.    , d$$?$$$$$F>>''                       `!!!
+//!!!!!!            <i?$P"??$$r--"?""  ,$$$$h;> ''                       `!!!
+//!!!!!!$$$hccccccccc = cc$$$$$$$>> '                         !!!
+//!!!!!              `?$$$$$$F""""  `"$$$$$>>>''                         `!!
+//!!!!!                "?$$$$$cccccc$$$$??>>>>'                           !!
+//!!!!>                  "$$$$$$$$$$$$$F>>>>''                            `!
+//!!!!!                    "$$$$$$$$???>'''                                !
+//!!!!!>                     `"""""                                        `
+//!!!!!!;                       .                                          `
+//!!!!!!!                       ? h.
+//!!!!!!!!                       $$c,
+//!!!!!!!!>                      ?$$$h.              ., c
+//!!!!!!!!!                       $$$$$$$$$hc,.,, cc$$$$$
+//!!!!!!!!!                  ., zcc$$$$$$$$$$$$$$$$$$$$$$
+//!!!!!!!!!               .z$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+//!!!!!!!!!             , d$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$          .
+//!!!!!!!!!           , d$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$         !!
+//!!!!!!!!!         , d$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$        ,!'
+//!!!!!!!!>        c$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$.       !'
+//!!!!!!''       , d$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$>       '
+//!!!''         z$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$>
+//!'           ,$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$>             ..
+//            z$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$'           ;!!!!''`
+//            $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$F       ,; ; !'`'.''
+//           < $$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$>    ,; '`'  ,;
+//           `$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$F - '   ,;!!'
+//            "?$$$$$$$$$$?$$$$$$$$$$$$$$$$$$$$$$$$$$F     .<!!!'''       <!
+//         ! > "" ?? $$$? C3$$$$$$$$$$$$$$$$$$$$$$$$""     ;!'''          !!!
+//       ; !!!!;,      `"''""????$$$$$$$$$$$$$$$$""   ,;-''               ',!
+//      ; !!!!< !!!; .                `"""""""""""    `'                  ' '
+//      !!!!; !!! ; !!!!>;,;, ..' .                   '  '
+//     !!' ,;!!! ;'`!!!!!!!!; !!!!!;  .        > ' .''                 ;
+//    !!' ;!!'!';! !! !!!!!!!!!!!!!  ' - '
+//   < !!!! `!; ! `!' !!!!!!!!!!<!       .
+//   `!  ; !  ; !!! < ' <!!!! `!!! <       /
+//  `; !>  < !! ; '  !!!!'!!';!     ;'
+//   !!!!!!   `!!!  ; !!!'  '
+//  ;   `!  `!! ,'    !'; !'
+//      '   /`! !    <     !! <      '
+//           / ; !        >; ! ;>
+//             !'       ; !! '
+//          ' ;!        > ! '
+//            '
+//Allen Mullen-->
 
 
 using SwissEphNet;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Newtonsoft.Json.Linq;
-using VedAstro.Library;
 
 namespace VedAstro.Library
 {
@@ -431,7 +502,7 @@ namespace VedAstro.Library
             //UNDERLYING FUNCTION
             List<PlanetName> _getAllPlanetOrderedByStrength()
             {
-                var planetStrenghtList = new Dictionary<double, PlanetName>();
+                var planetStrenghtList = new Dictionary<PlanetName, double>();
 
                 //create a list with planet names & its strength (unsorted)
                 foreach (var planet in PlanetName.All9Planets)
@@ -443,23 +514,15 @@ namespace VedAstro.Library
                     var strengthAfterLimit = strength / getLimit(planet);
 
                     //place in list with planet name
-                    planetStrenghtList[strengthAfterLimit] = planet;
-
+                    planetStrenghtList.Add(planet, strengthAfterLimit);
                 }
 
 
                 //sort that list from strongest planet to weakest planet
-                var sortedList = planetStrenghtList.Keys.OrderByDescending(item => item);
+                var sortedList= planetStrenghtList.OrderByDescending(item => item.Value);
+                var nameOnlyList = sortedList.Select(x => x.Key).ToList();
 
-                var sortedArray = new List<PlanetName>();
-                foreach (var key in sortedList)
-                {
-                    //strongest planet added first
-                    sortedArray.Add(planetStrenghtList[key]);
-                }
-
-                return sortedArray;
-
+                return nameOnlyList;
 
                 /*--------------FUNCTIONS----------------*/
 
@@ -520,29 +583,29 @@ namespace VedAstro.Library
             //UNDERLYING FUNCTION
             HouseName[] _getAllHousesOrderedByStrength()
             {
-                var houseStrenghtList = new Dictionary<double, HouseName>();
+                var houseStrengthList = new Dictionary<double, HouseName>();
 
                 //create a list with planet names & its strength (unsorted)
                 foreach (var house in House.AllHouses)
                 {
                     //get house strength
-                    var strength = GetBhavaBala(house, time).ToRupa();
+                    var strength = GetHouseStrength(house, time).ToRupa();
 
                     //place in list with house number
-                    houseStrenghtList[strength] = house;
+                    houseStrengthList[strength] = house;
 
                 }
 
 
                 //sort that list from strongest house to weakest house
-                var keys_sorted = houseStrenghtList.Keys.ToList();
-                keys_sorted.Sort();
+                var keysSorted = houseStrengthList.Keys.ToList();
+                keysSorted.Sort();
 
                 var sortedArray = new HouseName[12];
                 var count = 11;
-                foreach (var key in keys_sorted)
+                foreach (var key in keysSorted)
                 {
-                    sortedArray[count] = houseStrenghtList[key];
+                    sortedArray[count] = houseStrengthList[key];
                     count--;
                 }
 
@@ -659,7 +722,11 @@ namespace VedAstro.Library
         [API("DrikBala")]
         public static Shashtiamsa GetPlanetDrikBala(PlanetName planetName, Time time)
         {
-
+            //no calculation for rahu and ketu here
+            var isRahu = planetName.Name == PlanetName.PlanetNameEnum.Rahu;
+            var isKetu = planetName.Name == PlanetName.PlanetNameEnum.Ketu;
+            var isRahuKetu = isRahu || isKetu;
+            if (isRahuKetu) { return Shashtiamsa.Zero; }
 
             double dk;
             var drishti = new Dictionary<String, double>();
@@ -815,6 +882,13 @@ namespace VedAstro.Library
         [API("NaisargikaBala")]
         public static Shashtiamsa GetPlanetNaisargikaBala(PlanetName planetName, Time time)
         {
+            //no calculation for rahu and ketu here
+            var isRahu = planetName.Name == PlanetName.PlanetNameEnum.Rahu;
+            var isKetu = planetName.Name == PlanetName.PlanetNameEnum.Ketu;
+            var isRahuKetu = isRahu || isKetu;
+            if (isRahuKetu) { return Shashtiamsa.Zero; }
+
+
             if (planetName == PlanetName.Sun) { return new Shashtiamsa(60); }
             else if (planetName == PlanetName.Moon) { return new Shashtiamsa(51.43); }
             else if (planetName == PlanetName.Venus) { return new Shashtiamsa(42.85); }
@@ -1427,6 +1501,13 @@ namespace VedAstro.Library
         [API("SthanaBala")]
         public static Shashtiamsa GetPlanetSthanaBala(PlanetName planetName, Time time)
         {
+
+            //no calculation for rahu and ketu here
+            var isRahu = planetName.Name == PlanetName.PlanetNameEnum.Rahu;
+            var isKetu = planetName.Name == PlanetName.PlanetNameEnum.Ketu;
+            var isRahuKetu = isRahu || isKetu;
+            if (isRahuKetu) { return Shashtiamsa.Zero; }
+
             //CACHE MECHANISM
             return CacheManager.GetCache(new CacheKey("GetPlanetSthanaBala", planetName, time), _getPlanetSthanaBala);
 
@@ -1609,6 +1690,13 @@ namespace VedAstro.Library
         [API("KalaBala")]
         public static Shashtiamsa GetPlanetKalaBala(PlanetName planetName, Time time)
         {
+            //no calculation for rahu and ketu here
+            var isRahu = planetName.Name == PlanetName.PlanetNameEnum.Rahu;
+            var isKetu = planetName.Name == PlanetName.PlanetNameEnum.Ketu;
+            var isRahuKetu = isRahu || isKetu;
+            if (isRahuKetu) { return Shashtiamsa.Zero; }
+
+
 
             //CACHE MECHANISM
             return CacheManager.GetCache(new CacheKey("GetPlanetKalaBala", planetName, time), _getPlanetKalaBala);
@@ -2334,6 +2422,14 @@ namespace VedAstro.Library
         [API("NathonnathaBala")]
         public static Shashtiamsa GetPlanetNathonnathaBala(PlanetName planetName, Time time)
         {
+
+            //no calculation for rahu and ketu here
+            var isRahu = planetName.Name == PlanetName.PlanetNameEnum.Rahu;
+            var isKetu = planetName.Name == PlanetName.PlanetNameEnum.Ketu;
+            var isRahuKetu = isRahu || isKetu;
+            if (isRahuKetu) { return Shashtiamsa.Zero; }
+
+
             //get local apparent time
             var localApparentTime = AstronomicalCalculator.GetLocalApparentTime(time);
 
@@ -2389,6 +2485,13 @@ namespace VedAstro.Library
         [API("DigBala")]
         public static Shashtiamsa GetPlanetDigBala(PlanetName planetName, Time time)
         {
+            //no calculation for rahu and ketu here
+            var isRahu = planetName.Name == PlanetName.PlanetNameEnum.Rahu;
+            var isKetu = planetName.Name == PlanetName.PlanetNameEnum.Ketu;
+            var isRahuKetu = isRahu || isKetu;
+            if (isRahuKetu) { return Shashtiamsa.Zero; }
+
+
             //get planet longitude
             var planetLongitude = AstronomicalCalculator.GetPlanetNirayanaLongitude(time, planetName);
 
@@ -2428,7 +2531,8 @@ namespace VedAstro.Library
             //get Digbala arc
             //Digbala arc= planet's long. - its powerless cardinal point.
             //var digBalaArc = planetLongitude.GetDifference(powerlessPointLongitude);
-            var digBalaArc = AstronomicalCalculator.GetDistanceBetweenPlanets(planetLongitude, powerlessPointLongitude);
+            var xxx = powerlessPointLongitude.TotalDegrees == null ? Angle.Zero : powerlessPointLongitude;
+            var digBalaArc = AstronomicalCalculator.GetDistanceBetweenPlanets(planetLongitude, xxx);
 
             //If difference is more than 180° 
             if (digBalaArc > Angle.Degrees180)
@@ -2463,14 +2567,13 @@ namespace VedAstro.Library
         /// enjoy them. The strength of a bhava is composed
         /// of three factors, viz., (1) Bhavadhipathi Bala,
         /// (2) Bhava Digbala, (3) Bhava Drishti Bala.
-        /// todo change to house strength
         /// </summary>
-        [API("BhavaBala")]
-        public static Shashtiamsa GetBhavaBala(HouseName inputHouse, Time time)
+        [API("HouseStrength", "Bhava Bala")]
+        public static Shashtiamsa GetHouseStrength(HouseName inputHouse, Time time)
         {
 
             //CACHE MECHANISM
-            return CacheManager.GetCache(new CacheKey("GetBhavabala", inputHouse, time), _getBhavabala);
+            return CacheManager.GetCache(new CacheKey(nameof(GetHouseStrength), inputHouse, time), _getBhavabala);
 
 
             //UNDERLYING FUNCTION
@@ -2795,8 +2898,8 @@ namespace VedAstro.Library
             //take top 3 as needed planets
             var returnList = new List<PlanetName>();
             returnList.Add(allPlanetByStrenght[0]);
-            returnList.Add(allPlanetByStrenght[1]);
-            returnList.Add(allPlanetByStrenght[2]);
+            //returnList.Add(allPlanetByStrenght[1]);
+            //returnList.Add(allPlanetByStrenght[2]);
 
             return returnList;
         }
@@ -2812,7 +2915,7 @@ namespace VedAstro.Library
             foreach (var house in House.AllHouses)
             {
                 //get house strength
-                var strength = GetBhavaBala(house, personBirthTime).ToDouble();
+                var strength = GetHouseStrength(house, personBirthTime).ToDouble();
 
                 if (strength > threshold)
                 {
@@ -2834,8 +2937,8 @@ namespace VedAstro.Library
             //take top 3 as needed planets
             var returnList = new List<HouseName>();
             returnList.Add(allPlanetByStrenght[0]);
-            returnList.Add(allPlanetByStrenght[1]);
-            returnList.Add(allPlanetByStrenght[2]);
+            //returnList.Add(allPlanetByStrenght[1]);
+            //returnList.Add(allPlanetByStrenght[2]);
 
             return returnList;
 
@@ -2869,11 +2972,11 @@ namespace VedAstro.Library
             //get all planets
             var allPlanetByStrenght = AstronomicalCalculator.GetAllPlanetOrderedByStrength(personBirthTime);
 
-            //take top 3 as needed planets
+            //take last 3 as needed planets
             var returnList = new List<PlanetName>();
             returnList.Add(allPlanetByStrenght[^1]);
-            returnList.Add(allPlanetByStrenght[^2]);
-            returnList.Add(allPlanetByStrenght[^3]);
+            //returnList.Add(allPlanetByStrenght[^2]);
+            //returnList.Add(allPlanetByStrenght[^3]);
 
             return returnList;
 
@@ -2890,7 +2993,7 @@ namespace VedAstro.Library
             foreach (var house in House.AllHouses)
             {
                 //get house strength
-                var strength = GetBhavaBala(house, personBirthTime).ToDouble();
+                var strength = GetHouseStrength(house, personBirthTime).ToDouble();
 
                 if (strength < threshold)
                 {
@@ -2908,59 +3011,95 @@ namespace VedAstro.Library
             //get all planets
             var allPlanetByStrenght = AstronomicalCalculator.GetAllHousesOrderedByStrength(personBirthTime);
 
-            //take top 3 as needed planets
+            //take last 3 as needed planets
             var returnList = new List<HouseName>();
             returnList.Add(allPlanetByStrenght[^1]);
-            returnList.Add(allPlanetByStrenght[^2]);
-            returnList.Add(allPlanetByStrenght[^3]);
+            //returnList.Add(allPlanetByStrenght[^2]);
+            //returnList.Add(allPlanetByStrenght[^3]);
 
             return returnList;
 
         }
-    }
 
-}
-
-/// <summary>
-/// Represents the mini strengths that mae the final strength of a house
-/// </summary>
-public class HouseSubStrength : IToJson
-{
-    public string Name = "";
-
-    public Dictionary<HouseName, double> Power { get; }
-
-    public HouseSubStrength(Dictionary<HouseName, double> power, string name)
-    {
-        Power = power;
-        Name = name;
-    }
-
-
-    public JObject ToJson()
-    {
-        var returnList = new JArray();
-
-        //add into a list for each house
-        foreach (var houseData in Power)
+        public static string GetAstralBodyPrediction(Person person)
         {
-            //pack data nicely
-            var temp = new JObject();
-            temp["House"] = (int)houseData.Key; //show as number
-            temp["Strength"] = houseData.Value; //show as number
+            var finalPrediction = "";
 
-            Console.WriteLine(temp.ToString());
+            var birthConst = AstronomicalCalculator.GetMoonConstellation(person.BirthTime);
+            var animal = AstronomicalCalculator.GetAnimal(birthConst.GetConstellationName());
 
-            //add to main list
-            returnList.Add(temp);
+            finalPrediction += animal.ToString();
+
+            return finalPrediction;
         }
 
-        //send list on its way
-        var wrap = new JObject();
-        wrap.Add(returnList);
+        /// <summary>
+        /// Given a constellation will give animal with sex, used for yoni kuta calculations
+        /// and body appearance prediction
+        /// </summary>
+        public static ConstellationAnimal GetAnimal(ConstellationName sign)
+        {
+            switch (sign)
+            {
+                case ConstellationName.Aswini:
+                    return new ConstellationAnimal("Male", AnimalName.Horse);
+                case ConstellationName.Satabhisha:
+                    return new ConstellationAnimal("Female", AnimalName.Horse);
+                case ConstellationName.Bharani:
+                    return new ConstellationAnimal("Male", AnimalName.Elephant);
+                case ConstellationName.Revathi:
+                    return new ConstellationAnimal("Female", AnimalName.Elephant);
+                case ConstellationName.Pushyami:
+                    return new ConstellationAnimal("Male", AnimalName.Sheep);
+                case ConstellationName.Krithika:
+                    return new ConstellationAnimal("Female", AnimalName.Sheep);
+                case ConstellationName.Rohini:
+                    return new ConstellationAnimal("Male", AnimalName.Serpent);
+                case ConstellationName.Mrigasira:
+                    return new ConstellationAnimal("Female", AnimalName.Serpent);
+                case ConstellationName.Moola:
+                    return new ConstellationAnimal("Male", AnimalName.Dog);
+                case ConstellationName.Aridra:
+                    return new ConstellationAnimal("Female", AnimalName.Dog);
+                case ConstellationName.Aslesha:
+                    return new ConstellationAnimal("Male", AnimalName.Cat);
+                case ConstellationName.Punarvasu:
+                    return new ConstellationAnimal("Female", AnimalName.Cat);
+                case ConstellationName.Makha:
+                    return new ConstellationAnimal("Male", AnimalName.Rat);
+                case ConstellationName.Pubba:
+                    return new ConstellationAnimal("Female", AnimalName.Rat);
+                case ConstellationName.Uttara:
+                    return new ConstellationAnimal("Male", AnimalName.Cow);
+                case ConstellationName.Uttarabhadra:
+                    return new ConstellationAnimal("Female", AnimalName.Cow);
+                case ConstellationName.Swathi:
+                    return new ConstellationAnimal("Male", AnimalName.Buffalo);
+                case ConstellationName.Hasta:
+                    return new ConstellationAnimal("Female", AnimalName.Buffalo);
+                case ConstellationName.Vishhaka:
+                    return new ConstellationAnimal("Male", AnimalName.Tiger);
+                case ConstellationName.Chitta:
+                    return new ConstellationAnimal("Female", AnimalName.Tiger);
+                case ConstellationName.Jyesta:
+                    return new ConstellationAnimal("Male", AnimalName.Hare);
+                case ConstellationName.Anuradha:
+                    return new ConstellationAnimal("Female", AnimalName.Hare);
+                case ConstellationName.Poorvashada:
+                    return new ConstellationAnimal("Male", AnimalName.Monkey);
+                case ConstellationName.Sravana:
+                    return new ConstellationAnimal("Female", AnimalName.Monkey);
+                case ConstellationName.Poorvabhadra:
+                    return new ConstellationAnimal("Male", AnimalName.Lion);
+                case ConstellationName.Dhanishta:
+                    return new ConstellationAnimal("Female", AnimalName.Lion);
+                case ConstellationName.Uttarashada:
+                    return new ConstellationAnimal("Male", AnimalName.Mongoose);
 
-        return wrap;
+
+
+                default: throw new Exception("");
+            }
+        }
     }
-
 }
-

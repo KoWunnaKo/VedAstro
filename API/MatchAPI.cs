@@ -2,7 +2,9 @@
 using Microsoft.Azure.Functions.Worker.Http;
 using Newtonsoft.Json.Linq;
 using System.Xml.Linq;
+using Newtonsoft.Json;
 using VedAstro.Library;
+using System.Net.Mime;
 
 namespace API
 {
@@ -11,6 +13,12 @@ namespace API
     /// </summary>
     public class MatchAPI
     {
+        //NEW
+
+
+
+        //------------
+
         //PUBLIC API
 
         [Function(nameof(Match))]
@@ -48,7 +56,6 @@ namespace API
                 return APITools.FailMessageJson(e, incomingRequest);
             }
         }
-
 
         /// <summary>
         /// called by match report page
@@ -125,7 +132,7 @@ namespace API
 
                 //save chart into storage
                 //note: todo do not wait to speed things up, beware! failure will go undetected on client
-                await APITools.AddXElementToXDocumentAzure(chartReadyToInject, APITools.SavedMatchReportList, APITools.BlobContainerName);
+                await Tools.AddXElementToXDocumentAzure(chartReadyToInject, APITools.SavedMatchReportList, Tools.BlobContainerName);
 
                 //let caller know all good
                 return APITools.PassMessage(incomingRequest);
@@ -154,11 +161,11 @@ namespace API
 
                 //STAGE 2 : SWAP DATA
                 //swap visitor ID with user ID if any (data follows user when log in)
-                await APITools.SwapUserId(visitorId, userId, APITools.SavedMatchReportList);
+                await APITools.SwapUserId(new CallerInfo(visitorId, userId), APITools.SavedMatchReportList);
 
                 //STAGE 3 : FILTER
                 //get updated all match reports (after swap)
-                var savedMatchReportList = await APITools.GetXmlFileFromAzureStorage(APITools.SavedMatchReportList, APITools.BlobContainerName);
+                var savedMatchReportList = await Tools.GetXmlFileFromAzureStorage(APITools.SavedMatchReportList, Tools.BlobContainerName);
                 //filter out record by user id
                 var userIdList = Tools.FindXmlByUserId(savedMatchReportList, userId);
 
@@ -178,18 +185,18 @@ namespace API
             }
         }
 
-        [Function("GetAllMatchForPerson")]
-        public static async Task<HttpResponseData> GetAllMatchForPerson([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = null)] HttpRequestData incomingRequest, string personId)
+        [Function(nameof(FindMatch))]
+        public static async Task<HttpResponseData> FindMatch([HttpTrigger(AuthorizationLevel.Anonymous, "get", Route = "FindMatch/PersonId/{personId}")] HttpRequestData incomingRequest, string personId)
         {
-            //todo needs work person ID  is not being fed in
 
-            var person = await APITools.GetPersonById(personId);
+            var person = await Tools.GetPersonById(personId);
 
             var personList = await GetAllPersonByMatchStrength(person);
 
-            var text = Tools.ListToString(personList);
+            var returnJson = PersonKutaScore.ToJsonList(personList);
 
-            return APITools.PassMessage(text, incomingRequest);
+            var x = await APITools.SendPassHeaderToCaller(returnJson.ToString(Formatting.None), incomingRequest, MediaTypeNames.Application.Json);
+            return x;
         }
 
 
@@ -232,7 +239,7 @@ namespace API
                 var ownerId = apiKey;
 
                 //there is possibility user has put invalid characters, clean it!
-                var nameInput = Tools.CleanNameText(name);
+                var nameInput = Tools.CleanAndFormatNameText(name);
 
                 //new person ID made from thin air todo should be generated for human consumption, use new generator
                 var newPersonProfileId = Tools.GenerateId();
@@ -256,8 +263,8 @@ namespace API
         /// </summary>
         public static async Task<MatchReport> GetNewMatchReport(string maleId, string femaleId, string userId)
         {
-            var male = await APITools.GetPersonById(maleId);
-            var female = await APITools.GetPersonById(femaleId);
+            var male = await Tools.GetPersonById(maleId);
+            var female = await Tools.GetPersonById(femaleId);
 
             //if male & female profile found, make report and return caller
             var notEmpty = !Person.Empty.Equals(male) && !Person.Empty.Equals(female);
@@ -328,17 +335,26 @@ namespace API
             return SortedList;
         }
 
-        private static async Task<List<Person>> GetAllPersonByMatchStrength(Person inputPerson)
+        /// <summary>
+        /// Gets all people ordered by kuta total strength 0 is highest kuta score
+        /// note : chart created to make score is discarded
+        /// </summary>
+        public static async Task<List<PersonKutaScore>> GetAllPersonByMatchStrength(Person inputPerson)
         {
             var resultList = new List<MatchReport>();
 
+            //set input person in correct gender order
             var inputPersonIsMale = inputPerson.Gender == Gender.Male;
 
-            var personList = await APITools.GetAllPersonList();
+            //get everybody
+            var everybody = await APITools.GetAllPersonList();
 
             //this makes sure each person is cross checked against this person correctly
-            foreach (var personMatch in personList)
+            foreach (var personMatch in everybody)
             {
+                //skip own record
+                if (personMatch.Equals(inputPerson)) { continue; }
+
                 //add report to list
                 MatchReport report;
 
@@ -359,15 +375,35 @@ namespace API
                 resultList.Add(report);
             }
 
+            //SORT
             //order the list by strength, highest at 0 index
-            var resultListOrdered = resultList.OrderBy(o => o.KutaScore).ToList();
+            var resultListOrdered = resultList.OrderByDescending(o => o.KutaScore).ToList();
 
-            //get needed details
+            //only above 70 should be considered perfect
+            var minimumScore = 70;
 
-            List<Person> personList2;
-            if (inputPersonIsMale) { personList2 = resultListOrdered.Select(x => x.Female).ToList(); }
-            else { personList2 = resultListOrdered.Select(x => x.Male).ToList(); }
+            //FILTER
+            //needs to meets minimum score to make into list
+            var finalList = 
+                from matchReport in resultListOrdered
+                where matchReport.KutaScore >= minimumScore
+                select matchReport;
 
+            //package together all the needed data
+            //get needed details, person name and score to them
+            List<PersonKutaScore> personList2;
+            personList2 = finalList.Select(matchReport =>
+            {
+                //if male put in female
+                //if female put in male
+                var matchPerson = inputPersonIsMale ? matchReport.Female : matchReport.Male;
+                var id = matchPerson.Id;
+                var name = matchPerson.Name;
+                var gender = matchPerson.Gender;
+                var age = matchPerson.GetAge();
+                return new PersonKutaScore(id, name, gender, age, matchReport.KutaScore);
+            }).ToList();
+            
             return personList2;
         }
 
@@ -402,6 +438,7 @@ namespace API
             return goodReports;
         }
     }
+
 
     public class AppInstance
     {

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using Library.API;
@@ -23,10 +24,11 @@ namespace Library.API
     /// </summary>
     public static class Tools
     {
-
-        public static async Task<JObject> ReadServer(string receiverAddress)
+        /// <summary>
+        /// No parsing direct from horses mouth
+        /// </summary>
+        public static async Task<string> ReadServerRaw(string receiverAddress)
         {
-            //prepare the data to be sent
             var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, receiverAddress);
 
             //tell sender to wait for complete reply before exiting
@@ -34,14 +36,98 @@ namespace Library.API
 
             //send the data on its way
             using var client = new HttpClient();
+            client.Timeout = Timeout.InfiniteTimeSpan;
             var response = await client.SendAsync(httpRequestMessage, waitForContent);
 
             //return the raw reply to caller
             var dataReturned = await response.Content.ReadAsStringAsync();
-            return JObject.Parse(dataReturned);
+
+            return dataReturned;
+        }
+        
+        /// <summary>
+        /// Only returns 
+        /// </summary>
+        public static async Task<JToken?> ReadOnlyIfPassJSJson(string receiverAddress, IJSRuntime jsRuntime)
+        {
+            //this call will take you to NetworkThread.js
+            //todo handle empty response
+            var rawPayloadStr = await jsRuntime.InvokeAsync<JsonElement>("Interop.ReadOnlyIfPassJson", receiverAddress);
+            var status = rawPayloadStr.GetProperty("Status").GetString();
+            var payload = rawPayloadStr.GetProperty("Payload").GetString() ?? "{}";
+
+
+            var isPass = status == "Pass";
+            //var payload = rawPayload["Payload"]?.Value<JToken>() ?? new JObject();
+            if (isPass)
+            {
+                var rawPayload = JToken.Parse(payload);
+
+                //return the raw reply to caller
+                return rawPayload;
+
+            }
+
+            //if anything but pass, don't look inside just say nothing
+            return null;
+
+
+
+        }
+        
+
+        /// <summary>
+        /// give null data to send to get auto use GET instead of POST done by JS side
+        /// </summary>
+        public static async Task<string?> ReadOnlyIfPassJSString(string receiverUrl, string? dataToSend, IJSRuntime jsRuntime)
+        {
+            //holds control till get
+            var rawPayloadStr = await jsRuntime.InvokeAsync<string?>("Interop.ReadOnlyIfPassString", receiverUrl, dataToSend);
+
+            return rawPayloadStr;
+
+            //var status = rawPayloadStr.GetProperty("Status").GetString();
+            //var payload = rawPayloadStr.GetProperty("Payload").GetString() ?? "{}";
+
+            //var isPass = status == "Pass";
+            ////var payload = rawPayload["Payload"]?.Value<JToken>() ?? new JObject();
+            //if (isPass)
+            //{
+            //    var rawPayload = JToken.Parse(payload);
+
+            //    //return the raw reply to caller
+            //    return rawPayload;
+
+            //}
+
+            ////if anything but pass, don't look inside just say nothing
+            //return null;
+
         }
 
-        public static async Task<JObject> WriteServer(HttpMethod method, string receiverAddress, JToken? payloadJson = null)
+        public static async Task<T?> ReadServer<T>(string receiverAddress) where T : JToken
+        {
+            //prepare the data to be sent
+            var dataReturned = await ReadServerRaw(receiverAddress);
+
+            //if no data from server than empty, end here
+            if (string.IsNullOrEmpty(dataReturned)) { return null; }
+
+            try
+            {
+                var parsed = JToken.Parse(dataReturned);
+                return parsed as T;
+            }
+            catch (Exception e)
+            {
+                //todo proper logging
+                Console.WriteLine(e);
+            }
+
+            return null;
+        }
+
+        public static async Task<JToken> WriteServer(HttpMethod method, string receiverAddress, JToken? payloadJson = null)
         {
 
             //prepare the data to be sent
@@ -66,65 +152,49 @@ namespace Library.API
             //return data as JSON as expected from API 
             return JObject.Parse(dataReturned);
         }
+
+
+
+        //        public static async Task<string?> ReadOnlyIfPass(string receiverAddress)
+        //        {
+        //            var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, receiverAddress);
+
+        //            //tell sender to wait for complete reply before exiting
+        //            //var waitForContent = HttpCompletionOption.ResponseHeadersRead;
+        //            //send the data on its way
+        //            using var client = new HttpClient();
+        //            //client.Timeout = Timeout.InfiniteTimeSpan;
+        //            var response = await client.SendAsync(httpRequestMessage);
+
+        //            //if not pass end here
+        //            //if (!response.IsSuccessStatusCode) { return null; }
+
+        //            //var sss = response.Headers.AsEnumerable().Where(x => x.Key.ToLower() == "call-status")?.FirstOrDefault().Value?.FirstOrDefault() ?? "EMPTY";
+        //            //only get content if response is pass
+        //            //var callStatus = response?.Headers?.GetValues("Call-Status")?.FirstOrDefault() ?? "Fail"; //fail if null
+        //            //response.TrailingHeaders.TryGetValues("call-status", out var calls);
+        //            response.Headers.TryGetValues("Call-Status", out var calls); //fail if null
+        //            var callStatus = calls?.FirstOrDefault() ?? "Fail";
+
+        //#if DEBUG
+        //            Console.WriteLine($"API SAID : {callStatus}");
+        //#endif
+        //            var isPass = callStatus == "Pass";
+        //            if (isPass)
+        //            {
+        //                //return the raw reply to caller
+        //                var dataReturned = await response.Content.ReadAsStringAsync();
+
+        //                return dataReturned;
+
+        //            }
+
+        //            //if anything but pass, don't look inside just say nothing
+        //            return null;
+
+        //        }
+
     }
 }
 
 
-
-//ARCHIVED CODE
-//public static async Task<string> Post(string apiUrl, XElement xmlData)
-//{
-//    //this call will take you to NetworkThread.js
-//    var rawPayload = await AppData.JsRuntime.InvokeAsync<string>(AppData.postWrapper, apiUrl, xmlData.ToString(SaveOptions.DisableFormatting));
-
-//    //todo proper checking of status needed
-//    return rawPayload;
-//}
-
-///// <summary>
-///// HTTP Post via JS interop
-///// </summary>
-//public static async Task<WebResult<XElement>> WriteToServerXmlReply(string apiUrl, XElement xmlData, int timeout = 60)
-//{
-
-//TryAgain:
-
-//    //ACT 1:
-//    //send data to URL, using JS for reliability & speed
-//    //also if call does not respond in time, we replay the call over & over
-//    string receivedData;
-//    try { receivedData = await VedAstro.Library.Tools.TaskWithTimeoutAndException(Post(apiUrl, xmlData), TimeSpan.FromSeconds(timeout)); }
-
-//    //if fail replay and log it
-//    catch (Exception e)
-//    {
-//        var debugInfo = $"Call to \"{apiUrl}\" timeout at : {timeout}s";
-
-//        //WebLogger.Data(debugInfo);
-//#if DEBUG
-//        Console.WriteLine(debugInfo);
-//#endif
-//        goto TryAgain;
-//    }
-
-//    //ACT 2:
-//    //check raw data 
-//    if (string.IsNullOrEmpty(receivedData))
-//    {
-//        //log it
-//        //await WebLogger.Error($"BLZ > Call returned empty\n To:{apiUrl} with payload:\n{xmlData}");
-
-//        //send failed empty data to caller, it should know what to do with it
-//        return new WebResult<XElement>(false, new XElement("CallEmptyError"));
-//    }
-
-//    //ACT 3:
-//    //return data as XML
-//    //problems might occur when parsing
-//    //try to parse as XML
-//    var writeToServerXmlReply = XElement.Parse(receivedData);
-//    var returnVal = WebResult<XElement>.FromXml(writeToServerXmlReply);
-
-//    //ACT 4:
-//    return returnVal;
-//}

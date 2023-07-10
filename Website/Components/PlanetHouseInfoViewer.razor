@@ -10,16 +10,23 @@
     }
 </style>
 
-<h4>Planet Info</h4>
-<div style="min-height: 150px; width:100%;" class="mb-5" id="@PlanetTableId"></div>
-<hr />
-<div style="min-height: 150px; width:100%;" class="mb-5" id="@PlanetInfoTableId"></div>
+<div class="vstack gap-3">
+    <div>
+        <h4>Planet Info</h4>
+        <div class="vstack gap-2">
+            <div style="min-height: 150px; width:100%;" class="" id="@PlanetTableId"></div>
+            <div style="min-height: 150px; width:100%;" class="" id="@PlanetInfoTableId"></div>
+        </div>
+    </div>
 
-<h4>House Info</h4>
-<div style="min-height: 150px; width:100%;" class="mb-5" id="@HouseTableId"></div>
-<hr />
-<div style="min-height: 150px; width:100%;" class="mb-5" id="@HouseInfoTableId"></div>
-
+    <div>
+        <h4>House Info</h4>
+        <div class="vstack gap-2">
+            <div style="min-height: 150px; width:100%;" class="" id="@HouseTableId"></div>
+            <div style="min-height: 150px; width:100%;" class="" id="@HouseInfoTableId"></div>
+        </div>
+    </div>
+</div>
 
 @code {
 
@@ -55,7 +62,7 @@
 
         //if harmful remove
         this.StateHasChanged();
-        
+
     }
 
     public List<object> GetHouseData()
@@ -79,12 +86,12 @@
             var _houseLord = lordOfHouse.ToString();
             var _planetsInHouse = Tools.ListToString<PlanetName>(AstronomicalCalculator.GetPlanetsInHouse(houseNumber, _time));
             var _planetsAspectingHouse = Tools.ListToString<PlanetName>(AstronomicalCalculator.GetPlanetsAspectingHouse((HouseName)houseNumber, _time));
-            var rawHouseStrength = AstronomicalCalculator.GetBhavaBala((HouseName)houseNumber, _time).ToDouble();
+            var rawHouseStrength = AstronomicalCalculator.GetHouseStrength((HouseName)houseNumber, _time).ToDouble();
             var _houseStrength = Math.Round(rawHouseStrength, 2).ToString();
             var _houseSign = AstronomicalCalculator.GetHouseSignName(houseNumber, _time).ToString();
             var _houseNavamsaSign = AstronomicalCalculator.GetHouseNavamsaSign((HouseName)houseNumber, _time).ToString();
 
-            var _lordExalted = AstronomicalCalculator.IsPlanetExaltated(lordOfHouse, _time);
+            var _lordExalted = AstronomicalCalculator.IsPlanetExalted(lordOfHouse, _time);
             var _lordDebilitated = AstronomicalCalculator.IsPlanetDebilitated(lordOfHouse, _time);
 
             var _currentSignDescription = AstronomicalCalculator.GetSignTags(AstronomicalCalculator.GetHouseSignName(houseNumber, _time));

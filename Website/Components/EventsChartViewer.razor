@@ -2,257 +2,36 @@
 @using VedAstro.Library
 @using System.Xml.Linq
 @using Newtonsoft.Json.Linq
+@using System.Text
 
 
-<div @ref="MainElement" class="vstack gap-1" style="width: fit-content;">
-    @*dont show controls until after chart has been made*@
-    @if (_isReady)
-    {
-        <div class="hstack gap-3 mt-2">
-            <IconTitle IconName="" />
-            <HelpIconTooltip Label="Chart" HelpText="@HelpText.DasaChart" />
+<div @ref="MainElement" class="vstack gap-1">
 
-            <IconButton SmallSize="true" Outline="true" ButtonText="Save" IconName="mdi:content-save-cog">
-                <DropDownList>
-                    <li>
-                        <a class="dropdown-item hstack gap-1" @onclick="OnClickSaveAsImage">
-                            <Icon ExtraClass="me-2 mt-1" NextToText="true" IconName="uil:image-download" />
-                            <span>Download</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a class="dropdown-item hstack gap-1" @onclick="OnClickSaveChartAPI">
-                            <Icon ExtraClass="me-2 mt-1" NextToText="true" IconName="material-symbols:cloud-upload" />
-                            <span>Cloud</span>
-                        </a>
-                    </li>
-                </DropDownList>
-            </IconButton>
-            <IconButton SmallSize="true" Outline="true" ButtonText="Share" IconName="ic:sharp-ios-share">
-                <DropDownList>
-                    <li>
-                        <a class="dropdown-item hstack gap-1" @onclick="@(()=>WebsiteTools.OnClickSendToEmail(PdfFileName, eventsChartSvgHolder))">
-                            <Icon ExtraClass="me-2 mt-1" NextToText="true" IconName="ic:outline-attach-email" />
-                            <span>Email</span>
-                        </a>
-                    </li>
-                    <li>
-                        <a class="dropdown-item hstack gap-1" @onclick="OnClickShareToFacebook">
-                            <Icon ExtraClass="me-2 mt-1" NextToText="true" IconName="uil:facebook" />
-                            <span>Facebook</span>
-                        </a>
-                    </li>
-                </DropDownList>
-            </IconButton>
-
-
-
-            @*PLANET*@
-            <div class="dropdown">
-                <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <Icon IconName="ant-design:highlight-twotone" /> Planets
-                </button>
-                <ul class="dropdown-menu">
-                    <li class="dropdown-item">
-                        <div class="form-check">
-                            <input class="form-check-input CheckBox" id="Sun" type="checkbox" value="">
-                            <label class="form-check-label" for="flexCheckDefault">Sun @AstronomicalCalculator.GetPlanetShadbalaPinda(PlanetName.Sun, SelectedPerson.BirthTime).ToDouble()</label>
-                        </div>
-                    </li>
-                    <li class="dropdown-item">
-                        <div class="form-check">
-                            <input class="form-check-input CheckBox" id="Moon" type="checkbox" value="">
-                            <label class="form-check-label" for="flexCheckDefault">Moon @AstronomicalCalculator.GetPlanetShadbalaPinda(PlanetName.Moon, SelectedPerson.BirthTime).ToDouble()</label>
-                        </div>
-                    </li>
-                    <li class="dropdown-item">
-                        <div class="form-check">
-                            <input class="form-check-input CheckBox" id="Mars" type="checkbox" value="">
-                            <label class="form-check-label" for="flexCheckDefault">Mars @AstronomicalCalculator.GetPlanetShadbalaPinda(PlanetName.Mars, SelectedPerson.BirthTime).ToDouble()</label>
-                        </div>
-                    </li>
-                    <li class="dropdown-item">
-                        <div class="form-check">
-                            <input class="form-check-input CheckBox" id="Mercury" type="checkbox" value="">
-                            <label class="form-check-label" for="flexCheckDefault">Mercury @AstronomicalCalculator.GetPlanetShadbalaPinda(PlanetName.Mercury, SelectedPerson.BirthTime).ToDouble()</label>
-                        </div>
-                    </li>
-                    <li class="dropdown-item">
-                        <div class="form-check">
-                            <input class="form-check-input CheckBox" id="Venus" type="checkbox" value="">
-                            <label class="form-check-label" for="flexCheckDefault">Venus @AstronomicalCalculator.GetPlanetShadbalaPinda(PlanetName.Venus, SelectedPerson.BirthTime).ToDouble()</label>
-                        </div>
-                    </li>
-                    <li class="dropdown-item">
-                        <div class="form-check">
-                            <input class="form-check-input CheckBox" id="Jupiter" type="checkbox" value="">
-                            <label class="form-check-label" for="flexCheckDefault">Jupiter @AstronomicalCalculator.GetPlanetShadbalaPinda(PlanetName.Jupiter, SelectedPerson.BirthTime).ToDouble()</label>
-                        </div>
-                    </li>
-                    <li class="dropdown-item">
-                        <div class="form-check">
-                            <input class="form-check-input CheckBox" id="Saturn" type="checkbox" value="">
-                            <label class="form-check-label" for="flexCheckDefault">Saturn @AstronomicalCalculator.GetPlanetShadbalaPinda(PlanetName.Saturn, SelectedPerson.BirthTime).ToDouble()</label>
-                        </div>
-                    </li>
-                    <li class="dropdown-item">
-                        <div class="form-check">
-                            <input class="form-check-input CheckBox" id="Rahu" type="checkbox" value="">
-                            <label class="form-check-label" for="flexCheckDefault">Rahu @AstronomicalCalculator.GetPlanetShadbalaPinda(PlanetName.Rahu, SelectedPerson.BirthTime).ToDouble()</label>
-                        </div>
-                    </li>
-                    <li class="dropdown-item">
-                        <div class="form-check">
-                            <input class="form-check-input CheckBox" id="Ketu" type="checkbox" value="">
-                            <label class="form-check-label" for="flexCheckDefault">Ketu @AstronomicalCalculator.GetPlanetShadbalaPinda(PlanetName.Ketu, SelectedPerson.BirthTime).ToDouble()</label>
-                        </div>
-                    </li>
-                </ul>
+    @* BUTTON ROW *@
+    <div class="hstack gap-3 mb-2">
+        <IconButton SmallSize="true" Outline="true" ButtonText="Show/Hide" IconName="bx:hide">
+            <div style="" class="vstack gap-2 w-100">
+                <p style="text-align: center;font-size: 18px;white-space: nowrap;margin: 4px; @AppData.DescriptionFont">Coming soon to a browser near you</p>
             </div>
-
-            @*HOUSE*@
-            <style>
-                house-info-style {
-                    font-size: 10px;
-                    color: grey;
-                }
-            </style>
-            <div class="dropdown">
-                <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <Icon IconName="ant-design:highlight-twotone" /> Houses
-                </button>
-                <ul class="dropdown-menu">
-                    <li class="dropdown-item">
-                        <div class="form-check">
-                            <input class="form-check-input CheckBox" id="House 1" type="checkbox" value="">
-                            <label class="form-check-label" for="flexCheckDefault"><span>House 1</span><span class="house-info-style">@AstronomicalCalculator.GetBhavaBala((HouseName)1, SelectedPerson.BirthTime).ToDouble() | personal self, personal behavior</span></label>
-                        </div>
-                    </li>
-                    <li class="dropdown-item">
-                        <div class="form-check">
-                            <input class="form-check-input CheckBox" id="House 2" type="checkbox" value="">
-                            <label class="form-check-label" for="flexCheckDefault"><span>House 2</span><span class="house-info-style">@AstronomicalCalculator.GetBhavaBala((HouseName)2, SelectedPerson.BirthTime).ToDouble() | accumulated money/wealth, food, speech</span></label>
-                        </div>
-                    </li>
-                    <li class="dropdown-item">
-                        <div class="form-check">
-                            <input class="form-check-input CheckBox" id="House 3" type="checkbox" value="">
-                            <label class="form-check-label" for="flexCheckDefault"><span>House 3</span><span class="house-info-style">@AstronomicalCalculator.GetBhavaBala((HouseName)3, SelectedPerson.BirthTime).ToDouble() | younger siblings, artistic expression, communication, courage</span></label>
-                        </div>
-                    </li>
-                    <li class="dropdown-item">
-                        <div class="form-check">
-                            <input class="form-check-input CheckBox" id="House 4" type="checkbox" value="">
-                            <label class="form-check-label" for="flexCheckDefault"><span>House 4</span><span class="house-info-style">@AstronomicalCalculator.GetBhavaBala((HouseName)4, SelectedPerson.BirthTime).ToDouble() | mother, happiness, vehicles, fixed assets/real estate</span></label>
-                        </div>
-                    </li>
-                    <li class="dropdown-item">
-                        <div class="form-check">
-                            <input class="form-check-input CheckBox" id="House 5" type="checkbox" value="">
-                            <label class="form-check-label" for="flexCheckDefault"><span>House 5</span><span class="house-info-style">@AstronomicalCalculator.GetBhavaBala((HouseName)5, SelectedPerson.BirthTime).ToDouble() | romance/love from spouse, speculation, meditation techniques, intelligence</span></label>
-                        </div>
-                    </li>
-                    <li class="dropdown-item">
-                        <div class="form-check">
-                            <input class="form-check-input CheckBox" id="House 6" type="checkbox" value="">
-                            <label class="form-check-label" for="flexCheckDefault"><span>House 6</span><span class="house-info-style">@AstronomicalCalculator.GetBhavaBala((HouseName)6, SelectedPerson.BirthTime).ToDouble() | acute disease, struggle, war, opposition, service</span></label>
-                        </div>
-                    </li>
-                    <li class="dropdown-item">
-                        <div class="form-check">
-                            <input class="form-check-input CheckBox" id="House 7" type="checkbox" value="">
-                            <label class="form-check-label" for="flexCheckDefault"><span>House 7</span><span class="house-info-style">@AstronomicalCalculator.GetBhavaBala((HouseName)7, SelectedPerson.BirthTime).ToDouble() | partnerships</span></label>
-                        </div>
-                    </li>
-                    <li class="dropdown-item">
-                        <div class="form-check">
-                            <input class="form-check-input CheckBox" id="House 8" type="checkbox" value="">
-                            <label class="form-check-label" for="flexCheckDefault"><span>House 8</span><span class="house-info-style">@AstronomicalCalculator.GetBhavaBala((HouseName)8, SelectedPerson.BirthTime).ToDouble() | longevity, transcendental knowledge, unearned wealth, secrets, chronic illness</span></label>
-                        </div>
-                    </li>
-                    <li class="dropdown-item">
-                        <div class="form-check">
-                            <input class="form-check-input CheckBox" id="House 9" type="checkbox" value="">
-                            <label class="form-check-label" for="flexCheckDefault"><span>House 9</span><span class="house-info-style">@AstronomicalCalculator.GetBhavaBala((HouseName)9, SelectedPerson.BirthTime).ToDouble() | god, philosophy, guru, religion, fortune, relation with father</span></label>
-                        </div>
-                    </li>
-                    <li class="dropdown-item">
-                        <div class="form-check">
-                            <input class="form-check-input CheckBox" id="House 10" type="checkbox" value="">
-                            <label class="form-check-label" for="flexCheckDefault"><span>House 10</span><span class="house-info-style">@AstronomicalCalculator.GetBhavaBala((HouseName)10, SelectedPerson.BirthTime).ToDouble() | career, father’s position</span></label>
-                        </div>
-                    </li>
-                    <li class="dropdown-item">
-                        <div class="form-check">
-                            <input class="form-check-input CheckBox" id="House 11" type="checkbox" value="">
-                            <label class="form-check-label" for="flexCheckDefault"><span>House 11</span><span class="house-info-style">@AstronomicalCalculator.GetBhavaBala((HouseName)11, SelectedPerson.BirthTime).ToDouble() | cash flow, opportunities, hopes, friends, influential people older sibling</span></label>
-                        </div>
-                    </li>
-                    <li class="dropdown-item">
-                        <div class="form-check">
-                            <input class="form-check-input CheckBox" id="House 12" type="checkbox" value="">
-                            <label class="form-check-label" for="flexCheckDefault"><span>House 12</span><span class="house-info-style">@AstronomicalCalculator.GetBhavaBala((HouseName)12, SelectedPerson.BirthTime).ToDouble() | enlightenment, expenditures/losses, pleasures from spouse, confinement</span></label>
-                        </div>
-                    </li>
-                </ul>
+        </IconButton>
+        <IconButton SmallSize="true" Outline="true" ButtonText="Life Events" IconName="mdi:calendar-outline">
+            <div style="" class="vstack gap-2 w-100">
+                <p style="text-align: center;font-size: 18px;white-space: nowrap;margin: 4px; @AppData.DescriptionFont">Coming soon to a browser near you</p>
             </div>
-
-            @*Show /hide*@
-            <div class="dropdown">
-                <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    <Icon IconName="zondicons:view-show" /> Show/Hide
-                </button>
-                <ul class="dropdown-menu">
-                    <li class="dropdown-item">
-                        <div class="form-check">
-                            <input class="form-check-input CheckBox" id="LifeEvents" type="checkbox" value="">
-                            <label class="form-check-label" for="flexCheckDefault">Life Events</label>
-                        </div>
-                    </li>
-                    <li class="dropdown-item">
-                        <div class="form-check">
-                            <input class="form-check-input CheckBox" id="ColorSummary" type="checkbox" value="">
-                            <label class="form-check-label" for="flexCheckDefault">Color Summary</label>
-                        </div>
-                    </li>
-                    <li class="dropdown-item">
-                        <div class="form-check">
-                            <input class="form-check-input CheckBox" id="SmartSummary" type="checkbox" value="">
-                            <label class="form-check-label" for="flexCheckDefault">Smart Summary</label>
-                        </div>
-                    </li>
-                    <li class="dropdown-item">
-                        <div class="form-check">
-                            <input class="form-check-input CheckBox" id="BarSummary" type="checkbox" value="">
-                            <label class="form-check-label" for="flexCheckDefault">Bar Summary</label>
-                        </div>
-                    </li>
-                </ul>
+        </IconButton>
+        <IconButton SmallSize="true" Outline="true" ButtonText="Save" IconName="ic:outline-save" OnClickCallback="OnClickSaveChartSvg" />
+        <IconButton SmallSize="true" Outline="true" ButtonText="Share" IconName="ion:share-outline">
+            <div style="" class="hstack gap-2 w-100">
+                <IconButton SmallSize="true" ButtonText="Email" OnClickCallback="OnClickShareToEmail" IconName="ion:share-outline" />
+                <IconButton SmallSize="true" ButtonText="Facebook" IconName="ion:share-outline" />
             </div>
-
-            @*        <IconButton @ref="_showButton" ButtonText="Life Events" IconName="clarity:eye-show-solid" OnClickCallback="OnClickShowLifeEvents" SmallSize="true" />
-        *@@*        <IconButton @ref="_hideButton" ButtonText="Life Events" IconName="clarity:eye-hide-solid" OnClickCallback="OnClickHideLifeEvents" SmallSize="true" />
-        *@
-
-            @*only show mobile view when eventPreset & timePreset has been set*@
-            @if (!string.IsNullOrEmpty(_eventPreset))
-            {
-                <IconButton SmallSize="true" @ref="_mobileViewButton" ButtonText="Mobile View" IconName="icomoon-free:mobile" OnClickCallback="OnClickMobileViewButton" />
-            }
-            @*only show "Save" button if viewing newly generated chart, so that no erroneous double save*@
-            @if (!_nowSavedChart)
-            {
-                @*            <IconButton ButtonText="Save Chart" IconName="entypo:save" OnClickCallback="OnClickSaveChartAPI" SmallSize="true" />
-        *@
-            }
-            @*only show "Direct Link" & "Delete" button if viewing saved chart*@
-            @if (_nowSavedChart)
-            {
-                <IconButton ButtonText="Copy Link" IconName="carbon:link" OnClickCallback="OnClickCopyChartLink" SmallSize="true" />
-                <IconButton ButtonText="Delete" IconName="fluent:delete-16-regular" OnClickCallback="OnClickDeleteChart" SmallSize="true" />
-            }
-        </div>
-    }
+        </IconButton>
+        <IconButton SmallSize="true" Outline="true" ButtonText="Print" IconName="ic:round-print">
+            <div style="" class="vstack gap-2 w-100">
+                <p style="text-align: center;font-size: 18px;white-space: nowrap;margin: 4px; @AppData.DescriptionFont">Coming soon to a browser near you</p>
+            </div>
+        </IconButton>
+    </div>
 
     @*
     dark mode is disabled for chart with mix-blend-mode
@@ -261,10 +40,9 @@
     <div @ref="eventsChartSvgHolder" class="container-xxl" id="EventsChartSvgHolder" style="margin-left: -11px; @(AppData.DarkMode?"mix-blend-mode: difference;":"")"></div>
 
     @*bottom chart options row*@
+
+
 </div>
-
-
-
 
 @code {
 
@@ -285,7 +63,6 @@
     /// </summary>
     public string CurrentChartId { get; set; }
 
-    private bool _nowSavedChart = false; //set by show chart button
 
     public Person SelectedPerson { get; set; }
     public string _timePreset { get; set; }
@@ -294,6 +71,7 @@
     ElementReference _eventsChartSvgHolder;
     public Time StartTime { get; set; }
     public Time EndTime { get; set; }
+    public TimeRange TimeRange => new TimeRange(StartTime, EndTime);
     public List<EventTag> InputedEventTags { get; set; }
 
     private IconButton _showButton;
@@ -312,6 +90,9 @@
     /// </summary>
     bool _isReady = false;
 
+    public string RawChartSvg { get; set; }
+
+    public TimeRange SelectedTimeRange { get; set; }
 
 
 
@@ -324,8 +105,6 @@
 
         if (isDirty)
         {
-            //default show life event
-            //await OnClickShowLifeEvents();
             isDirty = false;//reset
         }
     }
@@ -334,8 +113,11 @@
     /// Sets the data that is processed and fill the content
     /// - Parent element calls here to start display chart process
     /// </summary>
-    public async Task ShowChart(Person person, Time startTime, Time endTime, List<EventTag> inputedEventTags)
+    public async Task ShowChart(Person person, TimeRange timeRange, List<EventTag> inputedEventTags)
     {
+        //stop if empty person
+        if (Person.Empty.Equals(person)) { throw new InvalidOperationException("PERSON CAN'T BE EMPTY!!!"); }
+
         try
         {
             //close previous if any
@@ -343,66 +125,22 @@
 
             //saved to be accessed later
             SelectedPerson = person;
-            StartTime = startTime;
-            EndTime = endTime;
             InputedEventTags = inputedEventTags;
+            SelectedTimeRange = timeRange;
 
-            //1 : package data to get chart
-            var payloadJson = GetChartGeneratorDataJson(person, startTime, endTime, inputedEventTags);
+            //get raw SVG chart from API as string
+            int maxWidth = 940; //to fit nicely in page
+            RawChartSvg = await AppData.API.EventsChart.GetEventsChart(person, timeRange, inputedEventTags, maxWidth);
 
-            var fff = await Chart.GetDataParsed(payloadJson);
-            string chartId = fff.GetEventsChartSignature();
-            
-
-            //skip getting new chart if old chart is there
-            var reply3 = await Library.API.Tools.WriteServer(HttpMethod.Get, $"{AppData.URL.GetCallStatus}/{chartId}");
-            var runtimeStatus3 = reply3["Payload"].Value<string>();
-            var isCompleted = runtimeStatus3 == "Completed";
-            if (isCompleted)
-            {
-                goto ShowChart;
-            }
-
-
-            //2 : use EventsChart.js to take over from here
-            //note : JS code will generate, inject & animate chart
-            //create new chart from svg string
-            //await _jsRuntime.InvokeVoidAsync(JS.ChartFromGenerateDataXML, payloadXml.ToString());
-            var reply = await Library.API.Tools.WriteServer(HttpMethod.Post, AppData.URL.GetEventsChartAsync, payloadJson);
-            chartId = reply["Payload"].Value<string>();
-
-
-    //start calling API till complete
-            var isNotComplete = true;
-            while (isNotComplete)
-            {
-                var reply2 = await Library.API.Tools.WriteServer(HttpMethod.Get, $"{AppData.URL.GetCallStatus}/{chartId}");
-                var runtimeStatus = reply2["Payload"].Value<string>();
-                isNotComplete = runtimeStatus != "Completed";
-
-                Console.WriteLine($"API SAID : {runtimeStatus}");
-
-                //check every once in a while
-                await Task.Delay(450);
-            }
-
-
-            ShowChart:
-            //control reahes here than already complete
-            var url = $"{AppData.URL.GetEventsChartResult}/{chartId}";
-            await _jsRuntime.InvokeVoidAsync(JS.ChartFromGenerateDataXML, url);
-
-            //var svg = await Library.API.Tools.WriteServer(HttpMethod.Get, );
-
-            //Console.WriteLine(svg.ToString());
+            //bring chart to live with EventsChart.js
+            await _jsRuntime.InvokeVoidAsync(JS.ChartFromSVG, RawChartSvg);
 
             //get latest dark mode setting
             //so that event chart is not lost in darkness
             await AppData.UpdateDarkMode(_jsRuntime);
 
-            //set current chart as not from saved version
-            //note: used to show and hide buttons
-            _nowSavedChart = false;
+            //play sound for better ux
+            _jsRuntime.PlayDoneSound();
 
             //render html
             _isReady = true;
@@ -412,188 +150,17 @@
         }
         catch (Exception e)
         {
-            //todo log it
+            WebLogger.Error(e);
             Console.WriteLine(e.Message);
-            Console.WriteLine(e.StackTrace);
-
-            //should not happen, let user know
-            await _jsRuntime.ShowAlert("error", AlertText.ObliviousErrors(), true);
         }
 
     }
-
-    /// <summary>
-    /// Given a saved chart name in local storage, it will load it into page
-    /// </summary>
-    public async Task ShowSavedChart(string selectedChartId)
-    {
-        //save chart id, used to generate direct link
-        CurrentChartId = selectedChartId;
-
-        //set current chart as from saved version (to hide save button)
-        //only show "Save" button if viewing newly generated chart, so that no erroneous double save
-        _nowSavedChart = true;
-
-        //1 GENERATE CHART IN SVG FROM SERVER
-        //saved for later use by Chart Saver
-        _finalSvg = await GetSavedEventsChartSvgFromApi(selectedChartId);
-
-        //gets person profile used to generate the saved chart being showed now
-        //needs to be set else parent depending will fail todo funny code
-        SelectedPerson = await WebsiteTools.GetPersonIdFromChartId(selectedChartId, _jsRuntime);
-
-        //2 LOAD CHART INTO PAGE
-        await LoadChartIntoPage(_finalSvg);
-
-        //needed to make save button appear again
-        StateHasChanged();
-
-    }
-
-    /// <summary>
-    /// calculates the precision of the events to fit inside 1000px width
-    /// </summary>
-    public static double GetDayPerPixel(Time start, Time end)
-    {
-        const int maxWidth = 1000; //px
-
-        var daysBetween = end.Subtract(start).TotalDays;
-        var daysPerPixel = Math.Round(daysBetween / maxWidth, 3); //small val = higher precision
-                                                                  //var daysPerPixel = Math.Round(yearsBetween * 0.4, 3); //small val = higher precision
-                                                                  //daysPerPixel = daysPerPixel < 1 ? 1 : daysPerPixel; // minimum 1 day per px
-
-        return daysPerPixel;
-    }
-
 
 
 
     //█▀█ █▀█ █ █░█ ▄▀█ ▀█▀ █▀▀   █▀▄▀█ █▀▀ ▀█▀ █░█ █▀█ █▀▄ █▀
     //█▀▀ █▀▄ █ ▀▄▀ █▀█ ░█░ ██▄   █░▀░█ ██▄ ░█░ █▀█ █▄█ █▄▀ ▄█
 
-
-    /// <summary>
-    /// Given an SVG as string, it will inject it into page & attach
-    /// the needed JS handlers for animation
-    /// </summary>
-    private async Task LoadChartIntoPage(string rawSvgChart)
-    {
-        //create new chart from svg string
-        await _jsRuntime.InvokeVoidAsync(JS.ChartFromSvgString, rawSvgChart, _eventsChartSvgHolder);
-
-        //get latest dark mode setting
-        //so that event chart is set properly
-        await AppData.UpdateDarkMode(_jsRuntime);
-
-        //needed to show changes to inputs
-        StateHasChanged();
-    }
-
-
-    private async Task<string> GetSavedEventsChartSvgFromApi(string chartId)
-    {
-        var chartIdXml = new XElement("ChartId", chartId);
-        var svgStream = await ServerManager.WriteToServerStreamReply(AppData.URL.GetSavedEventsChart, chartIdXml, _jsRuntime);
-
-        //todo just send as string to remove lags of using stream (testing needed 1st, maybe same or faster)
-        // convert stream to string
-        svgStream.Position = 0; //reset position otherwise can be null value out
-        var reader = new StreamReader(svgStream);
-        var svgText = await reader.ReadToEndAsync();
-
-        return svgText;
-
-    }
-
-    /// <summary>
-    /// Packages the data to send to API to generate the chart
-    /// </summary>
-    //private XElement GetChartGeneratorData(Person inputPerson, Time startTime, Time endTime, List<EventTag> inputedEventTags)
-    //{
-    //    //auto calculate precision
-    //    var daysPerPixelRaw = GetDayPerPixel(startTime, endTime);
-    //    //if not defined, use input
-    //    double daysPerPixelInput = 30;
-    //    daysPerPixelInput = daysPerPixelRaw != 0 ? daysPerPixelRaw : daysPerPixelInput;
-
-
-    //    var personIdXml = new XElement("PersonId", inputPerson.Id);
-    //    var startTimeXml = new XElement("StartTime", startTime.ToXml());
-    //    var endTimeXml = new XElement("EndTime", endTime.ToXml());
-    //    var daysPerPixelXml = new XElement("DaysPerPixel", daysPerPixelInput);
-    //    var eventTagListXml = EventTagExtensions.ToXmlList(inputedEventTags);
-    //    var rootXml = new XElement("Root", personIdXml, startTimeXml, endTimeXml, eventTagListXml, daysPerPixelXml);
-
-    //    return rootXml;
-
-    //    //note: when calling this api via postman, svg needs to be parsed in boxy-svg before viewable
-    //    //var svgStream = await ServerManager.WriteToServerStreamReply(AppData.URL.GetEventsChartDirect, rootXml, _jsRuntime);
-
-    //    //todo just send as string to remove lags of using stream (testing needed 1st, maybe same or faster)
-    //    // convert stream to string
-    //    //svgStream.Position = 0; //reset position otherwise can be null value out
-    //    //var reader = new StreamReader(svgStream);
-    //    //var svgText = await reader.ReadToEndAsync();
-
-    //    //return svgText;
-    //}
-
-    private JObject GetChartGeneratorDataJson(Person inputPerson, Time startTime, Time endTime, List<EventTag> inputedEventTags)
-    {
-        //auto calculate precision
-        var daysPerPixelRaw = GetDayPerPixel(startTime, endTime);
-        //if not defined, use input
-        double daysPerPixelInput = 30;
-        daysPerPixelInput = daysPerPixelRaw != 0 ? daysPerPixelRaw : daysPerPixelInput;
-
-        var returnPayload = new JObject();
-
-        returnPayload["PersonId"] = inputPerson.Id;
-        returnPayload["StartTime"] = startTime.ToJson();
-        returnPayload["EndTime"] = endTime.ToJson();
-        returnPayload["DaysPerPixel"] = daysPerPixelInput;
-        returnPayload["EventTagList"] = EventTagExtensions.ToJsonList(inputedEventTags);
-
-        return returnPayload;
-
-
-    }
-
-    private async Task<bool> SaveReportSvgInApi(Person inputPerson, Time startTime, Time endTime, List<EventTag> inputedEventTags)
-    {
-        //auto calculate precision
-        var daysPerPixelRaw = GetDayPerPixel(startTime, endTime);
-        //if not defined, use input
-        double daysPerPixelInput = 30;
-        daysPerPixelInput = daysPerPixelRaw != 0 ? daysPerPixelRaw : daysPerPixelInput;
-
-
-        var personIdXml = new XElement("PersonId", inputPerson.Id);
-        var startTimeXml = new XElement("StartTime", startTime.ToXml());
-        var endTimeXml = new XElement("EndTime", endTime.ToXml());
-        var daysPerPixelXml = new XElement("DaysPerPixel", daysPerPixelInput);
-        var eventTagListXml = EventTagExtensions.ToXmlList(inputedEventTags);
-        var rootXml = new XElement("Root", personIdXml, startTimeXml, endTimeXml, eventTagListXml, daysPerPixelXml);
-        //note: when calling this api via postman, svg needs to be parsed in boxy-svg before viewable
-        Console.WriteLine(rootXml.ToString());
-        var result = await ServerManager.WriteToServerXmlReply(AppData.URL.SaveEventsChart, rootXml);
-
-        return result.IsPass;
-    }
-
-
-    private async Task OnChangeLifeEventCheckBox(ChangeEventArgs obj)
-    {
-        //based on checked value hide or show
-        if ((bool)obj.Value)
-        {
-            await _jsRuntime.Show("#LifeEventLinesHolder");
-        }
-        else
-        {
-            await _jsRuntime.Hide("#LifeEventLinesHolder");
-        }
-    }
 
     /// <summary>
     /// Generates the needed url and opens new tab with it
@@ -610,29 +177,6 @@
         _jsRuntime.OpenNewTab(url);
     }
 
-    private async Task OnClickDeleteChart()
-    {
-        //show loading message
-        await _jsRuntime.ShowLoading();
-
-        //tell API to delete chart, using chart id
-        await WebsiteTools.DeleteSavedChart(CurrentChartId, _jsRuntime);
-
-        //let user know chart has been deleted
-        await _jsRuntime.ShowAlert("success", $"Chart deleted successfully!", false, timer: 2000);
-
-        //refresh the page variables
-        //todo marked for deletion, test without = no difference > delete
-        this.StateHasChanged();
-
-        //page ready
-        _jsRuntime.HideAlert();
-
-        ////send user to task list page after period of time
-        //await Task.Delay(100);
-        //_navigation.NavigateTo(PageRoute.PersonList);
-    }
-
     private async Task OnClickCopyChartLink()
     {
         //generate the url
@@ -643,31 +187,6 @@
 
         //let user know link coppied
         await _jsRuntime.ShowAlert("success", $"Chart Link Copied!", false, 2600);
-    }
-
-    /// <summary>
-    /// saves chart to server
-    /// </summary>
-    /// <returns></returns>
-    private async Task OnClickSaveChartAPI()
-    {
-        //todo for some reason after click there still remains a lag
-        await _jsRuntime.ShowLoading();
-
-        //hold control until loading box popped
-        await AppData.IfNoLoadingBoxPleaseHold();
-
-        //tell server to generate & save this chart
-        //give the server settings used to generate this chart
-        var result = await SaveReportSvgInApi(SelectedPerson, StartTime, EndTime, InputedEventTags);
-
-        _jsRuntime.HideLoading();
-
-
-        //show message to user based on success or failure
-        if (result) { await _jsRuntime.ShowAlert("success", $"Chart saved successfully!", false, 2600); }
-        else { await _jsRuntime.ShowAlert("error", $"Chart failed to save! Try again.", true); }
-
     }
 
     //todo use for lite viewer
@@ -693,35 +212,267 @@
 
     }
 
+
+    private async Task OnClickShareToEmail()
+    {
+
+        try
+        {
+            //poll till get
+            int maxWidth = 940;
+            string chartSvg = await AppData.API.EventsChart.GetEventsChart(SelectedPerson, SelectedTimeRange, InputedEventTags, maxWidth);
+
+            //control reaches here than already complete
+            await _jsRuntime.InvokeVoidAsync(JS.ChartFromSVG, chartSvg);
+
+            //get latest dark mode setting
+            //so that event chart is not lost in darkness
+            await AppData.UpdateDarkMode(_jsRuntime);
+
+            //play sound for better ux
+            _jsRuntime.PlayDoneSound();
+
+            //render html
+            _isReady = true;
+
+            //needed to make save button appear again
+            StateHasChanged();
+        }
+        catch (Exception e)
+        {
+            WebLogger.Error(e);
+            Console.WriteLine(e.Message);
+        }
+    }
+
     /// <summary>
-    /// when user clicked tab saved tab, refresh saved list immediately
+    /// Takes the chart as an SVG string and saves it to Downloads as SVG file
     /// </summary>
     /// <returns></returns>
-    public async Task<List<string>> GetSavedChartNameListLocal()
-    {
-        //get all latest keys from browser
-        var allKeys = await _jsRuntime.InvokeAsync<List<string>>(JS.getAllLocalStorageKeys);
-
-        //find the keys that hold the needed charts
-        var filtered = allKeys.Where(x => x.Contains("Chart")).ToList();
-
-        return filtered;
-    }
-
-    private async Task OnClickSaveAsImage()
-    {
-        //the downloading of the chart as image is done by JS
-        //this is done because, because save as image will be implemented directly in future
-        await _jsRuntime.InvokeVoidAsync(JS.DownloadChartFileSVG);
-
-    }
-
-
-    private async Task OnClickShareToFacebook()
+    private async Task OnClickSaveChartSvg()
     {
 
-        var x = await AppData.JsRuntime.InvokeAsync<object>(JS.shareDialogFacebook, _jsRuntime.GetCurrentUrl());
-
+        var bytes = Encoding.UTF8.GetBytes(RawChartSvg);
+        var base64 = Convert.ToBase64String(bytes);
+        var url = $"data:text/plain;base64,{base64}";
+        var filename = $"LifePredictor-{SelectedPerson.NameWithNoSpace}-{SelectedPerson.BirthYear}.svg";
+        //await JSRuntime.InvokeVoidAsync("saveAsFile", filename, url);
+        await _jsRuntime.InvokeVoidAsync(JS.SaveAsFile, filename, url);
     }
 
 }
+
+@*
+    @if (_isReady)
+{
+    <div class="hstack gap-3 mt-2">
+        <IconButton SmallSize="true" Outline="true" ButtonText="Save" IconName="mdi:content-save-cog">
+            <DropDownList>
+                <li>
+                    <a class="dropdown-item hstack gap-1" @onclick="OnClickSaveAsImage">
+                        <Icon ExtraClass="me-2 mt-1" NextToText="true" IconName="uil:image-download" />
+                        <span>Download</span>
+                    </a>
+                </li>
+            </DropDownList>
+        </IconButton>
+        <IconButton SmallSize="true" Outline="true" ButtonText="Share" IconName="ic:sharp-ios-share">
+            <DropDownList>
+                <li>
+                    <a class="dropdown-item hstack gap-1" @onclick="@(()=>WebsiteTools.OnClickSendToEmail(PdfFileName, eventsChartSvgHolder))">
+                        <Icon ExtraClass="me-2 mt-1" NextToText="true" IconName="ic:outline-attach-email" />
+                        <span>Email</span>
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item hstack gap-1" @onclick="@(() => WebsiteTools.ShareCurrentPageOnFacebook())">
+                        <Icon ExtraClass="me-2 mt-1" NextToText="true" IconName="uil:facebook" />
+                        <span>Facebook</span>
+                    </a>
+                </li>
+            </DropDownList>
+        </IconButton>
+        <IconButton SmallSize="true" Outline="true" ButtonText="Planets" IconName="ic:sharp-ios-share">
+            <DropDownList>
+                <li class="dropdown-item">
+                    <div class="form-check">
+                        <input class="form-check-input CheckBox" id="Sun" type="checkbox" value="">
+                        <label class="form-check-label" for="flexCheckDefault">Sun @AstronomicalCalculator.GetPlanetShadbalaPinda(PlanetName.Sun, SelectedPerson.BirthTime).ToDouble()</label>
+                    </div>
+                </li>
+                <li class="dropdown-item">
+                    <div class="form-check">
+                        <input class="form-check-input CheckBox" id="Moon" type="checkbox" value="">
+                        <label class="form-check-label" for="flexCheckDefault">Moon @AstronomicalCalculator.GetPlanetShadbalaPinda(PlanetName.Moon, SelectedPerson.BirthTime).ToDouble()</label>
+                    </div>
+                </li>
+                <li class="dropdown-item">
+                    <div class="form-check">
+                        <input class="form-check-input CheckBox" id="Mars" type="checkbox" value="">
+                        <label class="form-check-label" for="flexCheckDefault">Mars @AstronomicalCalculator.GetPlanetShadbalaPinda(PlanetName.Mars, SelectedPerson.BirthTime).ToDouble()</label>
+                    </div>
+                </li>
+                <li class="dropdown-item">
+                    <div class="form-check">
+                        <input class="form-check-input CheckBox" id="Mercury" type="checkbox" value="">
+                        <label class="form-check-label" for="flexCheckDefault">Mercury @AstronomicalCalculator.GetPlanetShadbalaPinda(PlanetName.Mercury, SelectedPerson.BirthTime).ToDouble()</label>
+                    </div>
+                </li>
+                <li class="dropdown-item">
+                    <div class="form-check">
+                        <input class="form-check-input CheckBox" id="Venus" type="checkbox" value="">
+                        <label class="form-check-label" for="flexCheckDefault">Venus @AstronomicalCalculator.GetPlanetShadbalaPinda(PlanetName.Venus, SelectedPerson.BirthTime).ToDouble()</label>
+                    </div>
+                </li>
+                <li class="dropdown-item">
+                    <div class="form-check">
+                        <input class="form-check-input CheckBox" id="Jupiter" type="checkbox" value="">
+                        <label class="form-check-label" for="flexCheckDefault">Jupiter @AstronomicalCalculator.GetPlanetShadbalaPinda(PlanetName.Jupiter, SelectedPerson.BirthTime).ToDouble()</label>
+                    </div>
+                </li>
+                <li class="dropdown-item">
+                    <div class="form-check">
+                        <input class="form-check-input CheckBox" id="Saturn" type="checkbox" value="">
+                        <label class="form-check-label" for="flexCheckDefault">Saturn @AstronomicalCalculator.GetPlanetShadbalaPinda(PlanetName.Saturn, SelectedPerson.BirthTime).ToDouble()</label>
+                    </div>
+                </li>
+                <li class="dropdown-item">
+                    <div class="form-check">
+                        <input class="form-check-input CheckBox" id="Rahu" type="checkbox" value="">
+                        <label class="form-check-label" for="flexCheckDefault">Rahu @AstronomicalCalculator.GetPlanetShadbalaPinda(PlanetName.Rahu, SelectedPerson.BirthTime).ToDouble()</label>
+                    </div>
+                </li>
+                <li class="dropdown-item">
+                    <div class="form-check">
+                        <input class="form-check-input CheckBox" id="Ketu" type="checkbox" value="">
+                        <label class="form-check-label" for="flexCheckDefault">Ketu @AstronomicalCalculator.GetPlanetShadbalaPinda(PlanetName.Ketu, SelectedPerson.BirthTime).ToDouble()</label>
+                    </div>
+                </li>
+
+            </DropDownList>
+        </IconButton>
+
+        <style>
+            house-info-style {
+                font-size: 10px;
+                color: grey;
+            }
+        </style>
+        <div class="dropdown">
+            <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <Icon IconName="ant-design:highlight-twotone" /> Houses
+            </button>
+            <ul class="dropdown-menu">
+                <li class="dropdown-item">
+                    <div class="form-check">
+                        <input class="form-check-input CheckBox" id="House 1" type="checkbox" value="">
+                        <label class="form-check-label" for="flexCheckDefault"><span>House 1</span><span class="house-info-style">@AstronomicalCalculator.GetBhavaBala((HouseName)1, SelectedPerson.BirthTime).ToDouble() | personal self, personal behavior</span></label>
+                    </div>
+                </li>
+                <li class="dropdown-item">
+                    <div class="form-check">
+                        <input class="form-check-input CheckBox" id="House 2" type="checkbox" value="">
+                        <label class="form-check-label" for="flexCheckDefault"><span>House 2</span><span class="house-info-style">@AstronomicalCalculator.GetBhavaBala((HouseName)2, SelectedPerson.BirthTime).ToDouble() | accumulated money/wealth, food, speech</span></label>
+                    </div>
+                </li>
+                <li class="dropdown-item">
+                    <div class="form-check">
+                        <input class="form-check-input CheckBox" id="House 3" type="checkbox" value="">
+                        <label class="form-check-label" for="flexCheckDefault"><span>House 3</span><span class="house-info-style">@AstronomicalCalculator.GetBhavaBala((HouseName)3, SelectedPerson.BirthTime).ToDouble() | younger siblings, artistic expression, communication, courage</span></label>
+                    </div>
+                </li>
+                <li class="dropdown-item">
+                    <div class="form-check">
+                        <input class="form-check-input CheckBox" id="House 4" type="checkbox" value="">
+                        <label class="form-check-label" for="flexCheckDefault"><span>House 4</span><span class="house-info-style">@AstronomicalCalculator.GetBhavaBala((HouseName)4, SelectedPerson.BirthTime).ToDouble() | mother, happiness, vehicles, fixed assets/real estate</span></label>
+                    </div>
+                </li>
+                <li class="dropdown-item">
+                    <div class="form-check">
+                        <input class="form-check-input CheckBox" id="House 5" type="checkbox" value="">
+                        <label class="form-check-label" for="flexCheckDefault"><span>House 5</span><span class="house-info-style">@AstronomicalCalculator.GetBhavaBala((HouseName)5, SelectedPerson.BirthTime).ToDouble() | romance/love from spouse, speculation, meditation techniques, intelligence</span></label>
+                    </div>
+                </li>
+                <li class="dropdown-item">
+                    <div class="form-check">
+                        <input class="form-check-input CheckBox" id="House 6" type="checkbox" value="">
+                        <label class="form-check-label" for="flexCheckDefault"><span>House 6</span><span class="house-info-style">@AstronomicalCalculator.GetBhavaBala((HouseName)6, SelectedPerson.BirthTime).ToDouble() | acute disease, struggle, war, opposition, service</span></label>
+                    </div>
+                </li>
+                <li class="dropdown-item">
+                    <div class="form-check">
+                        <input class="form-check-input CheckBox" id="House 7" type="checkbox" value="">
+                        <label class="form-check-label" for="flexCheckDefault"><span>House 7</span><span class="house-info-style">@AstronomicalCalculator.GetBhavaBala((HouseName)7, SelectedPerson.BirthTime).ToDouble() | partnerships</span></label>
+                    </div>
+                </li>
+                <li class="dropdown-item">
+                    <div class="form-check">
+                        <input class="form-check-input CheckBox" id="House 8" type="checkbox" value="">
+                        <label class="form-check-label" for="flexCheckDefault"><span>House 8</span><span class="house-info-style">@AstronomicalCalculator.GetBhavaBala((HouseName)8, SelectedPerson.BirthTime).ToDouble() | longevity, transcendental knowledge, unearned wealth, secrets, chronic illness</span></label>
+                    </div>
+                </li>
+                <li class="dropdown-item">
+                    <div class="form-check">
+                        <input class="form-check-input CheckBox" id="House 9" type="checkbox" value="">
+                        <label class="form-check-label" for="flexCheckDefault"><span>House 9</span><span class="house-info-style">@AstronomicalCalculator.GetBhavaBala((HouseName)9, SelectedPerson.BirthTime).ToDouble() | god, philosophy, guru, religion, fortune, relation with father</span></label>
+                    </div>
+                </li>
+                <li class="dropdown-item">
+                    <div class="form-check">
+                        <input class="form-check-input CheckBox" id="House 10" type="checkbox" value="">
+                        <label class="form-check-label" for="flexCheckDefault"><span>House 10</span><span class="house-info-style">@AstronomicalCalculator.GetBhavaBala((HouseName)10, SelectedPerson.BirthTime).ToDouble() | career, father’s position</span></label>
+                    </div>
+                </li>
+                <li class="dropdown-item">
+                    <div class="form-check">
+                        <input class="form-check-input CheckBox" id="House 11" type="checkbox" value="">
+                        <label class="form-check-label" for="flexCheckDefault"><span>House 11</span><span class="house-info-style">@AstronomicalCalculator.GetBhavaBala((HouseName)11, SelectedPerson.BirthTime).ToDouble() | cash flow, opportunities, hopes, friends, influential people older sibling</span></label>
+                    </div>
+                </li>
+                <li class="dropdown-item">
+                    <div class="form-check">
+                        <input class="form-check-input CheckBox" id="House 12" type="checkbox" value="">
+                        <label class="form-check-label" for="flexCheckDefault"><span>House 12</span><span class="house-info-style">@AstronomicalCalculator.GetBhavaBala((HouseName)12, SelectedPerson.BirthTime).ToDouble() | enlightenment, expenditures/losses, pleasures from spouse, confinement</span></label>
+                    </div>
+                </li>
+            </ul>
+        </div>
+
+        <div class="dropdown">
+            <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <Icon IconName="zondicons:view-show" /> Show/Hide
+            </button>
+            <ul class="dropdown-menu">
+                <li class="dropdown-item">
+                    <div class="form-check">
+                        <input class="form-check-input CheckBox" id="LifeEvents" type="checkbox" value="">
+                        <label class="form-check-label" for="flexCheckDefault">Life Events</label>
+                    </div>
+                </li>
+                <li class="dropdown-item">
+                    <div class="form-check">
+                        <input class="form-check-input CheckBox" id="ColorSummary" type="checkbox" value="">
+                        <label class="form-check-label" for="flexCheckDefault">Color Summary</label>
+                    </div>
+                </li>
+                <li class="dropdown-item">
+                    <div class="form-check">
+                        <input class="form-check-input CheckBox" id="SmartSummary" type="checkbox" value="">
+                        <label class="form-check-label" for="flexCheckDefault">Smart Summary</label>
+                    </div>
+                </li>
+                <li class="dropdown-item">
+                    <div class="form-check">
+                        <input class="form-check-input CheckBox" id="BarSummary" type="checkbox" value="">
+                        <label class="form-check-label" for="flexCheckDefault">Bar Summary</label>
+                    </div>
+                </li>
+            </ul>
+        </div>
+        <IconButton ButtonText="Copy Link" IconName="carbon:link" OnClickCallback="OnClickCopyChartLink" SmallSize="true" />
+
+        <IconButton SmallSize="true" @ref="_mobileViewButton" ButtonText="Mobile View" IconName="icomoon-free:mobile" OnClickCallback="OnClickMobileViewButton" />
+
+    </div>
+}
+ *@

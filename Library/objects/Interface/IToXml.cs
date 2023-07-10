@@ -26,6 +26,7 @@ namespace VedAstro.Library
     /// </summary>
     public interface IToJson
     {
+
         /// <summary>
         /// Converts Type to XML version of it
         /// </summary>

@@ -28,13 +28,6 @@ namespace VedAstro.Library
         private const string UrlEventDataListXml = $"https://{AzureStorage}/data/EventDataList.xml";
 
 
-        /// <summary>
-        /// Every time events is being generated ((data+calculator)+time=event),
-        /// the count goes up, auto reset on new task 
-        /// </summary>
-        public static int EventsGeneratorProgressCounter { get; set; }
-
-
 
         /** PUBLIC METHODS **/
 
@@ -55,17 +48,13 @@ namespace VedAstro.Library
             List<Event> eventList = new();
 
             //split time into slices based on precision
-            var timeList = GetTimeListFromRange(startTime, endTime, precisionInHours);
+            var timeList = Time.GetTimeListFromRange(startTime, endTime, precisionInHours);
 
-            EventsGeneratorProgressCounter = 0;// progress counter reset
 
             foreach (var eventData in eventDataList)
             {
                 //get list of occuring events for a single event type
                 var eventListForThisEvent = GetListOfEventsForEventData(eventData, person, timeList);
-
-                //increment counters, for anybody listening for progress
-                EventsGeneratorProgressCounter++;
 
                 //add events to main list of event
                 eventList.AddRange(eventListForThisEvent);
@@ -93,8 +82,6 @@ namespace VedAstro.Library
 
                 return eventList;
 
-
-
             }
 
         }
@@ -112,7 +99,7 @@ namespace VedAstro.Library
             Parallel.For(0, timeList.Count, i =>
             {
                 var timeTemp = timeList[i];
-                //get if event occuring at the inputed time (heavy computation)
+                //get if event occurring at the inputed time (heavy computation)
                 var updatedEventData = ConvertToEventSlice(timeTemp, eventData, person);
 
                 //note: fills null if not occuring
@@ -163,33 +150,35 @@ namespace VedAstro.Library
 
         /// <summary>
         /// before becoming events
+        /// scans array and creates events
         /// </summary>
-        private static List<Event> EventSlicesToEvents(List<Time> timeList, EventSlice[] eventSliceList)
+        public static List<Event> EventSlicesToEvents2(List<Time> timeList, EventSlice[] eventSliceList)
         {
 
             //Makes the events as it scans them
             var returnList = new List<Event>();
-            var eventStartI = 0;
+            var eventStartPosition = 0;
             var inBetween = false; //in between start & end event, start as though null before
             var lastIndex = eventSliceList.Length;
             for (int i = 0; i < lastIndex; i++)
             {
                 //if null move to next
                 var val = eventSliceList[i];
-                var isNull = val == null;
-                if (isNull)
+                var notOccuring = val == null;
+                var isOccuring = !notOccuring;
+                if (notOccuring)
                 {
                     //marks the end of the event, make it & save it
                     if (inBetween)
                     {
                         inBetween = false;//halt
-                        var previousSliceI = --i;//last slice in event
+                        var previousSlicePosition = --i;//last slice in previous event
 
                         //create the event
-                        var startSlice = eventSliceList[eventStartI];
+                        var startSlice = eventSliceList[eventStartPosition];
                         var startTime = startSlice.Time;
-                        var endTime = eventSliceList[previousSliceI].Time;//aka endI
-                        
+                        var endTime = eventSliceList[previousSlicePosition].Time;//aka end I
+
                         //note: only details from start slice is used, meaning if other slices have
                         //different nature it is ignored, and should not have it either
                         var newEvent = new Event(startSlice.Name, startSlice.Nature, startSlice.Description, startTime, endTime);
@@ -201,7 +190,7 @@ namespace VedAstro.Library
                 }
 
                 //if new event after null, set start
-                if (!isNull && !inBetween) { eventStartI = i; inBetween = true; }
+                if (isOccuring && !inBetween) { eventStartPosition = i; inBetween = true; }
 
             }
 
@@ -209,29 +198,79 @@ namespace VedAstro.Library
 
         }
 
-
         /// <summary>
-        /// Slices time range into pieces by inputed hours
-        /// Given a start time and end time, it will add precision hours to start time until reaching end time.
-        /// Note: number of slices returned != precision hours
+        /// Chunks of 1 event type in an array, scans it and makes events with start and end time
+        /// note: only details from start slice is used, meaning if other slices have
+        /// different nature it is ignored, and should not have it either
         /// </summary>
-        public static List<Time> GetTimeListFromRange(Time startTime, Time endTime, double precisionInHours)
+        public static List<Event> EventSlicesToEvents(List<Time> timeList, EventSlice[] eventSliceList)
         {
-            //declare return value
-            var timeList = new List<Time>();
+            //final event list
+            var returnList = new List<Event>();
 
-            //create list
-            for (var day = startTime; day.GetStdDateTimeOffset() <= endTime.GetStdDateTimeOffset(); day = day.AddHours(precisionInHours))
+            //consecutive events occurring slice count
+            int occurringCount = 0;
+
+            //go through each slice
+            var totalSlices = eventSliceList.Length;
+            var eventStartPosition = 0;
+            for (int i = 0; i < totalSlices; i++)
             {
-                timeList.Add(day);
+                //get whether event occurring
+                var val = eventSliceList[i];
+                var notOccurring = val == null;
+                var isOccurring = !notOccurring;
+
+                //if consecutive occurs count it
+                if (isOccurring)
+                {
+                    //if first count then this slice is start
+                    if (occurringCount == 0) { eventStartPosition = i; }
+                    occurringCount++;
+                }
+
+                //end of event
+                if (notOccurring && occurringCount > 0)
+                {
+                    //make new event
+                    var startSlice = eventSliceList[eventStartPosition];
+                    var startTime = startSlice.Time;
+                    var previousSlicePosition = --i;//right before this null
+                    var endTime = eventSliceList[previousSlicePosition].Time;//aka end I
+
+                    //note: only details from start slice is used, meaning if other slices have
+                    //different nature it is ignored, and should not have it either
+                    var newEvent = new Event(startSlice.Name, startSlice.Nature, startSlice.Description, startTime, endTime);
+                    returnList.Add(newEvent); //add to list
+
+                    //clear consecutive count
+                    occurringCount = 0;
+                }
+
+                //last slice but but still occurring
+                var isLastSlice = i == (totalSlices - 1);
+                if (isLastSlice && occurringCount > 0)
+                {
+                    //make new event
+                    var startSlice = eventSliceList[eventStartPosition];
+                    var startTime = startSlice.Time;
+                    var endTime = eventSliceList[i].Time; //this must be end of event
+
+                    //note: only details from start slice is used, meaning if other slices have
+                    //different nature it is ignored, and should not have it either
+                    var newEvent = new Event(startSlice.Name, startSlice.Nature, startSlice.Description, startTime, endTime);
+                    returnList.Add(newEvent); //add to list
+                }
+
             }
 
-            //return value
-            return timeList;
+
+            //send final compiled list to caller
+            return returnList;
         }
 
         /// <summary>
-        /// Gets the method that does the caculations for an event based on the events name
+        /// Gets the method that does the calculations for an event based on the events name
         /// </summary>
         public static EventCalculatorDelegate GetEventCalculatorMethod(EventName inputEventName)
         {
@@ -251,13 +290,13 @@ namespace VedAstro.Library
                 if (eventCalculatorAttribute == null) { continue; }
 
                 //store empty event to be used if error
-                if (eventCalculatorAttribute.GetEventName() == EventName.Empty)
+                if (eventCalculatorAttribute.EventName == EventName.Empty)
                 {
                     emptyCalculator = (EventCalculatorDelegate)Delegate.CreateDelegate(typeof(EventCalculatorDelegate), eventCalculator);
                 }
 
                 //if attribute name matches input event name
-                if (eventCalculatorAttribute.GetEventName() == inputEventName)
+                if (eventCalculatorAttribute.EventName == inputEventName)
                 {
                     //convert calculator reference to a delegate instance
                     var eventCalculatorDelegate = (EventCalculatorDelegate)Delegate.CreateDelegate(typeof(EventCalculatorDelegate), eventCalculator);
@@ -267,19 +306,17 @@ namespace VedAstro.Library
                 }
             }
 
-
+            //control should not reach here
             //if calculator method not found,
             //to make old code run with updated eventdatalist.xml file, an empty calculator return no event is attached as default
-            return emptyCalculator;
-            //todo log if this happens hack
-            throw new Exception("Calculator method not found!");
+            throw new Exception($"Calculator method not found! : {inputEventName}");
 
         }
 
         /// <summary>
         /// Gets the method that does the calculations for an event based on the events name
         /// </summary>
-        public static HoroscopeCalculatorDelegate GetHoroscopeCalculatorMethod(EventName inputEventName)
+        public static HoroscopeCalculatorDelegate GetHoroscopeCalculatorMethod(HoroscopeName inputEventName)
         {
             //get all event calculator methods
             var horoscopeCalculatorList = typeof(HoroscopeCalculatorMethods).GetMethods();
@@ -288,8 +325,8 @@ namespace VedAstro.Library
             foreach (var horoscopeCalculator in horoscopeCalculatorList)
             {
                 //try to get attribute attached to the calculator method
-                var horoscopeCalculatorAttribute = (EventCalculatorAttribute)Attribute.GetCustomAttribute(horoscopeCalculator,
-                    typeof(EventCalculatorAttribute));
+                var horoscopeCalculatorAttribute = (HoroscopeCalculatorAttribute)Attribute.GetCustomAttribute(horoscopeCalculator,
+                    typeof(HoroscopeCalculatorAttribute));
 
                 //if attribute not found
                 if (horoscopeCalculatorAttribute == null)
@@ -298,7 +335,7 @@ namespace VedAstro.Library
                 }
 
                 //if attribute name matches input event name
-                if (horoscopeCalculatorAttribute.GetEventName() == inputEventName)
+                if (horoscopeCalculatorAttribute.HoroscopeName == inputEventName)
                 {
                     //convert calculator reference to a delegate instance
                     var horoscopeCalculatorDelegate = (HoroscopeCalculatorDelegate)Delegate.CreateDelegate(typeof(HoroscopeCalculatorDelegate), horoscopeCalculator);
@@ -309,12 +346,11 @@ namespace VedAstro.Library
             }
 
 
+            //if control reaches here than failure
             //if calculator method not found, raise error
-            throw new Exception("Calculator method not found!");
+            throw new Exception($"Calculator method not found! : {inputEventName.ToString()}");
 
         }
-
-
 
         /// <summary>
         /// Splits events that span across 2 days or more
@@ -470,10 +506,6 @@ namespace VedAstro.Library
             return returnList;
 
         }
-
-
-
-
 
         /// <summary>
         /// Gets all event data/types that match the inputed tag

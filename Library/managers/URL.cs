@@ -19,21 +19,36 @@ public class URL
     /// All API functions can be accessed by this .org URL
     /// Note: possible via azure CDN rules engine : AccessApiViaWebDomain
     /// </summary>
-    public URL(bool isBetaRuntime)
+    public URL(bool isBetaRuntime, bool debugMode) //don't hide to make obvious easy id
     {
+        //set beta or stable based on Runtime Stamp data
         ApiUrl = isBetaRuntime ? ApiBeta : ApiStable;
         ApiUrlDirect = isBetaRuntime ? ApiBetaDirect : ApiStableDirect;
         WebUrl = isBetaRuntime ? WebBeta : WebStable;
 
+        //if DEBUG MODE set all to local (bye bye Postman! we don't need you anymore!)
+        if (debugMode)
+        {
+            ApiUrl = "http://localhost:7071/api";
+            ApiUrlDirect = "http://localhost:7071/api";
+        }
+
+
         //--------------done here so that can be readonly------------------
 
+        //GENERAL
+        GetCallData = ApiUrl + "/GetCallData";
+        Login = WebUrl + "/Account/Login"; //note must match with page route
+
         //PERSON
-        GetPersonListAsync = ApiUrl + "/GetPersonListAsync";
+        GetPersonList = ApiUrl + "/GetPersonList";
         AddPerson = ApiUrl + "/AddPerson";
         DeletePerson = ApiUrl + "/DeletePerson";
         UpdatePerson = ApiUrl + "/UpdatePerson";
         GetPerson = ApiUrl + "/getperson";
+        GetPersonImage = ApiUrl + "/GetPersonImage/PersonId/";
         GetNewPersonId = ApiUrl + "/GetNewPersonId";
+
 
         GetHoroscope = ApiUrl + "/gethoroscope";
         AddLifeEventApi = ApiUrl + "/addlifeevent";
@@ -47,14 +62,13 @@ public class URL
         GetVisitorList = ApiUrl + "/getvisitorlist";
         GetMessageList = ApiUrl + "/getmessagelist";
 
+        FindMatch = ApiUrl + "/FindMatch";
         GetMatchReportList = ApiUrl + "/GetMatchReportList";
         GetPersonIdFromSavedChartId = ApiUrl + "/getpersonidfromsavedchartid";
         GetMatchReportApi = ApiUrl + "/getmatchreport";
         GetSavedMatchReport = ApiUrl + "/GetSavedMatchReport";
         SaveMatchReportApi = ApiUrl + "/SaveMatchReport";
-        GetEventsChart = ApiUrl + "/geteventschart";
-        GetEventsChartAsync = ApiUrl + "/GetEventsChartAsync";
-        GetEventsChartResult = ApiUrl + "/GetEventsChartResult";
+        GetEventsChart = ApiUrl + "/GetEventsChart";
         GetCallStatus = ApiUrl + "/GetCallStatus";
         //TODO special URL for chart because timeout Azure CDN timeout >30s
         GetEventsChartDirect = ApiUrlDirect + "/api/geteventschart"; 
@@ -101,11 +115,17 @@ public class URL
     public readonly string GetMatchReportApi;
     public readonly string SaveMatchReportApi;
     public readonly string GetMatchReportList;
+    public readonly string FindMatch;
 
     //PERSON
     public readonly string AddPerson;
-    public readonly string GetPersonListAsync;
+    /// <summary>
+    /// Gets raw data at API data cache
+    /// </summary>
+    public readonly string GetCallData;
+    public readonly string GetPersonList;
     public readonly string GetPerson;
+    public readonly string GetPersonImage;
     public readonly string GetNewPersonId;
     public readonly string GetPersonIdFromSavedChartId;
     public readonly string UpdatePerson;
@@ -114,8 +134,6 @@ public class URL
     public readonly string GetVisitorList;
     public readonly string GetMessageList;
     public readonly string GetEventsChart;
-    public readonly string GetEventsChartAsync;
-    public readonly string GetEventsChartResult;
     public readonly string GetCallStatus;
     public readonly string GetEventsChartDirect;
     public readonly string GetSavedEventsChart;
@@ -124,14 +142,18 @@ public class URL
     public readonly string GetEventsApi;
     public readonly string SignInGoogle;
     public readonly string SignInFacebook;
+    public readonly string Login;
 
     /// <summary>
     /// link to js file used for google sign in function
     /// </summary>
     public const string GoogleSignInJs = "https://accounts.google.com/gsi/client";
     public const string GeoJsApiUrl = "https://get.geojs.io/v1/ip/geo.json";
+    public const string TelescopeBuyPage = "https://www.ebay.com/itm/285323405966";
+    public const string LaptopBuyPage = "https://www.ebay.com/itm/304878531330";
     public const string Paypal = "https://www.paypal.com/sdk/js?client-id=sb&enable-funding=venmo&currency=USD";
     public const string GitHubDiscussions = "https://github.com/orgs/VedAstro/discussions";
+    public const string YoutubeChannel = "https://www.youtube.com/@vedastro";
     public const string GitHub88000Lines = "https://github.com/VedAstro/VedAstro/discussions/4";
     public const string VedAstroJS = "https://github.com/VedAstro/VedAstro.js";
     public const string VedAstroSwift = "https://github.com/VedAstro/VedAstro.Swift";
@@ -140,7 +162,6 @@ public class URL
     public const string KoFiPage = "https://ko-fi.com/vedastro";
     public const string KoFiDonateIframe = "https://ko-fi.com/vedastro/?hidefeed=true&widget=true&embed=true&preview=true";
     public const string PaypalMePage = "https://paypal.me/VedAstroOrg";
-    public const string AddPersonGuideVideo = "https://youtu.be/RDUPsFOrr3c";
     public const string NasaJplSource = "https://naif.jpl.nasa.gov/pipermail/spice_announce/2007-August/000055.html";
     public const string SwissEphSource = "https://www.astro.com/swisseph/swephinfo_e.htm";
     public const string AzureStorage = "vedastrowebsitestorage.z5.web.core.windows.net";
@@ -154,6 +175,18 @@ public class URL
     public const string SlackInviteURL = "https://join.slack.com/t/vedastro/shared_invite/zt-1u7pdqjky-hrJZ7e3_vM2dZOmVY8FeHA";
     public const string JohnLenonImagine = "https://youtu.be/rAn-AWXtHv0";
     public const string YukteswarWiki = "https://en.wikipedia.org/wiki/Swami_Sri_Yukteswar_Giri";
+    public const string WHAudenWiki = "https://en.wikipedia.org/wiki/W._H._Auden";
+    public const string SwamiRamaWiki = "https://en.wikipedia.org/wiki/Swami_Rama";
+    public const string StarsThatDontGiveDam = "https://youtu.be/RhtrXdirXk4";
     public const string YoganandaWiki = "https://en.wikipedia.org/wiki/Paramahansa_Yogananda";
     public const string CarlSaganWiki = "https://en.wikipedia.org/wiki/Carl_Sagan";
+    public const string RamanujanWiki = "https://en.wikipedia.org/wiki/Srinivasa_Ramanujan";
+    public const string EmersonWiki = "https://en.wikipedia.org/wiki/Ralph_Waldo_Emerson";
+    public const string MahatmaGandhiWiki = "https://en.wikipedia.org/wiki/Mahatma_Gandhi";
+    public const string LaSalleWiki = "https://en.wikipedia.org/wiki/Jean-Baptiste_de_La_Salle";
+    public const string BVRamanWiki = "https://en.wikipedia.org/wiki/B._V._Raman";
+    public const string MiltonFriedmanWiki = "https://en.wikipedia.org/wiki/Milton_Friedman";
+    public const string RamanujanQuoteWiki = "https://en.wikipedia.org/wiki/Srinivasa_Ramanujan#Personality_and_spiritual_life";
+    public const string StPaulWiki = "https://en.wikipedia.org/wiki/Paul_the_Apostle";
+    public const string FreedmanYoutubePencil = "https://youtu.be/67tHtpac5ws";
 }

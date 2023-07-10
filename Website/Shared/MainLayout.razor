@@ -4,15 +4,15 @@
 @using Website.Pages
 @using System.Text.Json
 @using Library.API
-@using Newtonsoft.Json.Linq
-@using Tools = Library.API.Tools
 
+<NotificationSound @ref="soundPlayer" />
 
 @*
     NOTE : Components here are loaded same time as page,
     so component might not exist when page needs it.
     Thus page must check & wait during init.
 *@
+
 
 @*
     This makes sure MainLayout is loaded first.
@@ -27,13 +27,15 @@
         <!-- DESKTOP ONLY : SIDEBAR -->
         <div class="col-auto align-items-start d-none d-md-block">
             <!--only visible in Desktop-->
-            <div class="vstack gap-2 mb-3 rounded-3 border shadow sticky-md-top p-md-3 bg-white">
-                <input @ref="_searchInput" @onkeyup="OnKeyUpSearchBar" type="text" class="form-control" placeholder="Search...">
+            <div class="vstack gap-2 mb-3 rounded-3 border shadow sticky-md-top p-md-3 bg-white" style="z-index: 999;">
+                <!-- special style to make appear in night mode dispite bg-white -->
+                @* SEARCH *@
+                <SearchBox />
                 <SideBarButtons />
             </div>
 
             <!-- DEPLOYMENT STAMP : Not visible in mobile, no space to joke around -->
-            <div class="sticky-bottom position-fixed mb-3 ms-5" style="color:#969696; font-size: 8px; z-index: 1;">
+            <div class="sticky-bottom position-fixed mb-3 ms-5" style="color:@AppData.Grey; font-size: 8px; z-index: 1;">
                 @*stack below other elms*@
                 <div style="cursor: pointer;" @onclick="()=>_navigation.NavigateTo(PageRoute.MadeOnEarth)" class="hstack gap-1">
                     <span class="iconify" data-icon="ion:earth" data-width="10"></span>
@@ -49,7 +51,7 @@
                     <!-- Stamped build version during deployment, used to identify code in cloud -->
                     <span>2014 - 2023 VedAstro</span>
                 </div>
-                <div @onclick="OnClickStamp" class="mt-1">
+                <div @onclick="OnClickStamp" style="cursor: pointer;" class="mt-1">
                     <img src="images/ce-fcc-recycle.svg">
                 </div>
             </div>
@@ -64,11 +66,7 @@
                         <Icon IconName="material-symbols:menu-open-rounded" Size="30" />
                     </button>
                     <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel">
-                        <div class="offcanvas-header">
-                            <h6 class="offcanvas-title" id="offcanvasNavbarLabel">Mobile Menu</h6>
-                            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-                        </div>
-                        <div class="offcanvas-body">
+                        <div class="offcanvas-body" data-bs-dismiss="offcanvas"> <!--Needed close mobile menu onclick-->
                             <div class="d-flex flex-wrap gap-2 mb-2 p-2 rounded-3 border shadow"><TopBarButtons /></div>
                             <hr />
                             <div class="vstack gap-2 mb-2 p-2 rounded-3 border shadow"><SideBarButtons /></div>
@@ -80,7 +78,7 @@
 
         <!-- CONTENT + REF BUTTONS -->
         <!-- in mobile push down to make room for mobile menu-->
-        <div class="col mt-sm-5 mt-md-0">
+        <div class="col mt-5 mt-md-0">
 
             <!-- REFERENCE BUTTONS : buttons placed here are
             linked to places not needed all the time, like About and Docs -->
@@ -97,15 +95,22 @@
         </div>
     </div>
 
+
 }
 
 
 
 @code
 {
+    private bool LoadExtra = true;
+
+    /// <summary>
+    /// notification after chart complete for UX sake
+    /// </summary>
+    private NotificationSound soundPlayer;
+
     //IJSObjectReference? _module;
     bool _mainPageInitDone;
-    private ElementReference _searchInput;
 
 
     //█░░ █ █▀▀ █▀▀ █▀▀ █▄█ █▀▀ █░░ █▀▀   █▀▄▀█ █▀▀ ▀█▀ █░█ █▀█ █▀▄ █▀
@@ -129,6 +134,9 @@
 
             //log visit only 1 once when page is rendered
             await WebLogger.Visitor(_jsRuntime);
+
+            LoadExtra = false;
+            Console.WriteLine("ORI TAKEN OUT OF DOM!!!!!!!!!!!!");
         }
     }
 
@@ -138,17 +146,13 @@
         //control comes here after Program, all needed initialization
         //done here before page/components are loaded
 
-
         //1: do little check to make sure all functions in Interop is accounted for
         await InteropHealthCheck();
 
-        //2: create url based on beta or stable
-        AppData.URL = new URL(WebsiteTools.GetIsBetaRuntime());
-
-        //3: to be accessed by classes
+        //3: to be accessed by classes todo obliviion
         AppData.HttpClient = _client;
 
-        //4: used later to create HTTP client with correct base address
+        //4: used later to create HTTP client with correct base address todo obliviion
         AppData.BaseAddress = new Uri(_navigation.BaseUri);
 
         //5: get visitor ID if available
@@ -157,11 +161,31 @@
         //6: retrieve login status from previous visit if available
         await TryGetPreviousLogin();
 
+
+        //2: create url based on beta or stable
+        //note : must do after 
+        //---------------------
+        bool debugMode;
+
+        //if no login can't access account page, so can't set debug
+        //thus no login, disable debug
+        if (AppData.IsGuestUser) { debugMode = false; }
+
+        //user already logged in, get debug mode from browser setting if any
+        //note: "debug mode" is stored local instead of online, because possible mobile use under same account
+        else { debugMode = await WebsiteTools.GetDebugModeBool(); }
+
+        AppData.URL = new URL(WebsiteTools.GetIsBetaRuntime(), debugMode);
+
+        //---------------------
+
+
         //7: prepare server communicator
         AppData.API = new VedAstroAPI(AppData.CurrentUser.Id, AppData.VisitorId, _jsRuntime, AppData.URL);
 
-        //ask server to prepare person list, will be available instantly later when user needs it
-        await AppData.API.PreparePersonList();
+        //8:ask server to prepare person list, will be available instantly later when user needs it
+        AppData.API.Person.PreparePersonList();
+
 
         //get location from IP
         AppData.ClientLocation = await GeoLocation.FromIpAddress();
@@ -171,6 +195,8 @@
 
         //other components can start loading now
         _mainPageInitDone = true;
+
+
     }
 
     /// <summary>
@@ -219,40 +245,10 @@
 #if DEBUG
     Console.WriteLine("BLZ: Using Previous Login Data");
 #endif
-            AppData.CurrentUser = UserData.FromXml(XElement.Parse(userDataXml)) ?? throw new Exception("userDataXml failed to parse!");
+            AppData.CurrentUser = UserData.FromXml(XElement.Parse(userDataXml)) ?? UserData.Guest;
         }
     }
 
-    /// <summary>
-    /// Handle when user uses the Search
-    /// </summary>
-    private async Task OnKeyUpSearchBar(KeyboardEventArgs keyEventArgs)
-    {
-        //only start search when user press Enter
-        if (keyEventArgs.Key != "Enter") return;
-
-        await PerformSearch();
-
-    }
-
-    private async Task PerformSearch()
-    {
-        //get search text
-        var text = await _jsRuntime.GetValue(_searchInput);
-
-        //log
-        WebLogger.Data("Search: " + text);
-
-        //go home when no text
-        if (text.Length == 0) { _navigation.NavigateTo(PageRoute.Home); return; }
-
-        //show search page & input the search text
-        _navigation.NavigateTo(PageRoute.SearchResult);
-        await Task.Delay(250);//little time for page to load (needed else fails)
-        await AppData.SearchPage.Search(text);
-    }
-
-    private async Task OnClickSearchIcon() => await PerformSearch();
 
 
     private async Task OnClickStamp()
@@ -264,7 +260,7 @@
         {
             case 2: await _jsRuntime.ShowAlert("success", $"You clicked this 2x times, why?", true); break;
             case 4: await _jsRuntime.ShowAlert("success", $"Stop clicking! There is no \"Cake\" here.", true); break;
-            case 6: _navigation.NavigateTo(PageRoute.EasterEgg, true); break;
+            case 6: AppData.Go(PageRoute.EasterEgg, true); break;
         }
     }
 }

@@ -1,12 +1,11 @@
 ﻿@using VedAstro.Library
 @attribute [Route(PageRoute.APIBuilder)]
 
-<PageTitle>Easy API Builder | VedAstro</PageTitle>
+<PageTitle>Easy Open API | VedAstro</PageTitle>
 
-<PageTop ImageName="api-builder-banner.svg"
-         Title="Easy API Builder"
-         DescriptionText="Build your HTTP calls fast and easy. No manuals needed.
-         Powered by .NET Roslyn compiler to auto generate calls dynamically from source code.">
+<PageTop ImageName="api-builder-banner.png"
+         Title="Open API"
+         DescriptionText="Advanced astronomical data via a simple HTTP request for free. Enabling you to build your app or service faster and cheaper.">
 </PageTop>
 
 
@@ -21,20 +20,77 @@
 
             @*Celestial Body*@
             <div class="form-floating">
-                <select @bind="SelectedBodyType" class="form-select" id="celestialBodySelect" aria-label="Celestial Body Select">
+                <select @bind="SelectedCategory" class="form-select" id="celestialBodySelect" aria-label="Celestial Body Select">
                     <option value="" selected>Make a choice</option>
                     <option value="Planet">Planet</option>
                     <option value="House">House</option>
                     <option value="SkyChart">Sky Chart</option>
                     <option value="SkyChartGIF">Sky Chart GIF</option>
+                    <option value="Account">Account</option>
                 </select>
-                <label style="font-weight: 700; color: black;" for="celestialBodySelect">Celestial Body</label>
+                <label style="font-weight: 700; color: black;" for="celestialBodySelect">Category</label>
             </div>
+            
+            
+            <PlanetAPIPanel/>
+
+            @*ACCOUNT STUFF*@
+            <div @ref="accountTaskSelector" style="display: none;" class="form-floating">
+                <select @bind="SelectedTaskName" class="form-select">
+                    <option value="" selected>Make a choice</option>
+                    <option value="AddPerson">Add Person</option>
+                </select>
+                <label style="font-weight: 700; color: black;">Task</label>
+            </div>
+
+            <div @ref="AddPersonMaker" style="display: none;" class="form-floating">
+                <div class="input-group mb-3">
+                    <span class="input-group-text" style="min-width: @GR.W97px;">Name</span>
+                    <input @bind="AddPersonName" type="text" class="form-control" placeholder="Juliet">
+                </div>
+
+                <div class="input-group mb-3">
+                    <label class="input-group-text" style="min-width: @GR.W97px;">Gender</label>
+                    <select @bind="AddPersonGender" class="form-select">
+                        <option selected>Choose...</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                    </select>
+                </div>
+                <div class="input-group mb-3">
+                    <label class="input-group-text" style="min-width: @GR.W97px;">Owner</label>
+                    <select @bind="AddPersonOwnerId" class="form-select">
+                        <option selected>Choose...</option>
+                        <option value="101">Guest</option>
+                        @RenderWelcomeInfo();
+                    </select>
+                </div>
+            </div>
+
+            @functions {
+                RenderFragment RenderWelcomeInfo()
+                {
+                    //based on login show accoringly
+                    //ask user to login
+                    if (AppData.IsGuestUser)
+                    {
+                        return @<option value="login">Login First</option>;
+                    }
+                    //already loged in
+                    else
+                    {
+                        return @<option value="@AppData.CurrentUser.Id">@AppData.CurrentUser.Name</option>;
+                    }
+
+                }
+            }
+
 
             @*Planet Name*@
             <div @ref="planetNameSelector" style="display: none;" class="form-floating">
-                <select @bind="selectedPlanetName" class="form-select" id="planetNameSelector" aria-label="Planet Name Select">
+                <select @bind="SelectedPlanetName" class="form-select" id="planetNameSelector">
                     <option value="" selected>Make a choice</option>
+                    <option value="All">All</option>
                     <option value="Sun">Sun</option>
                     <option value="Moon">Moon</option>
                     <option value="Mars">Mars</option>
@@ -50,8 +106,9 @@
 
             @*House Name*@
             <div @ref="houseNameSelector" style="display: none;" class="form-floating">
-                <select @bind="selectedHouseName" class="form-select" id="houseNameSelector" aria-label="House Name Select">
+                <select @bind="SelectedHouseName" class="form-select" id="houseNameSelector" aria-label="House Name Select">
                     <option value="" selected>Make a choice</option>
+                    <option value="All">All</option>
                     <option value="House1">House 1</option>
                     <option value="House2">House 2</option>
                     <option value="House3">House 3</option>
@@ -96,33 +153,35 @@
                 <label style="font-weight: 700; color: black;" for="housePropertySelector">House Property</label>
             </div>
 
-            <IconButton ButtonText="Generate" FullWidth="true" FontSize="17px" FontWeight="500" TextCenter="true" SmallSize="true" Color="success" IconName="flat-color-icons:flash-auto" OnClickCallback="@OnClickSubmitButton" />
+            <IconButton ButtonText="Generate" FullWidth="true" FontSize="17px" FontWeight="500" TextCenter="true" SmallSize="true" Color="success" IconName="flat-color-icons:flash-auto" OnClickCallback="@OnClickGenerateButton" />
 
-            @*OUTPUT*@
+            @*OUTPUT ARROW ICON*@
             <Icon IconName="flat-color-icons:down" ExtraStyle="text-align: center;" Size="55" />
 
-            @*ARROW DOWN*@
-            <kbd style="padding: 12px; font-size: 18px; overflow-wrap: break-word;line-height: 33px;">@_finalApiGetCall</kbd>
+            @*URL DISPLAY OUT*@
+            <div class="vstack gap-1" style="margin-top: -32px;">
+                <span style="font-size: 14px; color: @AppData.Grey;">URL</span>
+                <kbd style="padding: 12px; font-size: 18px; overflow-wrap: break-word;line-height: 33px;">@_finalApiGetCall</kbd>
+            </div>
+            <div style="display: none;" class="form-floating" @ref="PostBodyElement">
+                <span>URL</span>
+                <kbd style="padding: 12px; font-size: 18px; overflow-wrap: break-word;line-height: 33px;">@_finalApiGetCall</kbd>
+            </div>
 
             @*COPY AND CALL BUTTON*@
-            <div class="hstack gap-3">
+            <div class="d-flex justify-content-center gap-3">
                 <IconButton ButtonText="Copy" IconName="carbon:link" OnClickCallback="OnClickCopyChartLink" SmallSize="true" />
                 <IconButton ButtonText="Test Call" IconName="ph:phone-call-light" OnClickCallback="OnDemoCallGeneratedUrl" SmallSize="true" />
             </div>
-
-
         </div>
 
         @*GUIDE TEXT*@
         <div class="vstack gap-3">
             <ArticleBlock Title="Next Step" IconName="mdi:foot-print">
-                <ButtonRow>
-                    <IconButton ButtonText="Read More" ClickUrl="@PageRoute.OpenApi" IconName="octicon:info-16"/>
-                </ButtonRow>
                 <TextHTML>
                     Make a <kbd>HTTP GET</kbd> request from your app or website. It can be in any language,
                     PHP, JS, Python, even your browsers' URL. Design your app to cache the received data.
-                    Note : calls have been known to fail once in a blue moon, if and when that happens,
+                    Note, calls have been known to fail once in a <strong>blue moon</strong>, if and when that happens,
                     just make sure your app just replays the same call again. Design your code to try
                     HTTP call at least 2 times be reporting as failed. Even a small network issue on the
                     client side may cause this.
@@ -136,6 +195,16 @@
                     error will be in <kbd>Payload</kbd> property. If call is successful, all the data you need will be alphabetically stored in <kbd>Payload</kbd> property.
                 </TextHTML>
             </ArticleBlock>
+            
+            <ArticleBlock Title="No Manuals Needed" IconName="emojione:clamp">
+                <TextHTML>
+                    Why a simple API builder using dropdown boxes? This will make it easy for any beginner to get started.
+                    The biggest problem with consuming any API, is the <strong>learning curve</strong> .
+                    Normally the first 3-5 hours will be spent learning the small
+                    nuances or semantics used by the API provider. Powered by .NET Roslyn compiler to auto generate calls dynamically from source code.
+                    We hope to reduce this lag with this simple &amp; intuitive API URL builder.
+                </TextHTML>
+            </ArticleBlock>
 
             <ArticleBlock Title="Reverse Engineer" IconName="emojione:hammer-and-wrench">
                 <TextHTML>
@@ -145,18 +214,51 @@
                     The API is designed to handle this, so don't worry about breaking it. Have fun.
                 </TextHTML>
             </ArticleBlock>
-
-            <ArticleBlock Title="Library (coming soon)" IconName="clarity:thin-client-line">
+            
+@*             <ArticleBlock Title="Library (coming soon)" IconName="clarity:thin-client-line">
                 <TextHTML>
                     There are also client libraries to help you access the API even more easily. It simply wraps HTTP calls into easy to consume functions, that your app can use.
                     Please note, these sub-projects is under <strong>prototype</strong> stage and much remains to be done. If you've created a library already please share it with the community.
                     <BoldLink URL="@URL.VedAstroJS">JavaScript</BoldLink>, <BoldLink URL="@URL.VedAstroNuget">.NET NuGet</BoldLink> &amp; <BoldLink URL="@URL.VedAstroSwift">Swift iOS &amp; MacOS</BoldLink>.
                 </TextHTML>
             </ArticleBlock>
+ *@
 
+            <ArticleBlock Title="Fair Usage Policy" IconName="flat-color-icons:like">
+                <TextHTML>
+                    In order to keep this <strong>API FREE</strong> for the benefit of all people. Please do not abuse it.
+                    <ul class="mt-2 gap-2">
+                        <li>design your app to call the API only when needed</li>
+                        <li>cache the data you receive</li>
+                    </ul>
+                    If you ram the API with calls every 60s (like some people do), you'll ruin it for everybody.
+                    If you need technical help on this, shoot us a <BoldLink URL="@PageRoute.Contact">mail</BoldLink>. And we'll try our best to help you.
+                </TextHTML>
+            </ArticleBlock>
+
+
+            <ArticleBlock Title="Sponsor Music" IconName="emojione:violin">
+                <ButtonRow>
+                    <IconButton ClickUrl="@PageRoute.Donate" IconName="flat-color-icons:donate" ButtonText="Tip" Outline="true" SmallSize="true"></IconButton>
+                </ButtonRow>
+                <TextHTML>
+                    Running this API service, is like playing a <strong>beautiful public orchestra</strong>.
+                    It is only possible because of many moving parts by many people.
+                    Servers need to be optimized, updated and maintained. Code needs to be improved, tested and cleaned.
+
+                    <img src="images/public-orchestra.jpg" class="img-thumbnail my-3" alt="...">
+
+                    And all this has to be juggled to create the final product you see. Its a group effort.
+                    Please consider supporting this service to keep the "music" playing.
+                    <strong>Everybody</strong> can enjoy the music, so long as there's <strong>one</strong> person, willing to <BoldLink URL="@PageRoute.Donate">tip</BoldLink>
+
+                    <QuoteTextBlock Author="W.H. Auden" URL="@URL.WHAudenWiki">
+                        We are all here on earth to help others:<br />what on earth the others are here for,<br />I don't know.
+                    </QuoteTextBlock>
+                </TextHTML>
+            </ArticleBlock>
 
         </div>
-
     </div>
 </div>
 
@@ -164,13 +266,74 @@
 
 @code {
 
-    private string selectedPlanetName;
+    private string SelectedHouseName
+    {
+        get => selectedHouseName;
+        set
+        {
+            WebLogger.Data($"Selected House : {value}");
+            selectedHouseName = value;
+        }
+    }
+
     private string selectedHouseName;
+
+    private string AddPersonName { get; set; } = "Juliet";
+
+    private string AddPersonGender { get; set; }
+
+    private string AddPersonOwnerId
+    {
+        get => _addPersonOwnerId;
+        set
+        {
+            //if login send to login page
+            if (value == "login") { AppData.Go(PageRoute.Login); }
+
+            _addPersonOwnerId = value;
+        }
+    }
+
+    private string SelectedPlanetName
+    {
+        get => selectedPlanetName;
+        set
+        {
+            WebLogger.Data($"Selected Planet : {value}");
+            selectedPlanetName = value;
+        }
+
+    }
+
+    private string SelectedTaskName
+    {
+        get => _selectedTaskName;
+        set
+        {
+            switch (value.ToLower())
+            {
+                case "addperson":
+                    _jsRuntime.Show(AddPersonMaker);
+                    break;
+                default:
+                    _jsRuntime.Hide(AddPersonMaker);
+                    break;
+            }
+            _selectedTaskName = value;
+        }
+    }
+
+    private string selectedPlanetName;
+
     private string selectedPlanetProperty;
+
     private string selectedHouseProperty;
 
+    private ElementReference PostBodyElement;
     private ElementReference houseNameSelector;
     private ElementReference planetNameSelector;
+    private ElementReference AddPersonMaker;
+    private ElementReference accountTaskSelector;
     private ElementReference housePropertySelector;
     private ElementReference planetPropertySelector;
 
@@ -185,11 +348,14 @@
     /// <summary>
     /// Controls the showing and hiding of other dropdowns
     /// </summary>
-    public string SelectedBodyType
+    public string SelectedCategory
     {
         get => _selectedBodyType;
         set
         {
+            //log this, don't await to reduce lag
+            WebLogger.Data($"Selected Body:{value}");
+
             _selectedBodyType = value;
 
             //based on body type only show relevant related fields
@@ -200,42 +366,54 @@
                     _jsRuntime.Hide(houseNameSelector);
                     _jsRuntime.Show(planetPropertySelector);
                     _jsRuntime.Hide(housePropertySelector);
+                    _jsRuntime.Hide(accountTaskSelector);
                     break;
                 case "house"://show house & hide planet
                     _jsRuntime.Show(houseNameSelector);
                     _jsRuntime.Hide(planetNameSelector);
                     _jsRuntime.Show(housePropertySelector);
                     _jsRuntime.Hide(planetPropertySelector);
+                    _jsRuntime.Hide(accountTaskSelector);
                     break;
                 case "skychart"://show house & hide planet
                     _jsRuntime.Hide(houseNameSelector);
                     _jsRuntime.Hide(planetNameSelector);
                     _jsRuntime.Hide(housePropertySelector);
                     _jsRuntime.Hide(planetPropertySelector);
+                    _jsRuntime.Hide(accountTaskSelector);
                     break;
                 case "skychartgif"://show house & hide planet
                     _jsRuntime.Hide(houseNameSelector);
                     _jsRuntime.Hide(planetNameSelector);
                     _jsRuntime.Hide(housePropertySelector);
                     _jsRuntime.Hide(planetPropertySelector);
+                    _jsRuntime.Hide(accountTaskSelector);
+                    break;
+                case "account"://show house & hide planet
+                    _jsRuntime.Hide(houseNameSelector);
+                    _jsRuntime.Hide(planetNameSelector);
+                    _jsRuntime.Hide(housePropertySelector);
+                    _jsRuntime.Hide(planetPropertySelector);
+                    _jsRuntime.Show(accountTaskSelector);
                     break;
             }
         }
     }
-
     private string _selectedBodyType;
+    private string _selectedTaskName;
+    private string _addPersonOwnerId;
+
 
     /// <summary>
     /// After user click generate check data validity, generate final url
     /// </summary>
     /// <returns></returns>
-    private async Task OnClickSubmitButton()
+    private async Task OnClickGenerateButton()
     {
         await _jsRuntime.ShowLoading();
 
         //only continue if passed input field validation
         if (!(await IsValidationPassed())) { return; }
-
 
         //auto set correct Timezone based on location & birth date
         var dateTimeOffset = await _timeInput.GetDateTimeOffset(); //offset is ignored here
@@ -248,22 +426,21 @@
         var timeInputed = await _timeInput.GetTime(geoLocation);
 
         //get final celes name, if empty raise nice alarm
-        var finalCelesName = GetFinalCelesName();
-        var finalCelesProperty = GetFinalCelesProperty();
+        var finalCelesName = GetFinalCategoryName();
+        var finalCelesProperty = GetFinalCategoryProperty();
 
         //data property
         //if select all, leave empty as for API to give all
-        finalCelesName = finalCelesName == "All" ? "" : finalCelesName;
+        //finalCelesName = finalCelesName == "All" ? "All" : finalCelesName;
         finalCelesProperty = finalCelesProperty == "All" ? "" : finalCelesProperty;
 
         //STAGE 2 :
         //combine the call
-        //---
         var domain = AppData.URL.ApiUrl; //get stable or beta as needed
-                                         //---
+
         var localNameNoSpace = Tools.RemoveWhiteSpace(_geoLocationInput.LocationName);
         var location = $"/Location/{localNameNoSpace}";
-        //---
+
         string hhmmStr = timeInputed.GetStdDateTimeOffset().ToString("HH:mm");
         string dateSt = timeInputed.GetStdDateTimeOffset().ToString("dd");
         string monthStr = timeInputed.GetStdDateTimeOffset().ToString("MM");
@@ -273,17 +450,28 @@
 
         //format of the API call
         var placeHolder = "";
-        if (SelectedBodyType == "SkyChart")
+        if (SelectedCategory == "SkyChart")
         {
             placeHolder = domain + location + time + "/SkyChart";
         }
-        else if (SelectedBodyType == "SkyChartGIF")
+        else if (SelectedCategory == "SkyChartGIF")
         {
             placeHolder = domain + location + time + "/SkyChartGIF";
         }
+        else if (SelectedCategory == "Account")
+        {
+            var ownerId = $"/OwnerId/{AddPersonOwnerId}";
+            var name = $"/Name/{AddPersonName}";
+            var gender = $"/Gender/{AddPersonGender}";
+            var accountTask = $"/{SelectedTaskName}";
+            placeHolder = domain + accountTask + ownerId + name + gender + location + time;
+        }
         else
         {
-            var celestialBodyData = $"/{SelectedBodyType}/{finalCelesName}/{finalCelesProperty}";
+            var celesPropertyStr = string.IsNullOrEmpty(finalCelesProperty) ? "" : $"/{finalCelesProperty}"; // sign, angle
+            var selectedBodyTypeStr = string.IsNullOrEmpty(SelectedCategory) ? "" : $"/{SelectedCategory}"; //planet, house
+            var finalCelesNameStr = string.IsNullOrEmpty(finalCelesName) ? "" : $"/{finalCelesName}"; // sun, moon, house 1
+            var celestialBodyData = selectedBodyTypeStr + finalCelesNameStr + celesPropertyStr;
             placeHolder = domain + location + time + celestialBodyData;
         }
 
@@ -292,6 +480,7 @@
         //tactile feedback to user
         await _jsRuntime.ShowAlert("success", AlertText.IsDoneText(), false, 2200);
 
+        _jsRuntime.PlayDoneSound();
     }
 
     /// <summary>
@@ -319,7 +508,7 @@
         }
 
         //TEST 3 : Celes Type
-        if (String.IsNullOrWhiteSpace(SelectedBodyType))
+        if (String.IsNullOrWhiteSpace(SelectedCategory))
         {
             //mark invalid & alert user
             await _jsRuntime.ShowAlert("error", "Falling asleep?", "Select a celestial body first");
@@ -328,18 +517,18 @@
         }
 
         //TEST 4 : Celes Name
-        if (String.IsNullOrWhiteSpace(GetFinalCelesName()))
+        if (String.IsNullOrWhiteSpace(GetFinalCategoryName()))
         {
             //mark invalid & alert user
-            await _jsRuntime.ShowAlert("error", $"What's the \"Name\" of the {SelectedBodyType}?", true);
+            await _jsRuntime.ShowAlert("error", $"What's the \"Name\" of the {SelectedCategory}?", true);
             return false;
         }
 
         //TEST 5 : Celes Prop
-        if (String.IsNullOrWhiteSpace(GetFinalCelesProperty()))
+        if (String.IsNullOrWhiteSpace(GetFinalCategoryProperty()))
         {
             //mark invalid & alert user
-            await _jsRuntime.ShowAlert("error", $"What exact {SelectedBodyType} data you want?", true);
+            await _jsRuntime.ShowAlert("error", $"What exact {SelectedCategory} data you want?", true);
             return false;
         }
 
@@ -349,28 +538,27 @@
 
     }
 
-
     /// <summary>
     /// if null or empty than needs selection
     /// since only calculated when called
     /// </summary>
-    private string GetFinalCelesName()
+    private string GetFinalCategoryName()
     {
-        switch (SelectedBodyType.ToLower())
+        switch (SelectedCategory.ToLower())
         {
             case "planet":
-                return selectedPlanetName;
+                return SelectedPlanetName;
             case "house":
-                return selectedHouseName;
+                return SelectedHouseName;
         }
 
         //if not specified than not needed, return empty
         return "pass"; //something to escape validation
     }
 
-    private string GetFinalCelesProperty()
+    private string GetFinalCategoryProperty()
     {
-        switch (SelectedBodyType.ToLower())
+        switch (SelectedCategory.ToLower())
         {
             case "planet":
                 return selectedPlanetProperty;

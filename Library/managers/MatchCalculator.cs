@@ -109,9 +109,9 @@ namespace VedAstro.Library
                     var grahaMaitram = list.Find(pr => pr.Name == MatchPredictionName.GrahaMaitram);
 
                     //if prediction is bad and exception can be applied
-                    var streeDeergaIsBad = streeDeerga.Nature == EventNature.Bad;
-                    var rasiKutaIsGood = rasiKuta.Nature == EventNature.Good;
-                    var grahaMaitramIsGood = grahaMaitram.Nature == EventNature.Good;
+                    var streeDeergaIsBad = streeDeerga?.Nature == EventNature.Bad;
+                    var rasiKutaIsGood = rasiKuta?.Nature == EventNature.Good;
+                    var grahaMaitramIsGood = grahaMaitram?.Nature == EventNature.Good;
 
                     if (streeDeergaIsBad && rasiKutaIsGood && grahaMaitramIsGood)
                     {
@@ -148,11 +148,11 @@ namespace VedAstro.Library
 
 
                     //if prediction is bad and exception can be applied
-                    var rajjuIsBad = rajju.Nature == EventNature.Bad;
-                    var grahaMaitramIsGood = grahaMaitram.Nature == EventNature.Good;
-                    var rasiKutaIsGood = rasiKuta.Nature == EventNature.Good;
-                    var dinaKutaIsGood = dinaKuta.Nature == EventNature.Good;
-                    var mahendraIsGood = mahendra.Nature == EventNature.Good;
+                    var rajjuIsBad = rajju?.Nature == EventNature.Bad;
+                    var grahaMaitramIsGood = grahaMaitram?.Nature == EventNature.Good;
+                    var rasiKutaIsGood = rasiKuta?.Nature == EventNature.Good;
+                    var dinaKutaIsGood = dinaKuta?.Nature == EventNature.Good;
+                    var mahendraIsGood = mahendra?.Nature == EventNature.Good;
 
 
                     if (rajjuIsBad && grahaMaitramIsGood && rasiKutaIsGood && dinaKutaIsGood && mahendraIsGood)
@@ -188,9 +188,9 @@ namespace VedAstro.Library
                     var rajju = list.Find(pr => pr.Name == MatchPredictionName.Rajju);
 
                     //if prediction is bad and exception can be applied
-                    var nadiKutaIsBad = nadiKuta.Nature == EventNature.Bad;
-                    var rasiKutaIsGood = rasiKuta.Nature == EventNature.Good;
-                    var rajjuIsGood = rajju.Nature == EventNature.Good;
+                    var nadiKutaIsBad = nadiKuta?.Nature == EventNature.Bad;
+                    var rasiKutaIsGood = rasiKuta?.Nature == EventNature.Good;
+                    var rajjuIsGood = rajju?.Nature == EventNature.Good;
 
                     if (nadiKutaIsBad && rasiKutaIsGood && rajjuIsGood)
                     {
@@ -442,10 +442,10 @@ namespace VedAstro.Library
             prediction.FemaleInfo = femaleGuna.ToString();
 
             //rename for readability
-            var manIsManushaDeva = maleGuna is Guna.Deva or Guna.Manusha;
-            var girlIsRakshasa = femaleGuna == Guna.Rakshasa;
-            var femaleIsManushaDeva = femaleGuna is Guna.Deva or Guna.Manusha;
-            var maleIsRakshasa = maleGuna == Guna.Rakshasa;
+            var manIsManushaDeva = maleGuna is Guna.DevaAngel or Guna.ManushaHuman;
+            var girlIsRakshasa = femaleGuna == Guna.RakshasaDemon;
+            var femaleIsManushaDeva = femaleGuna is Guna.DevaAngel or Guna.ManushaHuman;
+            var maleIsRakshasa = maleGuna == Guna.RakshasaDemon;
 
 
             //Hence one born in a Deva
@@ -455,11 +455,11 @@ namespace VedAstro.Library
             if (maleGuna == femaleGuna)
             {
                 prediction.Nature = EventNature.Good;
-                prediction.Info = $"both are same {femaleGuna.ToString()} Guna";
+                prediction.Info = $"both are same {Format.FormatName(femaleGuna)} Guna";
             }
 
             // Manusha or a Deva man should not marry a Rakshasa girl unless there
-            // are other neutralising factors.
+            // are other neutralizing factors.
             else if (manIsManushaDeva && girlIsRakshasa)
             {
                 prediction.Nature = EventNature.Bad;
@@ -523,7 +523,7 @@ namespace VedAstro.Library
                     case ConstellationName.Anuradha:
                     case ConstellationName.Mrigasira:
                     case ConstellationName.Aswini:
-                        return Guna.Deva;
+                        return Guna.DevaAngel;
 
                     // Manusha Gana. - Rohini, Pubba, Poorvashadha, Poorvabhadra,
                     // Bharani, Aridra, Uttara, Uttarashadha and Uttarabhadra.
@@ -536,7 +536,7 @@ namespace VedAstro.Library
                     case ConstellationName.Uttara:
                     case ConstellationName.Uttarashada:
                     case ConstellationName.Uttarabhadra:
-                        return Guna.Manusha;
+                        return Guna.ManushaHuman;
 
                     // Rakshasa Gana. - Krittika, Aslesha, Makha, Chitta, Visakha, Jyeshta,
                     // Moola, Dhanishta and Satabhisha.
@@ -549,7 +549,7 @@ namespace VedAstro.Library
                     case ConstellationName.Moola:
                     case ConstellationName.Dhanishta:
                     case ConstellationName.Satabhisha:
-                        return Guna.Rakshasa;
+                        return Guna.RakshasaDemon;
 
 
                     default: throw new Exception("");
@@ -566,17 +566,13 @@ namespace VedAstro.Library
                 Description = "spiritual/ego compatibility"
             };
 
-            //get ruling sign
-            var maleRuleSign = AstronomicalCalculator.GetPlanetRasiSign(PlanetName.Moon, male.BirthTime).GetSignName();
-            var femaleRuleSign = AstronomicalCalculator.GetPlanetRasiSign(PlanetName.Moon, female.BirthTime).GetSignName();
-
-            //get grade
-            var maleGrade = getGrade(maleRuleSign);
-            var femaleGrade = getGrade(femaleRuleSign);
 
             //copy info into prediction data
-            prediction.MaleInfo = getGradeName(maleGrade);
-            prediction.FemaleInfo = getGradeName(femaleGrade);
+            var maleGrade = AstronomicalCalculator.GetBirthVarna(male.BirthTime);
+            prediction.MaleInfo = Format.FormatName(maleGrade.ToString());
+
+            var femaleGrade = AstronomicalCalculator.GetBirthVarna(female.BirthTime);
+            prediction.FemaleInfo = Format.FormatName(femaleGrade.ToString());
 
 
             //A girl belonging fo a higher grade of
@@ -593,58 +589,11 @@ namespace VedAstro.Library
             if ((maleGrade > femaleGrade) || (maleGrade == femaleGrade))
             {
                 prediction.Nature = EventNature.Good;
-                prediction.Info = "boy higher and girl lower or both same Varna, is allowed";
+                prediction.Info = "boy higher and girl lower or both same Varna, is good";
             }
 
             return prediction;
 
-            string getGradeName(int grade)
-            {
-                switch (grade)
-                {
-                    case 1:
-                        return "Sudra";
-                    case 2:
-                        return "Vaisya";
-                    case 3:
-                        return "Kshatriya";
-                    case 4:
-                        return "Brahmin";
-                    default: throw new Exception();
-                }
-            }
-
-            //higher grade is higher class
-            int getGrade(ZodiacName sign)
-            {
-                switch (sign)
-                {   //Pisces, Scorpio and Cancer represent the highest development - Brahmin 
-                    case ZodiacName.Pisces:
-                    case ZodiacName.Scorpio:
-                    case ZodiacName.Cancer:
-                        return 4;
-
-                    //Leo, Sagittarius and Libra indicate the second grade - or Kshatriya;
-                    case ZodiacName.Leo:
-                    case ZodiacName.Sagittarius:
-                    case ZodiacName.Libra:
-                        return 3;
-
-                    //Aries, Gemini and Aquarius suggest the third or the Vaisya;
-                    case ZodiacName.Aries:
-                    case ZodiacName.Gemini:
-                    case ZodiacName.Aquarius:
-                        return 2;
-
-                    //while Taurus, Virgo and Capricorn indicate the last grade, viz., Sudra
-                    case ZodiacName.Taurus:
-                    case ZodiacName.Virgo:
-                    case ZodiacName.Capricornus:
-                        return 1;
-
-                    default: throw new Exception("");
-                }
-            }
         }
 
         public static MatchPrediction YoniKuta(Person male, Person female)
@@ -663,11 +612,11 @@ namespace VedAstro.Library
 
 
             //get group names
-            dynamic maleGroupName = getAnimal(maleConstellation);
-            dynamic femaleGroupName = getAnimal(femaleConstellation);
+            var maleGroupName = AstronomicalCalculator.GetAnimal(maleConstellation);
+            var femaleGroupName = AstronomicalCalculator.GetAnimal(femaleConstellation);
 
-            Animal maleAnimal = maleGroupName.Animal;
-            Animal femaleAnimal = femaleGroupName.Animal;
+            AnimalName maleAnimal = maleGroupName.Animal;
+            AnimalName femaleAnimal = femaleGroupName.Animal;
             string maleGender = maleGroupName.Gender;
             string femaleGender = femaleGroupName.Gender;
 
@@ -748,7 +697,7 @@ namespace VedAstro.Library
             //FUNCTIONS
 
             //gets animal compatibility grade
-            int getAnimalCompatible(Animal a, Animal b)
+            int getAnimalCompatible(AnimalName a, AnimalName b)
             {
                 //          Ho El   Sh  Se  Do  Ca  Ra  Co  Bu  Ti  Ha  Mo  Mg  Li
                 // Horse.   4   2   2   3   2   2   2   1   0   1   3   3   2   1
@@ -791,71 +740,7 @@ namespace VedAstro.Library
                 return animalGrade;
             }
 
-            //higher grade is higher class
-            object getAnimal(ConstellationName sign)
-            {
-                switch (sign)
-                {
-                    case ConstellationName.Aswini:
-                        return new { Gender = "Male", Animal = Animal.Horse };
-                    case ConstellationName.Satabhisha:
-                        return new { Gender = "Female", Animal = Animal.Horse };
-                    case ConstellationName.Bharani:
-                        return new { Gender = "Male", Animal = Animal.Elephant };
-                    case ConstellationName.Revathi:
-                        return new { Gender = "Female", Animal = Animal.Elephant };
-                    case ConstellationName.Pushyami:
-                        return new { Gender = "Male", Animal = Animal.Sheep };
-                    case ConstellationName.Krithika:
-                        return new { Gender = "Female", Animal = Animal.Sheep };
-                    case ConstellationName.Rohini:
-                        return new { Gender = "Male", Animal = Animal.Serpent };
-                    case ConstellationName.Mrigasira:
-                        return new { Gender = "Female", Animal = Animal.Serpent };
-                    case ConstellationName.Moola:
-                        return new { Gender = "Male", Animal = Animal.Dog };
-                    case ConstellationName.Aridra:
-                        return new { Gender = "Female", Animal = Animal.Dog };
-                    case ConstellationName.Aslesha:
-                        return new { Gender = "Male", Animal = Animal.Cat };
-                    case ConstellationName.Punarvasu:
-                        return new { Gender = "Female", Animal = Animal.Cat };
-                    case ConstellationName.Makha:
-                        return new { Gender = "Male", Animal = Animal.Rat };
-                    case ConstellationName.Pubba:
-                        return new { Gender = "Female", Animal = Animal.Rat };
-                    case ConstellationName.Uttara:
-                        return new { Gender = "Male", Animal = Animal.Cow };
-                    case ConstellationName.Uttarabhadra:
-                        return new { Gender = "Female", Animal = Animal.Cow };
-                    case ConstellationName.Swathi:
-                        return new { Gender = "Male", Animal = Animal.Buffalo };
-                    case ConstellationName.Hasta:
-                        return new { Gender = "Female", Animal = Animal.Buffalo };
-                    case ConstellationName.Vishhaka:
-                        return new { Gender = "Male", Animal = Animal.Tiger };
-                    case ConstellationName.Chitta:
-                        return new { Gender = "Female", Animal = Animal.Tiger };
-                    case ConstellationName.Jyesta:
-                        return new { Gender = "Male", Animal = Animal.Hare };
-                    case ConstellationName.Anuradha:
-                        return new { Gender = "Female", Animal = Animal.Hare };
-                    case ConstellationName.Poorvashada:
-                        return new { Gender = "Male", Animal = Animal.Monkey };
-                    case ConstellationName.Sravana:
-                        return new { Gender = "Female", Animal = Animal.Monkey };
-                    case ConstellationName.Poorvabhadra:
-                        return new { Gender = "Male", Animal = Animal.Lion };
-                    case ConstellationName.Dhanishta:
-                        return new { Gender = "Female", Animal = Animal.Lion };
-                    case ConstellationName.Uttarashada:
-                        return new { Gender = "Male", Animal = Animal.Mongoose };
-
-
-
-                    default: throw new Exception("");
-                }
-            }
+            
         }
 
         public static MatchPrediction VedhaKuta(Person male, Person female)
@@ -1755,7 +1640,7 @@ namespace VedAstro.Library
 
                 //get planet debilitated & exalted friendship
                 var planetDebilitated = AstronomicalCalculator.IsPlanetDebilitated(planet, birthTime);
-                var planetExalted = AstronomicalCalculator.IsPlanetExaltated(planet, birthTime);
+                var planetExalted = AstronomicalCalculator.IsPlanetExalted(planet, birthTime);
 
 
                 //for rahu/ketu special method
@@ -2070,10 +1955,10 @@ namespace VedAstro.Library
 
 
             //get the data needed (borrow horoscope calculator)
-            var maleStrongSex = HoroscopeCalculatorMethods.MarsVenusIn7th(male.BirthTime, male).Occuring;
-            var femaleStrongSex = HoroscopeCalculatorMethods.MarsVenusIn7th(female.BirthTime, female).Occuring;
-            var maleUnderSex = HoroscopeCalculatorMethods.MercuryOrJupiterIn7th(male.BirthTime, male).Occuring;
-            var femaleUnderSex = HoroscopeCalculatorMethods.MercuryOrJupiterIn7th(female.BirthTime, female).Occuring;
+            var maleStrongSex = HoroscopeCalculatorMethods.MarsVenusIn7th(male.BirthTime).Occuring;
+            var femaleStrongSex = HoroscopeCalculatorMethods.MarsVenusIn7th(female.BirthTime).Occuring;
+            var maleUnderSex = HoroscopeCalculatorMethods.MercuryOrJupiterIn7th(male.BirthTime).Occuring;
+            var femaleUnderSex = HoroscopeCalculatorMethods.MercuryOrJupiterIn7th(female.BirthTime).Occuring;
 
             //fill extra info
             if (maleStrongSex) { prediction.MaleInfo = "Strong Sex"; }

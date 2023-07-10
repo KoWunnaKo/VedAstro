@@ -4,6 +4,8 @@ using System.Xml.Linq;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using VedAstro.Library;
 
 
 namespace Website
@@ -45,7 +47,7 @@ namespace Website
             }
             //above code will fail when called during app start, because haven't load lib
             //as such catch failure and silently ignore
-            catch (Exception e)
+            catch (Exception)
             {
                 Console.WriteLine($"BLZ: ShowAlert Not Yet Load Lib Silent Fail!");
             }
@@ -115,6 +117,9 @@ namespace Website
         /// </summary>
         public static async Task ShowAlert(this IJSRuntime jsRuntime, string icon, string title, string descriptionText)
         {
+            //log this, don't await to reduce lag
+            WebLogger.Data($"Alert : {title} : {descriptionText}");
+
             //call SweetAlert lib directly via constructor
             await jsRuntime.InvokeVoidAsync(JS.Swal_fire, title, descriptionText, icon);
         }
@@ -124,7 +129,7 @@ namespace Website
         /// note: uses sweet alert js
         /// </summary>
         public static async Task<string> ShowLeaveEmailAlert(this IJSRuntime jsRuntime) => await jsRuntime.InvokeAsync<string>(JS.ShowLeaveEmailAlert);
-        
+
         /// <summary>
         /// Shows a dialog box with request for email, done via SweetAlert JS
         /// </summary>
@@ -144,6 +149,25 @@ namespace Website
         /// </summary>
         public static async Task ShowLoading(this IJSRuntime jsRuntime, int delayMs = 300)
         {
+            //note: - id needed for tooltip js, init from app js
+            //      - div need to wrap image for nice formatting
+            //      - all code placed here for easy of maintainer and it works!
+            var clear = "function hi(){$('#LoadingBoxStatus').text('');};hi()";
+            var showReload = "function hi(){$('#LoadingBoxStatus').text('reload');};hi()";
+            var newTab = "function hi(){$('#LoadingBoxStatus').text('new tab');};hi()";
+            var styleText = "font-size: 15px; align-self: center;color: #a3a3a3; width:64px;white-space: nowrap;";
+            var loadingBoxOptions = $@"
+                <div class=""vstack"">
+                    <div>
+                        <img src=""images/loading-animation-progress-transparent.gif"">
+                    </div>
+                    <div class=""my-1 d-flex justify-content-center gap-3"">
+                        <button onmouseout=""{clear}"" onmouseover=""{showReload}"" onclick=""window.location.href=window.location.href"" style=""width: fit-content;"" class=""btn-sm iconOnlyButton btn-outline-danger btn"" ><svg xmlns=""http://www.w3.org/2000/svg"" xmlns:xlink=""http://www.w3.org/1999/xlink"" aria-hidden=""true"" role=""img"" class=""iconify iconify--ooui"" width=""25"" height=""25"" preserveAspectRatio=""xMidYMid meet"" viewBox=""0 0 20 20"" data-icon=""ooui:reload"" data-width=""25""><path fill=""currentColor"" d=""M15.65 4.35A8 8 0 1 0 17.4 13h-2.22a6 6 0 1 1-1-7.22L11 9h7V2z""></path></svg></button><!--!-->
+                        <span id=""LoadingBoxStatus"" style=""{styleText}"" class=""px-2""></span>                
+                        <button  onmouseout=""{clear}"" onmouseover=""{newTab}"" onclick=""window.open('{AppData.URL.WebUrl}')"" style=""width: fit-content;"" class=""btn-sm iconOnlyButton btn-outline-primary btn"" ><svg xmlns=""http://www.w3.org/2000/svg"" xmlns:xlink=""http://www.w3.org/1999/xlink"" aria-hidden=""true"" role=""img"" class=""iconify iconify--iconoir"" width=""25"" height=""25"" preserveAspectRatio=""xMidYMid meet"" viewBox=""0 0 24 24"" data-icon=""iconoir:new-tab"" data-width=""25""><g fill=""none"" stroke=""currentColor"" stroke-width=""1.5""><path d=""M2 19V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2Z""></path><path stroke-linecap=""round"" stroke-linejoin=""round"" d=""M2 7h20M9 14h3m3 0h-3m0 0v-3m0 3v3""></path></g></svg></button>
+                    </div>
+                </div>";
+
             var alertData = new
             {
                 showConfirmButton = false,
@@ -153,8 +177,7 @@ namespace Website
                 allowEscapeKey = false,
                 stopKeydownPropagation = true,
                 keydownListenerCapture = true,
-                html = "<img src=\"images/loading-animation-progress-transparent.gif\" />"
-
+                html = loadingBoxOptions
             };
 
             //log it
@@ -171,6 +194,7 @@ namespace Website
             AppData.IsShowLoading = true;
         }
 
+
         public static void HideLoading(this IJSRuntime jsRuntime)
         {
             //log it
@@ -180,6 +204,18 @@ namespace Website
 
             //let others know loading box is closed
             AppData.IsShowLoading = false;
+        }
+
+
+        /// <summary>
+        /// uses basic JS plays sound stored in wwwroot via element in index.html
+        /// </summary>
+        /// <param name="jsRuntime"></param>
+        public static void PlayDoneSound(this IJSRuntime jsRuntime)
+        {
+            var notifySoundFile = "/sound/positive-notification.mp3";
+
+            jsRuntime.InvokeVoidAsync(JS.PlaySoundFromUrl, Path.Combine(AppData.URL.WebUrl, notifySoundFile));
         }
 
 
@@ -207,7 +243,7 @@ namespace Website
             {
                 await jsRuntime.InvokeVoidAsync(JS.tippy, cssSelector, tooltipData);
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 //not important ignore if fail
                 Console.WriteLine("BLZ: Tippy Silent Fail!");
@@ -217,12 +253,33 @@ namespace Website
 
         //ACCESS BROWSERS LOCAL STORAGE
 
-        public static async Task<string> GetProperty(this IJSRuntime jsRuntime, string propName) => await jsRuntime.InvokeAsync<string>(JS.getProperty, propName);
+        /// <summary>
+        /// Gets data stored in browser storage
+        /// </summary>
+        public static async Task<string> GetProperty(this IJSRuntime jsRuntime, string propName)
+        {
+            var value = await jsRuntime.InvokeAsync<string>(JS.getProperty, propName);
+
+#if DEBUG
+            Console.WriteLine($"GET Prop : {propName} = {value}");
+#endif
+
+            return value;
+        }
+
         /// <summary>
         /// Set data into browser local storage
         /// </summary>
-        public static async Task SetProperty(this IJSRuntime jsRuntime, string propName, string value) => await jsRuntime.InvokeVoidAsync(JS.setProperty, propName, value);
+        public static async Task SetProperty(this IJSRuntime jsRuntime, string propName, string value)
+        {
+#if DEBUG
+            Console.WriteLine($"SET Prop : {propName} = {value}");
+#endif
+            await jsRuntime.InvokeVoidAsync(JS.setProperty, propName, value);
+        }
+
         public static async Task RemoveProperty(this IJSRuntime jsRuntime, string propName) => await jsRuntime.InvokeVoidAsync(JS.removeProperty, propName);
+
         /// <summary>
         /// Calls given handler when localstorage data changes
         /// </summary>
@@ -240,10 +297,21 @@ namespace Website
         /// Uses jQuery to show element via blazor reference
         /// </summary>
         public static async Task Show(this IJSRuntime jsRuntime, ElementReference element) => await jsRuntime.InvokeVoidAsync(JS.showWrapper, element);
+
         /// <summary>
         /// Uses jQuery to show element via selector (#ID,.class)
         /// </summary>
         public static async Task Show(this IJSRuntime jsRuntime, string elementSelector) => await jsRuntime.InvokeVoidAsync(JS.showWrapper, elementSelector);
+
+        public static async Task FunFeaturePopUp(this IJSRuntime jsRuntime, string featureName)
+        {
+            //log this
+            WebLogger.Click($"Fund : {featureName}");
+
+            var descriptionText = "<a target=\"_blank\" style=\"text-decoration-line: none;\" href=\"https://vedastro.org/Donate/\" class=\"link-primary fw-bold\">Fund</a> this feature for faster development";
+            await jsRuntime.ShowAlert("info", "Coming soon", descriptionText);
+        }
+
 
         /// <summary>
         /// Uses jQuery to hide element via blazor reference
@@ -307,6 +375,12 @@ namespace Website
             return finalXml;
         }
 
+        public static async Task ScrollToDivById(this IJSRuntime jsRuntime, string predictionName)
+        {
+            //make scroll movement to place
+            await jsRuntime.InvokeVoidAsync(JS.scrollToDiv, "#" + predictionName);
+        }
+
         public static async Task AddClass(this IJSRuntime jsRuntime, ElementReference element, string classNames) => await jsRuntime.InvokeVoidAsync(JS.addClassWrapper, element, classNames);
 
         public static async Task RemoveClass(this IJSRuntime jsRuntime, ElementReference element, string classNames) => await jsRuntime.InvokeVoidAsync(JS.removeClassWrapper, element, classNames);
@@ -341,14 +415,21 @@ namespace Website
         /// </summary>
         public static async Task SetCss(this IJSRuntime jsRuntime, string element, string propName, object propVal) => await jsRuntime.InvokeVoidAsync(JS.setCssWrapper, element, propName, propVal);
 
-        public static void OpenNewTab(this IJSRuntime jsRuntime, string url) => jsRuntime.InvokeVoidAsync(JS.open, url, "_blank");
+        public static void OpenNewTab(this IJSRuntime jsRuntime, string url)
+        {
+            WebLogger.Data($"NEW TAB TO: {url}");
+            jsRuntime.InvokeVoidAsync(JS.open, url, "_blank");
+        }
 
         /// <summary>
         /// Jquery .text()
         /// </summary>
         public static async Task<string> GetText(this IJSRuntime jsRuntime, ElementReference element) => await jsRuntime.InvokeAsync<string>(JS.getTextWrapper, element);
+
         public static async Task<string> GetText(this IJSRuntime jsRuntime, string jquerySelector) => await jsRuntime.InvokeAsync<string>(JS.getTextWrapper, jquerySelector);
+
         public static async Task<string> GetValue(this IJSRuntime jsRuntime, ElementReference element) => await jsRuntime.InvokeAsync<string>(JS.getValueWrapper, element);
+
         public static async Task<string> GetValue(this IJSRuntime jsRuntime, string jquerySelector) => await jsRuntime.InvokeAsync<string>(JS.getValueWrapper, jquerySelector);
 
         /// <summary>

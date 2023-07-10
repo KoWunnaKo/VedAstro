@@ -21,13 +21,6 @@
         public const string QuickGuide = "Docs/QuickGuide";
         public const string Glossary = "Docs/Glossary";
 
-        //DOCS > API
-        public const string HouseApi = "Docs/API/House";
-        public const string PlanetApi = "Docs/API/Planet";
-        public const string OpenApi = "Docs/API/";
-        public const string MatchApi = "Docs/API/Match";
-        public const string NLPApi = "Docs/API/NLP";
-        
         //DEVELOPER
         public const string Developer = "Developer/";
         public const string DeveloperParam = "Developer/{TabName}";
@@ -37,40 +30,39 @@
         //JOURNAL
         public const string Journal = "Journal/";
         public const string JournalParam = "/Journal/{PersonIdUrl}";
-        public const string JournalAdd = "Journal/Add";
-        public const string JournalEditor = "Journal/Editor";
+        public const string JournalEditorParam = "Journal/Editor/{PersonIdUrl}/{LifeEventIdUrl}"; //for page declaration
+        public const string JournalEditor = "Journal/Editor"; //for page URL generation
 
         
         //CALCULATORS
         public const string CalculatorList = "Calculator/";
-        public const string LifePredictor = "Calculator/LifePredictor";
-        public const string LifePredictorParam = "Calculator/LifePredictor/{PersonIdUrl}";
-        public const string StarsAboveMe = "Calculator/StarsAboveMe";
-        public const string SunRiseSetTime = "Calculator/SunRiseSetTime";
-        public const string BirthTimeFinder = "Calculator/BirthTimeFinder";
-        public const string LocalMeanTime = "Calculator/LocalMeanTime";
-        public const string Horoscope = "Calculator/Horoscope";
-        public const string HoroscopeParam = "Calculator/Horoscope/{PersonIdUrl}";
-        public const string Muhurtha = "Calculator/Muhurtha";
-        public const string FamilyChart = "Calculator/FamilyChart";
-        public const string MatchReport = "Calculator/Match/Report";
-        public const string APIBuilder = "Calculator/APIBuilder";
+        public const string LifePredictor = "LifePredictor";
+        public const string LifePredictorParam = "LifePredictor/{PersonIdUrl}";
+        public const string StarsAboveMe = "StarsAboveMe";
+        public const string SunRiseSetTime = "SunRiseSetTime";
+        public const string BirthTimeFinder = "BirthTimeFinder";
+        public const string LocalMeanTime = "LocalMeanTime";
+        public const string Horoscope = "Horoscope";
+        public const string HoroscopeParam = "Horoscope/{PersonIdUrl}";
+        public const string Muhurtha = "Muhurtha";
+        public const string FamilyChart = "FamilyChart";
+        public const string MatchReport = "Match/Report";
+        public const string APIBuilder = "APIBuilder";
 
 
         //MATCH
-        public const string Match = "Calculator/Match";
-        public const string SavedMatchReports = "Calculator/Match/Saved";
-        public const string MatchProfile = "Calculator/Match/Profile";
-        public const string MatchReportParam = "Calculator/Match/Report/{MaleId}/{FemaleId}";
-        public const string MatchFinder = "Calculator/Match/Finder";
+        public const string Match = "Match";
+        public const string SavedMatchReports = "Match/Saved";
+        public const string MatchProfile = "Match/Profile";
+        public const string MatchReportParam = "Match/Report/{MaleId}/{FemaleId}";
+        public const string MatchFinder = "Match/Finder";
 
 
 
         //DONATE
         public const string Donate = "Donate/";
         public const string DonateOld = "DonateOld/";
-        public const string DonatePayment = "Donate/Payment"; //todo maybe not needed
-        public const string DonateSpacy = "Donate/spaCyAPI";
+        public const string DonatePayment = "Donate/Payment"; //contains Paypal sample code
 
 
         //ACCOUNT
@@ -88,6 +80,7 @@
         public const string Remedy = "/Remedy";
         public const string Download = "/Download";
         public const string VisitorList = "/VisitorList";
+        public const string VisitorListOld = "/VisitorListOld";
         public const string FAQ = "/FAQ";
         public const string TaskEditor = "/TaskEditor";
         public const string TaskEditorParam = "/TaskEditor/{TaskHash}";

@@ -64,13 +64,22 @@ namespace VedAstro.Library
         /// </summary>
         public Time(string stdDateTimeText, GeoLocation geoLocation)
         {
-            var stdDateTime = DateTimeOffset.ParseExact(stdDateTimeText, Time.DateTimeFormat, null);
+            try
+            {
+                var stdDateTime = DateTimeOffset.ParseExact(stdDateTimeText, Time.DateTimeFormat, null);
 
-            //store std time
-            _stdTime = stdDateTime;
+                //store std time
+                _stdTime = stdDateTime;
 
-            //store geo location for later use
-            _geoLocation = geoLocation;
+                //store geo location for later use
+                _geoLocation = geoLocation;
+
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+               //return Empty;
+            }
         }
 
         /// <summary>
@@ -98,6 +107,27 @@ namespace VedAstro.Library
 
         //█▀█ █░█ █▄▄ █░░ █ █▀▀   █▀▄▀█ █▀▀ ▀█▀ █░█ █▀█ █▀▄ █▀
         //█▀▀ █▄█ █▄█ █▄▄ █ █▄▄   █░▀░█ ██▄ ░█░ █▀█ █▄█ █▄▀ ▄█
+
+        /// <summary>
+        /// Slices time range into pieces by inputed hours
+        /// Given a start time and end time, it will add precision hours to start time until reaching end time.
+        /// Note: number of slices returned != precision hours
+        /// </summary>
+        public static List<Time> GetTimeListFromRange(Time startTime, Time endTime, double precisionInHours)
+        {
+            //declare return value
+            var timeList = new List<Time>();
+
+            //create list
+            for (var day = startTime; day.GetStdDateTimeOffset() <= endTime.GetStdDateTimeOffset(); day = day.AddHours(precisionInHours))
+            {
+                timeList.Add(day);
+            }
+
+            //return value
+            return timeList;
+        }
+
 
         /// <summary>
         /// Returns a new instance of the modified time.
@@ -192,6 +222,23 @@ namespace VedAstro.Library
 
             //return formatted time
             return final;
+        }
+
+        public string GetStdDateMonthYearText()
+        {
+            var stdDateTimeString = _stdTime.ToString("dd/MM/yyyy");
+            return stdDateTimeString;
+        }
+
+
+        /// <summary>
+        /// Returns STD time zone as text "+08:00"
+        /// </summary>
+        /// <returns></returns>
+        public string GetStdTimezoneText()
+        {
+            var stdTimeZoneString = _stdTime.ToString("zzz"); //timezone separate so can clean date time
+            return stdTimeZoneString;
         }
 
         public DateTimeOffset GetStdDateTimeOffset()
@@ -497,12 +544,15 @@ namespace VedAstro.Library
         public override int GetHashCode()
         {
             //combine all the hash of the fields
-            var hash1 = _stdTime.GetHashCode();
+            var hash1 = (int)_stdTime.Ticks;
             var hash2 = _geoLocation.GetHashCode();
 
             return hash1 + hash2;
         }
 
+        /// <summary>
+        /// Returns STD time in string HH:mm dd/MM/yyyy zzz
+        /// </summary>
         public override string ToString()
         {
             return GetStdDateTimeOffsetText();
@@ -543,6 +593,20 @@ namespace VedAstro.Library
                 parsed = new DateTimeOffset();
                 return false;
             }
+        }
+
+        /// <summary>
+        /// time converted to the format used in OPEN API url
+        /// Time/ + 00:00/22/05/2023/+00:00
+        /// </summary>
+        /// <returns></returns>
+        public string GetUrlString()
+        {
+            //reconstruct into URL pattern
+            //00:00/22/05/2023/+00:00
+            var returnVal = this.GetStdDateTimeOffsetText(); //date time with space
+            var formatted = returnVal.Replace(" ", "/"); //replace spacing between to slash
+            return formatted;
         }
 
     }

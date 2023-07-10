@@ -4,6 +4,7 @@ using System.Linq;
 using System.Web;
 using System.Xml.Linq;
 using Newtonsoft.Json.Linq;
+using static Azure.Core.HttpHeader;
 
 namespace VedAstro.Library
 {
@@ -145,8 +146,20 @@ namespace VedAstro.Library
         /// <summary>
         /// Gets now time at birth location of person (STD time)
         /// </summary>
-        public DateTimeOffset StdTimeNowAtBirthLocation =>
-            DateTimeOffset.Now.ToOffset(this.BirthTime.GetStdDateTimeOffset().Offset);
+        public DateTimeOffset StdTimeNowAtBirthLocation => DateTimeOffset.Now.ToOffset(this.BirthTime.GetStdDateTimeOffset().Offset);
+
+
+        /// <summary>
+        /// Gets now time at birth location of person
+        /// </summary>
+        public Time TimeNowAtBirthLocation
+        {
+            get
+            {
+                var temp = new Time(DateTimeOffset.Now.ToOffset(this.BirthTime.GetStdDateTimeOffset().Offset), this.GetBirthLocation());
+                return temp;
+            }
+        }
 
         /// <summary>
         /// image name is ID with .jpg at back
@@ -155,9 +168,14 @@ namespace VedAstro.Library
 
         /// <summary>
         /// Format name with birth year for easy identification
-        /// used for showing to  in website
+        /// used for showing to  in website Steve Jobs - 1995
         /// </summary>
         public string DisplayName => $"{Name} - {BirthYear}";
+
+        /// <summary>
+        /// Name with no space, used for file names, SteveJobs
+        /// </summary>
+        public string NameWithNoSpace => $"{Name.Replace(" ", "")}";
 
 
         //PUBLIC PROPERTIES
@@ -180,6 +198,12 @@ namespace VedAstro.Library
         /// Gets this person's age at the inputed std year (using year from STD time)
         /// </summary>
         public int GetAge(int year) => year - this.BirthYear;
+
+        /// <summary>
+        /// Gets age at now time at current time's locations
+        /// </summary>
+        /// <returns></returns>
+        public int GetAge() => GetAge(Time.Now(this.GetBirthLocation()));
 
 
 
@@ -247,7 +271,7 @@ namespace VedAstro.Library
             JArray returnArray = new JArray();
             foreach (var person in personList)
             {
-                
+
                 //compile into an JSON array
                 returnArray.Add(person.ToJson());
             }
@@ -320,7 +344,7 @@ namespace VedAstro.Library
                 return returnXml;
             }
         }
-
+        
         /// <summary>
         /// The root element is expected to be Person
         /// Note: Special method done to implement IToXml
@@ -385,6 +409,9 @@ namespace VedAstro.Library
 
         public static List<Person> FromJsonList(JToken personList)
         {
+            //if null empty list please
+            if (personList == null) { return new List<Person>(); }
+
             var returnList = new List<Person>();
 
             foreach (var personJson in personList)
