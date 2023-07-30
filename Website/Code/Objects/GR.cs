@@ -28,6 +28,9 @@
         public static double W667 => Math.Round(W1080 / GoldenRatio, 1);
         public static string W667px => $"{W667}px";
 
+        public static double W546 => W509 + W37;
+        public static string W546px => $"{W546}px";
+
         public static double W509 => W412 + W97;
         public static string W509px => $"{W509}px";
 
@@ -42,6 +45,12 @@
 
         public static double W255 => Math.Round(W412 / GoldenRatio, 1);
         public static string W255px => $"{W255}px";
+
+        public static double W231 => GR.W194 + GR.W37;
+        public static string W231px => $"{W231}px";
+
+        public static double W194 => GR.W157 + GR.W37;
+        public static string W194px => $"{W194}px";
 
         public static double W157 => Math.Round(W255 / GoldenRatio, 1);
         public static string W157px => $"{W157}px";

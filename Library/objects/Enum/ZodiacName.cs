@@ -1,9 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using System.Xml.Linq;
 
 namespace VedAstro.Library
 {
+    /// <summary>
+    /// note EMPTY not allowed here because, used to generate list of 12 for looping
+    /// </summary>
     [Serializable()]
     public enum ZodiacName
     {
@@ -21,8 +26,16 @@ namespace VedAstro.Library
         Pisces = 12
     }
 
+    /// <summary>
+    /// Follow naming convention "{Enum}Extensions" (depended by Open API)
+    /// </summary>
     public static class ZodiacNameExtensions
     {
+
+        /// <summary>
+        /// Gets all zodiac names in a list
+        /// </summary>
+        public static List<ZodiacName> AllZodiacSigns = Enum.GetValues(typeof(ZodiacName)).Cast<ZodiacName>().ToList();
 
         /// <summary>
         /// Note: Root element must be named ZodiacName
@@ -71,6 +84,34 @@ namespace VedAstro.Library
             var holder = new XElement("ZodiacName", _eventTag.ToString());
 
             return holder;
+        }
+
+        /// <summary>
+        /// Gets all zodiac signs in order in an dictionary with a  value,
+        /// used for making astavarga charts
+        /// </summary>
+        public static Dictionary<ZodiacName, T> GetDictionary<T>(T defaultValue)
+        {
+            var returnVal = new Dictionary<ZodiacName, T>();
+
+            foreach (var sign in ZodiacNameExtensions.AllZodiacSigns)
+            {
+                returnVal.Add(sign, defaultValue);
+            }
+
+            return returnVal;
+        }
+
+        /// <summary>
+        /// /ZodiacName/Leo
+        /// </summary>
+        public static async Task<dynamic> FromUrl(string url)
+        {
+            string[] parts = url.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
+
+            var parsedZodiac = (ZodiacName)Enum.Parse(typeof(ZodiacName), parts[1]); 
+
+            return parsedZodiac;
         }
     }
 

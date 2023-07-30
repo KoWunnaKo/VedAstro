@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.Xml.Linq;
 
 namespace VedAstro.Library
@@ -7,11 +8,20 @@ namespace VedAstro.Library
     /// <summary>
     /// A list of planet names, with string parsing & comparison
     /// </summary>
-    public class PlanetName : IToXml
+    public class PlanetName : IToXml, IFromUrl
     {
+        /// <summary>
+        /// The number of pieces the URL version of this instance needs to be cut for processing
+        /// used to segregate out the combined URL with other data
+        /// EXP -> /PlanetName/Sun/ == 2 PIECES
+        /// </summary>
+        public static int OpenAPILength = 2;
+
+
         //NESTED TYPES
         public enum PlanetNameEnum
         {
+            Empty = 0,
             Sun = 1,
             Moon,
             Mars,
@@ -61,6 +71,8 @@ namespace VedAstro.Library
         //DATA FIELDS
         public PlanetNameEnum Name { get; }
 
+        public static PlanetName Empty = new PlanetName(PlanetNameEnum.Empty);
+
 
         //CTOR
         private PlanetName(PlanetNameEnum planetName)
@@ -72,31 +84,31 @@ namespace VedAstro.Library
         //METHODS
         
         /// <summary>
-        /// 
+        /// Given a planet name in string will give back an instance, caps auto corrected
         /// </summary>
         public static PlanetName Parse(string name)
         {
 
             //Convert string to PlanetName type
-            switch (name)
+            switch (name.ToLower())
             {
-                case "Sun":
+                case "sun":
                     return Sun;
-                case "Moon":
+                case "moon":
                     return Moon;
-                case "Mars":
+                case "mars":
                     return Mars;
-                case "Mercury":
+                case "mercury":
                     return Mercury;
-                case "Jupiter":
+                case "jupiter":
                     return Jupiter;
-                case "Venus":
+                case "venus":
                     return Venus;
-                case "Saturn":
+                case "saturn":
                     return Saturn;
-                case "Ketu":
+                case "ketu":
                     return Ketu;
-                case "Rahu":
+                case "rahu":
                     return Rahu;
             }
 
@@ -128,7 +140,6 @@ namespace VedAstro.Library
             parsed = null;
             return false;
         }
-
 
         public XElement ToXml()
         {
@@ -164,6 +175,20 @@ namespace VedAstro.Library
         }
 
         /// <summary>
+        /// Given PlanetName instance in URL form will convert to instance
+        /// /PlanetName/Mercury
+        /// </summary>
+        public static async Task<dynamic> FromUrl(string url)
+        {
+            // INPUT -> "/PlanetName/Mercury/"
+            string[] parts = url.Split(new char[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
+
+            var parsed = PlanetName.Parse(parts[1]);
+
+            return parsed;
+        }
+
+        /// <summary>
         /// Note: Root element must be named PlanetNameList
         /// </summary>
         public static XElement ToXmlList(List<PlanetName> planetNameList)
@@ -183,6 +208,12 @@ namespace VedAstro.Library
         //OPERATOR OVERRIDES
         public static bool operator ==(PlanetName left, PlanetName right)
         {
+            //check for nulls
+            if (ReferenceEquals(left, null))
+            {
+                return ReferenceEquals(right, null);
+            }
+
             return left.Equals(right);
         }
 
@@ -196,6 +227,8 @@ namespace VedAstro.Library
 
         public override bool Equals(object obj)
         {
+            //nulls is false
+            if (ReferenceEquals(null, obj)) return false;
 
             if (obj.GetType() == typeof(PlanetName))
             {

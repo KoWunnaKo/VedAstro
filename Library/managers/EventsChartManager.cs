@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Web;
 using System.Drawing;
+using System.Diagnostics.Tracing;
 
 
 namespace VedAstro.Library
@@ -41,7 +42,7 @@ namespace VedAstro.Library
         //▒█▄▄█ ▒█░▒█ ▒█▀▀▄ ▒█░░░ ▒█░ ▒█░░░ 
         //▒█░░░ ░▀▄▄▀ ▒█▄▄█ ▒█▄▄█ ▄█▄ ▒█▄▄█
 
-        public static async Task<string> GenerateEventsChart(Person inputPerson, TimeRange timeRange, double daysPerPixel, List<EventTag> inputedEventTags)
+        public static async Task<string> GenerateEventsChart(Person inputPerson, TimeRange timeRange, double daysPerPixel, List<EventTag> inputedEventTags, ChartOptions summaryOptions)
         {
 
             //ACT I : declare the components
@@ -49,6 +50,7 @@ namespace VedAstro.Library
             string contentHead = null;
             string timeHeader = null;
             string eventRows = null;
+            string summaryRow = null;
             string nowLine = null;
             string contentTail = null;
             string cursorLine = null;
@@ -60,7 +62,7 @@ namespace VedAstro.Library
 
             //ACT II : fill the components in order
 
-            await GenerateComponents(inputPerson, timeRange.start, timeRange.end, daysPerPixel, inputedEventTags);
+            await GenerateComponents(inputPerson, timeRange.start, timeRange.end, daysPerPixel, inputedEventTags, summaryOptions);
 
 
             //ACT III : compile in right placement
@@ -70,13 +72,14 @@ namespace VedAstro.Library
                         <!--inside border-->
                         {contentHead}
                             {timeHeader}
-                            {eventRows} <!-- with summary-->
+                            {eventRows}
+                            {lifeEvents}
+                            {summaryRow}
                             {nowLine}
                         {contentTail}
 
                         <!--outside border-->
                         {cursorLine}
-                        {lifeEvents}
                         {border} <!--border painted last-->
                         {jsCode} <!--place last-->
                     {svgTail}
@@ -86,7 +89,7 @@ namespace VedAstro.Library
             return final;
 
 
-            async Task GenerateComponents(Person inputPerson, Time startTime, Time endTime, double daysPerPixel, List<EventTag> inputedEventTags)
+            async Task GenerateComponents(Person inputPerson, Time startTime, Time endTime, double daysPerPixel, List<EventTag> inputedEventTags, ChartOptions summaryOptions)
             {
                 //STEP 1: USER INPUT > USABLE DATA
                 var svgBackgroundColor = "#f0f9ff"; //not bleach white
@@ -120,7 +123,10 @@ namespace VedAstro.Library
                     endTime,
                     inputPerson,
                     timeSlices,
-                    inputedEventTags, ref verticalYAxis);
+                    inputedEventTags, summaryOptions, ref verticalYAxis);
+
+                var padding = 1;//space between rows
+                summaryRow = GenerateSummaryRow(SummaryRowData, SummaryRowHeight, SingleRowHeight, padding, ref verticalYAxis);
 
                 nowLine = MakeNowLine(startTime, verticalYAxis, timeSlices);
 
@@ -219,20 +225,17 @@ namespace VedAstro.Library
             //load order is important
             jsCode += "<script href=\"https://code.jquery.com/jquery-3.6.3.min.js\" />";
             jsCode += "<script href=\"https://cdn.jsdelivr.net/npm/@svgdotjs/svg.js@3.0/dist/svg.min.js\" />";//used in events chart inside js
-            jsCode += "<script href=\"https://www.vedastro.org/js/EventsChart.js\" />";
-            //compiledRow += "<script href=\"https://www.vedastro.org/js/EventsChartInside.js\" />";
+            jsCode += "<script href=\"https://www.vedastro.org/js/EventsChartClass.js\" />";
 
             //random id is created here to link svg element with JS instance
             jsCode += $@"
-                            <script>//<![CDATA[
+	                    <script type=""text/ecmascript"">
+		                    <![CDATA[
 
-                                new EventsChart($(""#{randomId}""));
-
-                                //animate chart
-                                window.EventsChart.animateChart();
-
-                            //]]>
-                            </script>
+                               //START THE BEAST
+		                       var index = new EventsChart(""{randomId}"");
+			                ]]>
+	                    </script>
                             ";
 
             return jsCode;
@@ -428,7 +431,7 @@ namespace VedAstro.Library
                                     </g>
                                     <!-- DESCRIPTION -->
 		                            <g class=""description-label"" style=""{descriptionDisplayStyle}"" transform=""translate(0,{17})"">
-                                        <rect class=""background"" style=""fill: blue; opacity: 0.8;"" width=""{descriptionBackgroundWidth}"" height=""{boxHeightPx+5}"" rx=""2"" ry=""2""/>
+                                        <rect class=""background"" style=""fill: blue; opacity: 0.8;"" width=""{descriptionBackgroundWidth}"" height=""{boxHeightPx + 5}"" rx=""2"" ry=""2""/>
                                         <text transform=""translate(2,11)"">
                                             {descriptionTextSvg}
 			                            </text>
@@ -704,16 +707,17 @@ namespace VedAstro.Library
 			                    <rect width=""2"" height=""{lineHeight}"" style=""fill:#000000;"" x=""0"" y=""0""></rect>
 			                    <rect width=""20"" height=""2"" style=""fill:black;"" x=""-9"" y=""{lineHeight - 2}""></rect>
 		                    </g>
+                            <!--cloned to CursorLineLegendClone -->
 		                    <g id=""CursorLineLegendTemplate"" transform=""matrix(1, 0, 0, 1, 10, 26)"" style=""display:none;"">
-                                <rect style=""fill: blue; opacity: 0.80;"" x=""-1"" y=""0"" width=""160"" height=""15"" rx=""2"" ry=""2""></rect>
-			                    <text style=""fill:#FFFFFF; font-size:11px; font-weight:400; white-space: pre;"" x=""14"" y=""11"">Template</text>
+                                <rect opacity=""0.80"" fill=""blue"" x=""-1"" y=""0"" width=""160"" height=""15"" rx=""2"" ry=""2""></rect>
+			                    <text fill=""#FFFFFF"" font-size=""11"" font-weight=""400"" x=""14"" y=""11"">Template</text>
                                 <!--icon set dynamic by JS-->
                                 <use xlink:href=""""></use>                                
                             </g>
                             <!--place where dynamic event names are placed by JS-->
                             <g id=""CursorLineLegendHolder"" transform=""matrix(1, 0, 0, 1, 0, 4)""></g>
                             <g id=""CursorLineLegendDescriptionHolder"" transform=""matrix(1, 0, 0, 1, 0, 0)"" style=""display:none;"">
-			                    <rect id=""CursorLineLegendDescriptionBackground"" style=""fill:#003e99;"" x=""170"" y=""11.244"" width=""150"" height=""0"" rx=""2"" ry=""2""></rect>
+			                    <rect id=""CursorLineLegendDescriptionBackground"" fill=""#0096FF"" x=""170"" y=""11.244"" width=""150"" height=""0"" rx=""2"" ry=""2""></rect>
                                 <g id=""CursorLineLegendDescription""></g>
 		                    </g>
                        </g>
@@ -1389,16 +1393,19 @@ namespace VedAstro.Library
 
         }
 
+        private static Dictionary<int, SumData> SummaryRowData { get; set; }
+
+        //1 GENERATE DATA FOR EVENT ROWS
+        public const int SingleRowHeight = 15;
+        public const int SummaryRowHeight = 22;
+
         /// <summary>
         /// Generate rows based of inputed events
         /// </summary>
         private static string GenerateEventRows(double eventsPrecision, Time startTime, Time endTime,
-            Person inputPerson, List<Time> timeSlices, List<EventTag> inputedEventTags, ref int yAxis)
+            Person inputPerson, List<Time> timeSlices, List<EventTag> inputedEventTags, ChartOptions summaryOptions, ref int yAxis)
         {
-            //1 GENERATE DATA FOR EVENT ROWS
             const int widthPerSlice = 1;
-            const int singleRowHeight = 15;
-            const int SummaryRowHeight = 22;
 
 
             //sort event by duration, so that events are ordered nicely in chart
@@ -1410,29 +1417,17 @@ namespace VedAstro.Library
             //2 STACK & GENERATED ROWS FROM ABOVE DATA
             var padding = 1;//space between rows
             var compiledRow = "";
-            double maxValue;
-            double minValue;
-            Dictionary<int, SumData> summaryRowData;
             if (eventList.Any())
             {
 
                 //note: summary data is filled when generating rows
                 //x axis, total nature score, planet name
-                summaryRowData = new Dictionary<int, SumData>();
+                SummaryRowData = new Dictionary<int, SumData>();
                 //generate svg for each row & add to final row
                 //compiledRow += GenerateMultipleRowSvg(eventList, timeSlices, yAxis, 0, out int finalHeight);
-                compiledRow += GenerateMultipleRowSvg(eventList, timeSlices, yAxis, 0, out int finalHeight);
+                compiledRow += GenerateMultipleRowSvg(eventList, timeSlices, yAxis, 0, summaryOptions, out int finalHeight);
                 //set y axis (horizontal) for next row
                 yAxis = yAxis + finalHeight + padding;
-
-                //4 GENERATE SUMMARY ROW
-                //min & max used to calculate color later
-                maxValue = summaryRowData?.Values?.Max(x => x.NatureScore) ?? 0;
-                minValue = summaryRowData?.Values?.Min(x => x.NatureScore) ?? 0;
-                compiledRow += GenerateSummaryRow(yAxis);
-
-                //note caller checks final height by checking y axis by ref
-                yAxis += 15;//add in height of summary row
 
             }
 
@@ -1443,106 +1438,10 @@ namespace VedAstro.Library
             //█░░ █▀█ █▀▀ ▄▀█ █░░   █▀▀ █░█ █▄░█ █▀▀ ▀█▀ █ █▀█ █▄░█ █▀
             //█▄▄ █▄█ █▄▄ █▀█ █▄▄   █▀░ █▄█ █░▀█ █▄▄ ░█░ █ █▄█ █░▀█ ▄█
 
-            string GenerateSummaryRow(int yAxis)
-            {
-#if DEBUG
-                Console.WriteLine($"GenerateSummaryRow : MAX:{maxValue}, MIN:{minValue}");
-#endif
-
-                var rowHtml = "";
-                //STEP 1 : generate color summary
-                var colorRow = "";
-                foreach (var summarySlice in summaryRowData)
-                {
-                    int xAxis = summarySlice.Key;
-                    //total nature score is sum of negative & positive 1s of all events
-                    //that occurred at this point in time, possible negative number
-                    //exp: -4 bad + 5 good = 1 total nature score
-                    double totalNatureScore = summarySlice.Value.NatureScore;
-
-                    var rect = $"<rect " +
-                               $"x=\"{xAxis}\" " +
-                               $"y=\"{yAxis}\" " + //y axis placed here instead of parent group, so that auto legend can use the y axis
-                               $"width=\"{widthPerSlice}\" " +
-                               $"height=\"{SummaryRowHeight}\" " +
-                               $"fill=\"{GetSummaryColor(totalNatureScore, minValue, maxValue)}\" />";
-
-                    //add rect to row
-                    colorRow += rect;
-                }
-
-                rowHtml += $"<g id=\"ColorRow\">{colorRow}</g>";
-
-
-                //STEP 2 : generate graph summary
-                //var barChartRow = "";
-                //foreach (var summarySlice in summaryRowData)
-                //{
-                //    int xAxis = summarySlice.Key;
-                //    double totalNatureScore = summarySlice.Value.NatureScore; //possible negative
-                //    var barHeight = (int)totalNatureScore.Remap(minValue, maxValue, 0, 30);
-                //    var rect = $"<rect " +
-                //               $"x=\"{xAxis}\" " +
-                //               $"y=\"{yAxis}\" " + //y axis placed here instead of parent group, so that auto legend can use the y axis
-                //               $"width=\"{widthPerSlice}\" " +
-                //               $"height=\"{barHeight}\" " +
-                //               $"fill=\"black\" />";
-
-                //    //add rect to row
-                //    barChartRow += rect;
-                //}
-
-                ////note: chart is flipped 180, to start bar from bottom to top
-                ////default hidden
-                //rowHtml += $"<g id=\"BarChartRow\" transform=\"matrix(1, 0, 0, 1, 0, 20)\">{barChartRow}</g>";
-
-
-                //STEP 3 : generate color summary SMART
-                //var colorRowSmart = "";
-                //foreach (var summarySlice in summaryRowData)
-                //{
-                //    int xAxis = summarySlice.Key;
-                //    //total nature score is sum of negative & positive 1s of all events
-                //    //that occurred at this point in time, possible negative number
-                //    //exp: -4 bad + 5 good = 1 total nature score
-                //    double totalNatureScore = summarySlice.Value.NatureScore;
-                //    var planetPowerFactor = GetPlanetPowerFactor(summarySlice.Value.Planet, summarySlice.Value.BirthTime);
-                //    var smartNatureScore = totalNatureScore * planetPowerFactor;
-                //    var rect = $"<rect " +
-                //               $"x=\"{xAxis}\" " +
-                //               $"y=\"{yAxis}\" " + //y axis placed here instead of parent group, so that auto legend can use the y axis
-                //               $"width=\"{widthPerSlice}\" " +
-                //               $"height=\"{singleRowHeight}\" " +
-                //               $"fill=\"{GetSummaryColor(smartNatureScore, -100, 100)}\" />";
-
-                //    //add rect to row
-                //    colorRowSmart += rect;
-                //}
-                ////note: chart is flipped 180, to start bar from bottom to top
-                ////default hidden
-                //rowHtml += $"<g id=\"BarChartRowSmart\" transform=\"matrix(1, 0, 0, 1, 0, 43)\">{colorRowSmart}</g>";
-
-
-                //STEP 4 : final wrapper
-                //add in "Smart Summary" label above row
-                float aboveRow = yAxis - singleRowHeight - padding;
-                rowHtml += $@"
-                    <g id=""SummaryLabel"" transform=""matrix(1, 0, 0, 1, 0, {aboveRow})"">
-				        <rect style=""fill: blue; opacity: 0.80;"" x=""-1"" y=""0"" width=""100"" height=""15"" rx=""2"" ry=""2""/>
-				        <text style=""fill:#FFFFFF; font-size:11px; font-weight:400;"" x=""16"" y=""11"">Smart Summary</text>
-				        <path transform=""matrix(0.045, 0, 0, 0.045, -14, -4)"" fill=""#fff"" d=""M437 122c-15 2-26 5-38 10-38 16-67 51-75 91-4 17-4 36 0 54 10 48 47 86 95 98 11 2 15 3 30 3s19-1 30-3c48-12 86-50 96-98 3-18 3-37 0-54-10-47-48-86-95-98-10-2-16-3-29-3h-14zm66 59c2 2 3 3 4 6s1 17 0 20c-2 7-11 9-15 2-1-2-1-3-1-7v-5h-37-37s8 11 18 23l21 25c1 2 1 5 1 7-1 1-10 13-21 26l-19 24c0 1 13 1 37 1h37v-5c0-6 1-9 5-11 5-2 11 1 11 8 1 1 1 6 1 10-1 7-1 8-2 10s-3 4-7 4h-52-50l-2-1c-4-3-5-7-3-11 0 0 11-14 24-29l22-28-22-28c-13-16-24-29-24-30-2-3-1-7 2-9 2-3 2-3 55-3h51l3 1z"" stroke=""none"" fill-rule=""nonzero""/>
-			        </g>";
-
-                //return compiled rects as 1 row in a group for easy debugging & edits
-                rowHtml = $"<g id=\"SummaryRow\">{rowHtml}</g>";
-                return rowHtml;
-            }
-
-
 
             //height not known until generated
             //returns the final dynamic height of this event row
-            string GenerateMultipleRowSvg(List<Event> eventList, List<Time> timeSlices, int yAxis, int xAxis, out int finalHeight)
+            string GenerateMultipleRowSvg(List<Event> eventList, List<Time> timeSlices, int yAxis, int xAxis, ChartOptions summaryOptions, out int finalHeight)
             {
                 //generate the row for each time slice
                 var rowHtml = "";
@@ -1591,7 +1490,7 @@ namespace VedAstro.Library
                                    $"x=\"{horizontalPosition}\" " +
                                    $"y=\"{finalYAxis}\" " + //y axis placed here instead of parent group, so that auto legend can use the y axis
                                    $"width=\"{widthPerSlice}\" " +
-                                   $"height=\"{singleRowHeight}\" " +
+                                   $"height=\"{SingleRowHeight}\" " +
                                    $"fill=\"{color}\" />";
 
                         //add rect to return list
@@ -1604,23 +1503,23 @@ namespace VedAstro.Library
                         double natureScore = 0;
 
                         //calculate accurate nature score
-                        natureScore = CalculateNatureScore(foundEvent, inputPerson);
+                        natureScore = CalculateNatureScore(foundEvent, inputPerson, summaryOptions);
 
                         //compile nature score for making summary row later (defaults to 0)
-                        var previousNatureScoreSum = (summaryRowData.ContainsKey(horizontalPosition) ? summaryRowData[horizontalPosition].NatureScore : 0);
+                        var previousNatureScoreSum = (SummaryRowData.ContainsKey(horizontalPosition) ? SummaryRowData[horizontalPosition].NatureScore : 0);
 
                         var x = new SumData
                         {
                             BirthTime = inputPerson.BirthTime,
                             Planet = Tools.GetPlanetFromName(foundEvent.FormattedName),
-                            NatureScore = natureScore + previousNatureScoreSum //combine current with previous
+                            NatureScore = natureScore + previousNatureScoreSum //combine current with other events on same time slice
                         };
-                        summaryRowData[horizontalPosition] = x;
+                        SummaryRowData[horizontalPosition] = x;
 
 
                         //increment vertical position for next
                         //element to be placed beneath this one
-                        verticalPosition += singleRowHeight + spaceBetweenRow;
+                        verticalPosition += SingleRowHeight + spaceBetweenRow;
 
                         multipleEventCount++; //include this in count
                     }
@@ -1632,8 +1531,8 @@ namespace VedAstro.Library
                     verticalPosition = 0;
 
                     //safe only the highest row (last row in to be added) used for calculating final height
-                    var multipleRowH = (multipleEventCount * (singleRowHeight + spaceBetweenRow)) - spaceBetweenRow; //minus 1 to compensate for last row
-                    var thisSliceHeight = multipleEventCount > 1 ? multipleRowH : singleRowHeight; //different height calc for multiple & single row
+                    var multipleRowH = (multipleEventCount * (SingleRowHeight + spaceBetweenRow)) - spaceBetweenRow; //minus 1 to compensate for last row
+                    var thisSliceHeight = multipleEventCount > 1 ? multipleRowH : SingleRowHeight; //different height calc for multiple & single row
                     highestTimeSlice = thisSliceHeight > highestTimeSlice ? thisSliceHeight : highestTimeSlice;
                     multipleEventCount = 0; //reset
 
@@ -1652,169 +1551,438 @@ namespace VedAstro.Library
 
         }
 
+        private static string GenerateSummaryRow(Dictionary<int, SumData> summaryRowData, int summaryRowHeight, int singleRowHeight, int padding, ref int yAxis)
+        {
+            //min & max used to calculate color later
+            var maxValue = summaryRowData?.Values?.Max(x => x.NatureScore) ?? 0;
+            var minValue = summaryRowData?.Values?.Min(x => x.NatureScore) ?? 0;
+
+#if DEBUG
+            Console.WriteLine($"GenerateSummaryRow : MAX:{maxValue}, MIN:{minValue}");
+#endif
+
+            var rowHtml = "";
+            //STEP 1 : generate color summary
+            var colorRow = "";
+            foreach (var summarySlice in summaryRowData)
+            {
+                int xAxis = summarySlice.Key;
+                //total nature score is sum of negative & positive 1s of all events
+                //that occurred at this point in time, possible negative number
+                //exp: -4 bad + 5 good = 1 total nature score
+                double totalNatureScore = summarySlice.Value.NatureScore;
+
+                var rect = $"<rect " +
+                           $"x=\"{xAxis}\" " +
+                           $"y=\"{yAxis}\" " + //y axis placed here instead of parent group, so that auto legend can use the y axis
+                           $"width=\"{widthPerSlice}\" " +
+                           $"height=\"{summaryRowHeight}\" " +
+                           $"fill=\"{GetSummaryColor(totalNatureScore, minValue, maxValue)}\" />";
+
+                //add rect to row
+                colorRow += rect;
+            }
+
+            rowHtml += $"<g id=\"ColorRow\">{colorRow}</g>";
+
+
+            //STEP 2 : generate graph summary
+            //var barChartRow = "";
+            //foreach (var summarySlice in summaryRowData)
+            //{
+            //    int xAxis = summarySlice.Key;
+            //    double totalNatureScore = summarySlice.Value.NatureScore; //possible negative
+            //    var barHeight = (int)totalNatureScore.Remap(minValue, maxValue, 0, 30);
+            //    var rect = $"<rect " +
+            //               $"x=\"{xAxis}\" " +
+            //               $"y=\"{yAxis}\" " + //y axis placed here instead of parent group, so that auto legend can use the y axis
+            //               $"width=\"{widthPerSlice}\" " +
+            //               $"height=\"{barHeight}\" " +
+            //               $"fill=\"black\" />";
+
+            //    //add rect to row
+            //    barChartRow += rect;
+            //}
+
+            ////note: chart is flipped 180, to start bar from bottom to top
+            ////default hidden
+            //rowHtml += $"<g id=\"BarChartRow\" transform=\"matrix(1, 0, 0, 1, 0, 20)\">{barChartRow}</g>";
+
+
+            //STEP 3 : generate color summary SMART
+            //var colorRowSmart = "";
+            //foreach (var summarySlice in summaryRowData)
+            //{
+            //    int xAxis = summarySlice.Key;
+            //    //total nature score is sum of negative & positive 1s of all events
+            //    //that occurred at this point in time, possible negative number
+            //    //exp: -4 bad + 5 good = 1 total nature score
+            //    double totalNatureScore = summarySlice.Value.NatureScore;
+            //    var planetPowerFactor = GetPlanetPowerFactor(summarySlice.Value.Planet, summarySlice.Value.BirthTime);
+            //    var smartNatureScore = totalNatureScore * planetPowerFactor;
+            //    var rect = $"<rect " +
+            //               $"x=\"{xAxis}\" " +
+            //               $"y=\"{yAxis}\" " + //y axis placed here instead of parent group, so that auto legend can use the y axis
+            //               $"width=\"{widthPerSlice}\" " +
+            //               $"height=\"{singleRowHeight}\" " +
+            //               $"fill=\"{GetSummaryColor(smartNatureScore, -100, 100)}\" />";
+
+            //    //add rect to row
+            //    colorRowSmart += rect;
+            //}
+            ////note: chart is flipped 180, to start bar from bottom to top
+            ////default hidden
+            //rowHtml += $"<g id=\"BarChartRowSmart\" transform=\"matrix(1, 0, 0, 1, 0, 43)\">{colorRowSmart}</g>";
+
+
+            //STEP 4 : final wrapper
+            //add in "Smart Summary" label above row
+            float aboveRow = yAxis - singleRowHeight - padding;
+            rowHtml += $@"
+                    <g id=""SummaryLabel"" transform=""matrix(1, 0, 0, 1, 0, {aboveRow})"">
+				        <rect style=""fill: blue; opacity: 0.80;"" x=""-1"" y=""0"" width=""100"" height=""15"" rx=""2"" ry=""2""/>
+				        <text style=""fill:#FFFFFF; font-size:11px; font-weight:400;"" x=""16"" y=""11"">Smart Summary</text>
+				        <path transform=""matrix(0.045, 0, 0, 0.045, -14, -4)"" fill=""#fff"" d=""M437 122c-15 2-26 5-38 10-38 16-67 51-75 91-4 17-4 36 0 54 10 48 47 86 95 98 11 2 15 3 30 3s19-1 30-3c48-12 86-50 96-98 3-18 3-37 0-54-10-47-48-86-95-98-10-2-16-3-29-3h-14zm66 59c2 2 3 3 4 6s1 17 0 20c-2 7-11 9-15 2-1-2-1-3-1-7v-5h-37-37s8 11 18 23l21 25c1 2 1 5 1 7-1 1-10 13-21 26l-19 24c0 1 13 1 37 1h37v-5c0-6 1-9 5-11 5-2 11 1 11 8 1 1 1 6 1 10-1 7-1 8-2 10s-3 4-7 4h-52-50l-2-1c-4-3-5-7-3-11 0 0 11-14 24-29l22-28-22-28c-13-16-24-29-24-30-2-3-1-7 2-9 2-3 2-3 55-3h51l3 1z"" stroke=""none"" fill-rule=""nonzero""/>
+			        </g>";
+
+            //return compiled rects as 1 row in a group for easy debugging & edits
+            rowHtml = $"<g id=\"SummaryRow\">{rowHtml}</g>";
+
+            //add in summary row height
+            yAxis += 15;
+
+            return rowHtml;
+        }
+
+
+
         /// <summary>
         /// Intelligently calculates summary score
         /// </summary>
-        private static double CalculateNatureScore(Event foundEvent, Person person)
+        private static double CalculateNatureScore(Event foundEvent, Person person, ChartOptions chartOptions)
         {
-            //STAGE 1:
-            //score from general nature of event
-            var generalScore = 0;
-            switch (foundEvent?.Nature)
+            //add together all score of selected algorithms
+            var final = 0.0;
+            foreach (var algorithm in chartOptions.SelectedAlgorithm)
             {
-                case EventNature.Good:
-                    generalScore = 1;
-                    break;
-                case EventNature.Bad:
-                    generalScore = -1;
-                    break;
+                final += algorithm.Invoke(foundEvent, person);
             }
 
-            //STAGE 2: Special score
-            //var eventScore = GetEventScoreFromShadvargaTop3(foundEvent, person);
-            var eventScore2 = GetEventScoreFromShadvargaMK3(foundEvent, person);
 
-
-#if DEBUG
-            //Console.WriteLine($"PlanetOrHouse:{eventScore2}");
-#endif
-
-            var final = 0;
-            final += generalScore;
-            final += eventScore2;
+            //rounding
+            final = Math.Round(final, 2);
 
             return final;
         }
 
-        private static int GetEventScoreFromShadvargaTop3(Event foundEvent, Person person)
+
+        /// <summary>
+        /// Special set of functions to calculate events chart summary row
+        /// See as filters for data from events, to highlight and dim the presented score
+        /// </summary>
+        public static class Algorithm
         {
-            var finalScore = 0;
+            private static double topPlanetScore = 1;
 
-            //get all planets used in making event
-            var planetInEventList = foundEvent.GetRelatedPlanet();
-
-            //get top 3 planets as good
-            var beneficPlanetList = AstronomicalCalculator.GetBeneficPlanetListByShadbala(person.BirthTime);
-            //var beneficPlanetList2 = AstronomicalCalculator.GetBeneficPlanetListByShadbala(person.BirthTime, 500);
-            var maleficPlanetList = AstronomicalCalculator.GetMaleficPlanetListByShadbala(person.BirthTime);
-            //var maleficPlanetList2 = AstronomicalCalculator.GetMaleficPlanetListByShadbala(person.BirthTime, 300);
-
-            //add and remove score based on planet good and bad todo add remove by voting power
-            foreach (var planetInEvent in planetInEventList)
+            public static double GetGeneralScore(Event foundEvent, Person person)
             {
-                //has good planet plus 1
-                var beneficFound = beneficPlanetList.Contains(planetInEvent);
-                if (beneficFound) { finalScore += 1; }
+                //score from general nature of event
+                var generalScore = 0.0;
+                switch (foundEvent?.Nature)
+                {
+                    case EventNature.Good:
+                        generalScore = 1;
+                        break;
+                    case EventNature.Bad:
+                        generalScore = -1;
+                        break;
+                }
 
-                //has good planet plus 1
-                //var beneficFound2 = beneficPlanetList2.Contains(planetInEvent);
-                //if (beneficFound2) { finalScore += 1; }
+                return generalScore;
+            }
 
-                //has bad planet minus 1
-                var maleficFound = maleficPlanetList.Contains(planetInEvent);
-                if (maleficFound) { finalScore += -1; }
+            /// <summary>
+            /// Adds ashtakvarga bindu to only gochara events 
+            /// </summary>
+            public static double GocharaAshtakvargaBindu(Event foundEvent, Person person)
+            {
+                //if not gochara event, end here with 0/Neutral score
+                if (!foundEvent.Name.ToString().Contains("Gochara")) { return 0; }
 
-                //has bad planet minus 1
-                //var maleficFound2 = maleficPlanetList2.Contains(planetInEvent);
-                //if (maleficFound2) { finalScore += -1; }
+                //get gochara house number and planet from name of event
+                var gocharaHouse = foundEvent.GetRelatedHouse()[0];
+                var gocharaPlanet = foundEvent.GetRelatedPlanet()[0];
 
+                //no bindu for rahu & ketu, so default to 0/neutral
+                if (gocharaPlanet.Name is PlanetName.PlanetNameEnum.Rahu or PlanetName.PlanetNameEnum.Ketu) { return 0; }
+
+                //NOTE: Below we mix radical horoscope with now time = future prediction/muhurtha
+                //get ashtakvarga bindu points to predict good/bad nature of ongoing gochara (percentage possible)
+                //note here "Start Time" should be fine, since all throughout the event the house sign will be same as start
+                var houseSign = AstronomicalCalculator.GetHouseSignName(gocharaHouse, foundEvent.StartTime); //time here is current time, not birth
+                //here is birth time because ashtakvarga is based on birth
+                var binduPoints = AstronomicalCalculator.GetPlanetAshtakvargaBindu(gocharaPlanet, houseSign, person.BirthTime);//here is birth
+
+
+                //if bindu is below 3 and below bad
+                if (binduPoints == 0) { return -3; }
+                if (binduPoints == 1) { return -2; }
+                if (binduPoints is >= 2 and <= 3) { return -1; }
+
+                //if 4 and above is good
+                if (binduPoints is >= 4 and <= 5) { return 1; }
+                if (binduPoints is >= 6 and <= 7) { return 2; }
+                if (binduPoints == 8) { return 3; }
+
+                //end of line
+                throw new Exception("Not meant to hit here");
+            }
+
+            //if strongest planet, gets an extra point
+            public static double HighlightStrongestPlanet(Event foundEvent, Person person)
+            {
+                //get top planet
+                var topPlanet = AstronomicalCalculator.GetAllPlanetOrderedByStrength(person.BirthTime)[0];
+
+                //get all planets in event, scan and give score
+                var planetNatureScore = 0.0;
+                foreach (var relatedPlanet in foundEvent.GetRelatedPlanet())
+                {
+                    //is planet top planet
+                    var isTopPlanet = relatedPlanet == topPlanet;
+
+                    //if top planet than give score
+                    if (isTopPlanet)
+                    {
+                        planetNatureScore += topPlanetScore;
+                    }
+                }
+
+                return planetNatureScore;
+            }
+
+            public static double HighlightWeakestPlanet(Event foundEvent, Person person)
+            {
+                //get bottom planet
+                var bottomPlanet = AstronomicalCalculator.GetAllPlanetOrderedByStrength(person.BirthTime)[8];
+
+                //get all planets in event, scan and give score
+                var planetNatureScore = 0.0;
+                foreach (var relatedPlanet in foundEvent.GetRelatedPlanet())
+                {
+                    //is planet bottom planet
+                    var isBottomPlanet = relatedPlanet == bottomPlanet;
+
+                    //if bottom planet than give score
+                    if (isBottomPlanet)
+                    {
+                        planetNatureScore += -topPlanetScore;
+                    }
+                }
+
+                return planetNatureScore;
+            }
+
+            public static double HighlightStrongestHouse(Event foundEvent, Person person)
+            {
+                //get top house
+                var topHouse = AstronomicalCalculator.GetAllHousesOrderedByStrength(person.BirthTime)[0];
+
+                //get all houses in event, scan and give score
+                var houseNatureScore = 0.0;
+                foreach (var relatedHouse in foundEvent.GetRelatedHouse())
+                {
+                    //is house top house
+                    var isTopHouse = relatedHouse == topHouse;
+
+                    //if top house than give score
+                    if (isTopHouse)
+                    {
+                        houseNatureScore += topPlanetScore;
+                    }
+                }
+
+                return houseNatureScore;
+            }
+
+            public static double HighlightWeakestHouse(Event foundEvent, Person person)
+            {
+                //get bottom house
+                var bottomHouse = AstronomicalCalculator.GetAllHousesOrderedByStrength(person.BirthTime)[11];
+
+                //get all houses in event, scan and give score
+                var houseNatureScore = 0.0;
+                foreach (var relatedHouse in foundEvent.GetRelatedHouse())
+                {
+                    //is house bottom house
+                    var isBottomHouse = relatedHouse == bottomHouse;
+
+                    //if bottom house than give score
+                    if (isBottomHouse)
+                    {
+                        houseNatureScore += -topPlanetScore;
+                    }
+                }
+
+                return houseNatureScore;
             }
 
 
 
-            var houseInEventList = foundEvent.GetRelatedHouse();
-
-            var beneficHouseList = AstronomicalCalculator.GetBeneficHouseListByShadbala(person.BirthTime);
-            // var beneficHouseList2 = AstronomicalCalculator.GetBeneficHouseListByShadbala(person.BirthTime, 550);
-            var maleficHouseList = AstronomicalCalculator.GetMaleficHouseListByShadbala(person.BirthTime);
-            //var maleficHouseList2 = AstronomicalCalculator.GetMaleficHouseListByShadbala(person.BirthTime, 250);
-
-            foreach (var houseName in houseInEventList)
+            //------------------------------------
+            public static double GetEventScoreFromShadvargaMK3(Event foundEvent, Person person)
             {
-                //has good planet plus 1
-                var beneficFound = beneficHouseList.Contains(houseName);
-                if (beneficFound) { finalScore += 1; }
+                //get house that the event is related to
+                var relatedHouse = foundEvent.GetRelatedHouse().FirstOrDefault(); //for now assume only one
+                //get nature of house based on shadbala
+                var houseNatureScore = AstronomicalCalculator.GetHouseNatureScore(person.BirthTime, relatedHouse);
 
-                //has good planet plus 1
-                //var beneficFound2 = beneficHouseList2.Contains(houseName);
-                //if (beneficFound2) { finalScore += 1; }
+                //get houses and planet that the event is related to
+                var relatedPlanet = foundEvent.GetRelatedPlanet().FirstOrDefault(); //for now assume only one
+                //get nature of planet based on shadbala
+                var planetNatureScore = AstronomicalCalculator.GetPlanetNatureScore(person.BirthTime, relatedPlanet);
 
-                //has bad planet minus 1
-                var maleficFound = maleficHouseList.Contains(houseName);
-                if (maleficFound) { finalScore += -1; }
+                var final = 0;
+                final += houseNatureScore;
+                final += planetNatureScore;
 
-                //has bad planet minus 1
-                //var maleficFound2 = maleficHouseList2.Contains(houseName);
-                //if (maleficFound2) { finalScore += -1; }
+                return final;
 
             }
 
-
-            //return the compiled score to caller
-            return finalScore;
-        }
-
-
-        private static int GetEventScoreFromShadvargaMK3(Event foundEvent, Person person)
-        {
-            //get house that the event is related to
-            var relatedHouse = foundEvent.GetRelatedHouse().FirstOrDefault(); //for now assume only one
-            //get nature of house based on shadbala
-            var houseNatureScore = AstronomicalCalculator.GetHouseNatureScore(person.BirthTime, relatedHouse);
-
-            //get houses and planet that the event is related to
-            var relatedPlanet = foundEvent.GetRelatedPlanet().FirstOrDefault(); //for now assume only one
-            //get nature of planet based on shadbala
-            var planetNatureScore = AstronomicalCalculator.GetPlanetNatureScore(person.BirthTime, relatedPlanet);
-
-            var final = 0;
-            final += houseNatureScore;
-            final += planetNatureScore;
-
-            return final;
-
-        }
-
-
-        private static int GetEventScoreFromShadvargaPlanetOrHouse(Event foundEvent, Person person)
-        {
-            var finalScore = 0;
-
-            //get all planets used in making event
-            var planetInEventList = foundEvent.GetRelatedPlanet();
-
-            //get top 3 planets as good
-            var beneficPlanetList = AstronomicalCalculator.GetBeneficPlanetListByShadbala(person.BirthTime);
-            //var beneficPlanetList2 = AstronomicalCalculator.GetBeneficPlanetListByShadbala(person.BirthTime, 500);
-            var maleficPlanetList = AstronomicalCalculator.GetMaleficPlanetListByShadbala(person.BirthTime);
-            //var maleficPlanetList2 = AstronomicalCalculator.GetMaleficPlanetListByShadbala(person.BirthTime, 300);
-
-            //add and remove score based on planet good and bad todo add remove by voting power
-            foreach (var planetInEvent in planetInEventList)
+            public static double GetEventScoreFromShadvargaMK4(Event foundEvent, Person person)
             {
-                //has good planet plus 1
-                var beneficFound = beneficPlanetList.Contains(planetInEvent);
-                if (beneficFound) { finalScore += 1; }
+                //double houseNatureScore = 0;
+                //foreach (var relatedHouse in foundEvent.GetRelatedHouse())
+                //{
+                //    houseNatureScore = AstronomicalCalculator.GetHouseNatureScoreMK4(person.BirthTime, relatedHouse);
+                //}
 
-                //has good planet plus 1
-                //var beneficFound2 = beneficPlanetList2.Contains(planetInEvent);
-                //if (beneficFound2) { finalScore += 1; }
 
-                //has bad planet minus 1
-                var maleficFound = maleficPlanetList.Contains(planetInEvent);
-                if (maleficFound) { finalScore += -1; }
+                //get houses and planet that the event is related to
+                double planetNatureScore = 0;
+                foreach (var relatedPlanet in foundEvent.GetRelatedPlanet())
+                {
+                    planetNatureScore = AstronomicalCalculator.GetPlanetNatureScoreMK4(person.BirthTime, relatedPlanet);
+                }
 
-                //has bad planet minus 1
-                //var maleficFound2 = maleficPlanetList2.Contains(planetInEvent);
-                //if (maleficFound2) { finalScore += -1; }
+                var final = 0.0;
+                //final += houseNatureScore;
+                final += planetNatureScore;
+
+                return final;
 
             }
 
-
-            //only use houses when planets empty
-            var noPlanets = !planetInEventList.Any();
-            if (noPlanets)
+            public static double GetEventScoreFromShadvargaPlanetOrHouse(Event foundEvent, Person person)
             {
+                var finalScore = 0;
+
+                //get all planets used in making event
+                var planetInEventList = foundEvent.GetRelatedPlanet();
+
+                //get top 3 planets as good
+                var beneficPlanetList = AstronomicalCalculator.GetBeneficPlanetListByShadbala(person.BirthTime);
+                //var beneficPlanetList2 = AstronomicalCalculator.GetBeneficPlanetListByShadbala(person.BirthTime, 500);
+                var maleficPlanetList = AstronomicalCalculator.GetMaleficPlanetListByShadbala(person.BirthTime);
+                //var maleficPlanetList2 = AstronomicalCalculator.GetMaleficPlanetListByShadbala(person.BirthTime, 300);
+
+                //add and remove score based on planet good and bad todo add remove by voting power
+                foreach (var planetInEvent in planetInEventList)
+                {
+                    //has good planet plus 1
+                    var beneficFound = beneficPlanetList.Contains(planetInEvent);
+                    if (beneficFound) { finalScore += 1; }
+
+                    //has good planet plus 1
+                    //var beneficFound2 = beneficPlanetList2.Contains(planetInEvent);
+                    //if (beneficFound2) { finalScore += 1; }
+
+                    //has bad planet minus 1
+                    var maleficFound = maleficPlanetList.Contains(planetInEvent);
+                    if (maleficFound) { finalScore += -1; }
+
+                    //has bad planet minus 1
+                    //var maleficFound2 = maleficPlanetList2.Contains(planetInEvent);
+                    //if (maleficFound2) { finalScore += -1; }
+
+                }
+
+
+                //only use houses when planets empty
+                var noPlanets = !planetInEventList.Any();
+                if (noPlanets)
+                {
+                    var houseInEventList = foundEvent.GetRelatedHouse();
+
+                    var beneficHouseList = AstronomicalCalculator.GetBeneficHouseListByShadbala(person.BirthTime);
+                    // var beneficHouseList2 = AstronomicalCalculator.GetBeneficHouseListByShadbala(person.BirthTime, 550);
+                    var maleficHouseList = AstronomicalCalculator.GetMaleficHouseListByShadbala(person.BirthTime);
+                    //var maleficHouseList2 = AstronomicalCalculator.GetMaleficHouseListByShadbala(person.BirthTime, 250);
+
+                    foreach (var houseName in houseInEventList)
+                    {
+                        //has good planet plus 1
+                        var beneficFound = beneficHouseList.Contains(houseName);
+                        if (beneficFound) { finalScore += 1; }
+
+                        //has good planet plus 1
+                        //var beneficFound2 = beneficHouseList2.Contains(houseName);
+                        //if (beneficFound2) { finalScore += 1; }
+
+                        //has bad planet minus 1
+                        var maleficFound = maleficHouseList.Contains(houseName);
+                        if (maleficFound) { finalScore += -1; }
+
+                        //has bad planet minus 1
+                        //var maleficFound2 = maleficHouseList2.Contains(houseName);
+                        //if (maleficFound2) { finalScore += -1; }
+
+                    }
+
+                }
+
+
+                //return the compiled score to caller
+                return finalScore;
+            }
+
+            public static double GetEventScoreFromShadvargaTop3(Event foundEvent, Person person)
+            {
+                var finalScore = 0;
+
+                //get all planets used in making event
+                var planetInEventList = foundEvent.GetRelatedPlanet();
+
+                //get top 3 planets as good
+                var beneficPlanetList = AstronomicalCalculator.GetBeneficPlanetListByShadbala(person.BirthTime);
+                //var beneficPlanetList2 = AstronomicalCalculator.GetBeneficPlanetListByShadbala(person.BirthTime, 500);
+                var maleficPlanetList = AstronomicalCalculator.GetMaleficPlanetListByShadbala(person.BirthTime);
+                //var maleficPlanetList2 = AstronomicalCalculator.GetMaleficPlanetListByShadbala(person.BirthTime, 300);
+
+                //add and remove score based on planet good and bad todo add remove by voting power
+                foreach (var planetInEvent in planetInEventList)
+                {
+                    //has good planet plus 1
+                    var beneficFound = beneficPlanetList.Contains(planetInEvent);
+                    if (beneficFound) { finalScore += 1; }
+
+                    //has good planet plus 1
+                    //var beneficFound2 = beneficPlanetList2.Contains(planetInEvent);
+                    //if (beneficFound2) { finalScore += 1; }
+
+                    //has bad planet minus 1
+                    var maleficFound = maleficPlanetList.Contains(planetInEvent);
+                    if (maleficFound) { finalScore += -1; }
+
+                    //has bad planet minus 1
+                    //var maleficFound2 = maleficPlanetList2.Contains(planetInEvent);
+                    //if (maleficFound2) { finalScore += -1; }
+
+                }
+
+
+
                 var houseInEventList = foundEvent.GetRelatedHouse();
 
                 var beneficHouseList = AstronomicalCalculator.GetBeneficHouseListByShadbala(person.BirthTime);
@@ -1842,11 +2010,13 @@ namespace VedAstro.Library
 
                 }
 
+
+                //return the compiled score to caller
+                return finalScore;
             }
 
-
-            //return the compiled score to caller
-            return finalScore;
         }
+
+
     }
 }

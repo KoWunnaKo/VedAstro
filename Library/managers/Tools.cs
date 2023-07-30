@@ -22,6 +22,8 @@ using SwissEphNet;
 using Formatting = Newtonsoft.Json.Formatting;
 using Azure.Storage.Blobs.Models;
 using Azure.Storage.Blobs;
+using System.Reflection.Metadata;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 
 namespace VedAstro.Library
@@ -32,6 +34,22 @@ namespace VedAstro.Library
     /// </summary>
     public static class Tools
     {
+
+        /// <summary>
+        /// gets last day of any month at any time
+        /// input : 01/1981
+        /// </summary>
+        public static int GetLastDay(string monthYearText)
+        {
+            //split month and year
+            string[] splited = monthYearText.Split('/');
+            var month = int.Parse(splited[0]);
+            var year = int.Parse(splited[1]);
+
+            int daysInMonth = DateTime.DaysInMonth(year: year, month: month);
+            return daysInMonth;
+
+        }
 
         /// <summary>
         /// Converts raw call from API via URL to parsed Time
@@ -159,7 +177,7 @@ namespace VedAstro.Library
         {
             //access to file
             var fileClient = await Tools.GetBlobClientAzure(fileName, containerName);
-            
+
             //get xml file
             var xmlDocFile = await Tools.DownloadToXDoc(fileClient);
 
@@ -198,14 +216,14 @@ namespace VedAstro.Library
         }
 
 
-        public static async Task<EventsChart> GenerateNewChart(Person foundPerson, TimeRange timeRange, double daysPerPixel, List<EventTag> eventTags)
+        public static async Task<EventsChart> GenerateNewChart(Person foundPerson, TimeRange timeRange, double daysPerPixel, List<EventTag> eventTags, ChartOptions summaryOptions)
         {
             //from person get svg report
-            var eventsChartSvgString = await EventsChartManager.GenerateEventsChart(foundPerson, timeRange, daysPerPixel, eventTags);
+            var eventsChartSvgString = await EventsChartManager.GenerateEventsChart(foundPerson, timeRange, daysPerPixel, eventTags, summaryOptions);
 
             //a new chart is born
             var newChartId = Tools.GenerateId();
-            var newChart = new EventsChart(newChartId, eventsChartSvgString, foundPerson.Id, timeRange, daysPerPixel, eventTags);
+            var newChart = new EventsChart(newChartId, eventsChartSvgString, foundPerson.Id, timeRange, daysPerPixel, eventTags, summaryOptions);
 
             return newChart;
         }
@@ -458,6 +476,16 @@ namespace VedAstro.Library
             //note : done so that any updates to that live file will be instantly reflected in API results
             var eventDataListXml = await Tools.GetXmlFileHttp(httpUrl);
 
+            var finalInstance = await ConvertXmlListFileToInstanceList<T>(eventDataListXml);
+
+            return finalInstance;
+        }
+
+        /// <summary>
+        /// Given an XML file will auto convert it to an instance using ToXml() method
+        /// </summary>
+        public static async Task<List<T>> ConvertXmlListFileToInstanceList<T>(List<XElement> eventDataListXml) where T : IToXml, new()
+        {
             //parse each raw event data in list
             var eventDataList = new List<T>();
             foreach (var eventDataXml in eventDataListXml)
@@ -1565,35 +1593,78 @@ namespace VedAstro.Library
             return removed;
         }
 
-        public readonly record struct APICallData(string Name, string Description);
 
         /// <summary>
-        /// Get all methods that is available to time and planet param
-        /// this is the lis that will appear on the fly in API Builder dropdown
+        /// Get all methods that is available to 2 params
+        /// this is the list that will appear on the fly in API Builder dropdown
         /// </summary>
         /// <returns></returns>
-        public static IEnumerable<APICallData> GetPlanetApiCallList<T1, T2>()
+        public static List<AutoCalculator.APICallData> GetPlanetApiCallList<T1, T2>()
         {
             //get all the same methods gotten by Open api func
             var calcList = GetCalculatorListByParam<T1, T2>();
 
-            var finalList = new List<APICallData>();
-
-            //make final list with API description
-            //get nice API calc name, shown in builder dropdown
-            foreach (var calc in calcList)
-            {
-                finalList.Add(new APICallData(Tools.GetAPISpecialName(calc), Tools.GetAPICallDescByName("")));
-            }
+            //extract needed data out in convenient form
+            var finalList = AutoCalculator.APICallData.FromMethodInfoList(calcList);
 
             return finalList;
         }
 
-        //todo needs improvement
-        private static string GetAPICallDescByName(string calcName)
+        /// <summary>
+        /// Get Description text from api code
+        /// </summary>
+        public static string GetAPISpecialDescription(MethodInfo methodInfo1)
         {
-            //temp
-            return "temp no data, implement pls";
+            //try to get special API name for the calculator, possible not to exist
+            var customAttributes = methodInfo1?.GetCustomAttributes(true);
+            var apiAttributes = customAttributes?.OfType<APIAttribute>();
+            var firstOrDefault = apiAttributes?.FirstOrDefault();
+            var properApiDescription = firstOrDefault?.Description ?? "Not yet written, coming soon.";
+            return properApiDescription;
+        }
+
+        /// <summary>
+        /// Searches text no caps and no space
+        /// </summary>
+        /// <param name="text"></param>
+        /// <param name="keyword"></param>
+        /// <returns></returns>
+        public static bool SearchText(this string text, string keyword)
+        {
+            // Remove spaces from the text and the keyword
+            string textWithoutSpaces = text.Replace(" ", "");
+            string keywordWithoutSpaces = keyword.Replace(" ", "");
+            return textWithoutSpaces.Contains(keywordWithoutSpaces, StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
+        /// Get all data inside a method info as string made by AI
+        /// </summary>
+        public static string GetAllDataAsText(this MethodInfo methodInfo)
+        {
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine($"Method Name: {methodInfo.Name}");
+            sb.AppendLine($"Return Type: {methodInfo.ReturnType}");
+            ParameterInfo[] parameters = methodInfo.GetParameters();
+            sb.AppendLine($"Parameters ({parameters.Length}):");
+            foreach (ParameterInfo parameter in parameters)
+            {
+                sb.AppendLine($"\t{parameter.ParameterType} {parameter.Name}");
+            }
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// Gets input params of methods nicely formatted string for display
+        /// </summary>
+        public static List<string> GetParametersStringList(this MethodInfo methodInfo)
+        {
+            List<string> parameters = new List<string>();
+            foreach (ParameterInfo parameter in methodInfo.GetParameters())
+            {
+                parameters.Add($"{parameter.ParameterType.Name}");
+            }
+            return parameters;
         }
 
         /// <summary>
@@ -1884,58 +1955,51 @@ namespace VedAstro.Library
             return finalList;
         }
 
-
-
-        public static JToken AnyToJSON(dynamic anyTypeData)
+        /// <summary>
+        /// Gets all possible API calculators from code method info
+        /// used to make list to show user
+        /// </summary>
+        public static List<MethodInfo> GetAllApiCalculatorsMethodInfo()
         {
-            JToken parsed = JToken.Parse("{}");//to identify errors by default
 
-            try
+            //get all calculators that can work with the inputed data
+            var calculatorClass = typeof(AstronomicalCalculator);
+
+            var finalList = calculatorClass.GetMethods().ToList();
+
+            return finalList;
+        }
+
+
+
+        /// <summary>
+        /// Given a type will convert to json
+        /// used for parsing results from all OPEN API calcs
+        /// </summary>
+        public static JProperty AnyToJSON(string dataName, dynamic anyTypeData)
+        {
+            //process list differently
+            JProperty rootPayloadJson;
+            if (anyTypeData is IList iList) //handles results that have many props from 1 call, exp : SwissEphemeris
             {
-                string rawText = anyTypeData.ToString();
-                parsed = JToken.Parse("'" + rawText + "'");
+                //convert list to comma separated string
+                var parsedList = iList.Cast<object>().ToList();
+                var stringComma = Tools.ListToString(parsedList);
+
+                rootPayloadJson = new JProperty(dataName, stringComma);
             }
-            catch (Exception e)
+            //custom JSON converter available
+            else if (anyTypeData is IToJson iToJson)
             {
-                //todo better error
-                Console.WriteLine("Could not parse JSON");
+                rootPayloadJson = new JProperty(dataName, iToJson.ToJson());
             }
-
-            try
+            //normal conversion via to string
+            else
             {
-
-                //string goes in like normal
-                if (anyTypeData is string stringData) { return parsed; }
-                else if (anyTypeData is IEnumerable dataList)
-                {
-                    //convert to string
-                    foreach (var data in dataList)
-                    {
-                        var rawText = data.ToString();
-                        parsed = JToken.Parse("'" + rawText + "'");
-
-                        return parsed;
-                    }
-                }
-
-                //just convert direct
-                return parsed;
-
-
-            }
-            catch (Exception e)
-            {
-
-                //in prod log data and exist silent
-                LibLogger.Error(e);
-#if DEBUG
-                Console.WriteLine(e.Message);
-                //raise alarm
-                throw e;
-#endif
+                rootPayloadJson = new JProperty(dataName, anyTypeData?.ToString());
             }
 
-            throw new Exception("END OF LINE");
+            return rootPayloadJson;
 
         }
 
@@ -2096,7 +2160,7 @@ namespace VedAstro.Library
             return "Earth";
             //switch (timeZone)
             //{
-               
+
             //}
         }
 
@@ -2145,12 +2209,17 @@ namespace VedAstro.Library
         }
 
         /// <summary>
-        /// for open api AstronomicalCalculator
+        /// Given a method name in string form, will get it's reference to code
+        /// gets from AstronomicalCalculator class
         /// </summary>
         public static MethodInfo MethodNameToMethodInfo(string methodName)
         {
             var calculatorClass = typeof(AstronomicalCalculator);
-            var foundMethod = calculatorClass.GetMethods().Where(x => Tools.GetAPISpecialName(x) == methodName).FirstOrDefault();
+            var foundList = calculatorClass.GetMethods().Where(x => Tools.GetAPISpecialName(x) == methodName);
+            var foundMethod = foundList.FirstOrDefault();
+
+            //if more than 1 method found major internal error, crash it!
+            if (foundList.Count() > 1) { throw new InvalidOperationException($"Duplicate API Names : {methodName}"); }
 
             return foundMethod;
 
@@ -2348,6 +2417,32 @@ namespace VedAstro.Library
             //return returnStream;
         }
 
+        /// <summary>
+        /// INPUT:
+        /// /Singapore/Time/23:59/31/12/2000/+08:00/Planet/Sun/Sign/
+        /// OUTPUT:
+        /// "/Singapore/Time/23:59/"
+        /// NOTE:
+        /// In this example, if cutCount is 3, the CutString method will return
+        /// the first 3 substrings ("Singapore", "Time", "23:59")
+        /// from the input string. The result will be "/Singapore/Time/23:59/".
+        /// </summary>
+        public static string CutOutString(string input, int cutCount)
+        {
+            var parts = input.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
+            var firstParts = parts.Take(cutCount);
+            return "/" + string.Join("/", firstParts) + "/";
+        }
+
+        /// <summary>
+        /// removes the what is within count, returns rest
+        /// </summary>
+        public static string CutRemoveString(string input, int cutCount)
+        {
+            var parts = input.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
+            var remainingParts = parts.Skip(cutCount);
+            return "/" + string.Join("/", remainingParts) + "/";
+        }
     }
 
 

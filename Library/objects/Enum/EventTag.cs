@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Xml.Linq;
 using Newtonsoft.Json.Linq;
 
@@ -16,7 +18,6 @@ namespace VedAstro.Library
     {
         //todo made visible to public via api
         Agriculture,
-
         General,
         Personal,
         Yoga,
@@ -28,15 +29,19 @@ namespace VedAstro.Library
         Astronomical,
         BuyingSelling,
         Building,
-        Gochara,
+        Education,
         Horoscope,
         Tarabala,
         Chandrabala,
         Travel,
-        RisingSign, //used in birth time finder
-        GocharaSummary,
+        RisingSign, //used in birth time finder todo might not be needed
+        GocharaSummary, //todo not yet implemented 
+
+        AshtakvargaGochara, //gochara based on bindu
+        Gochara,
 
         //DASA STUFF
+        Dasa, //main category include below sub category
         PD1,
         PD2,
         PD3,
@@ -138,6 +143,15 @@ namespace VedAstro.Library
             var holder = new JObject(_eventTag.ToString());
 
             return holder;
+        }
+
+        /// <summary>
+        /// Get all in a list for looping
+        /// </summary>
+        public static List<EventTag> GetAll()
+        {
+            List<EventTag> enumList = Enum.GetValues(typeof(EventTag)).Cast<EventTag>().ToList();
+            return enumList;
         }
     }
 }

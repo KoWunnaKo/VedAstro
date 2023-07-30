@@ -161,7 +161,7 @@ namespace VedAstro.Library
                         return new TimeRange(start, end);
                     case "fulllife":
                         start = birthTimeClient;
-                        end = birthTimeClient.AddYears(100);
+                        end = birthTimeClient.AddYears(75);
                         return new TimeRange(start, end);
                     default:
                         return new TimeRange(Time.Empty, Time.Empty);
@@ -184,7 +184,7 @@ namespace VedAstro.Library
 
                 //add to birth time to get final time range
                 start = birthTimeClient.AddYears(startAge);
-                end = birthTimeClient.AddYears(35);
+                end = birthTimeClient.AddYears(endAge);
                 return new TimeRange(start, end);
 
             }

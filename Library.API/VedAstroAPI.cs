@@ -260,21 +260,36 @@ namespace Library.API
         public EventsChartTools(VedAstroAPI vedAstroApi) => _api = vedAstroApi;
 
 
-        public async Task<string> GetEventsChart(Person person, TimeRange timeRange, List<EventTag> inputedEventTags, int maxWidth)
+        public async Task<string> GetEventsChart(Person person, TimeRange timeRange, List<EventTag> inputedEventTags, int maxWidth, ChartOptions summaryOptions)
         {
             //no person no entry!
             if (Person.Empty.Equals(person)) { throw new InvalidOperationException("NO CHART FOR EMPTY PERSON!"); }
 
             //package data to get chart
-            var chartSpecsJson = EventsChart.GenerateChartSpecsJson(person, timeRange, inputedEventTags, maxWidth);
+            var chartSpecsJson = EventsChart.GenerateChartSpecsJson(person, timeRange, inputedEventTags, maxWidth, summaryOptions);
 
-            //ask API to make new chart
+            //ask API to make new chart (user id is for caching)
             var eventsChartApiCallUrl = $"{_api.URL.GetEventsChart}/UserId/{_api.UserId}/VisitorId/{_api.VisitorID}";
 
             //NOTE:call is held here
             var chartString = await  _api.PollApiTillData(eventsChartApiCallUrl, chartSpecsJson.ToString());
 
             return chartString;
+        }
+
+
+        /// <summary>
+        /// Gets POST call body data that is sent to API, used as a shortcut rather going into network tab in F12 
+        /// </summary>
+        public string GetPOSTCall(Person person, TimeRange timeRange, List<EventTag> inputedEventTags, int maxWidth,
+            ChartOptions summaryOptions)
+        {
+            //generate the same data used when calling API
+            var chartSpecsJson = EventsChart.GenerateChartSpecsJson(person, timeRange, inputedEventTags, maxWidth, summaryOptions);
+
+            var jsonPostData = chartSpecsJson.ToString();
+
+            return jsonPostData;
         }
 
     }
@@ -316,7 +331,7 @@ namespace Library.API
 
             //call until data appears, API takes care of everything
             JToken? personListJson = null;
-            var pollRate = 500;
+            var pollRate = 1500;
             var notReady = true;
             while (notReady)
             {
@@ -413,7 +428,7 @@ namespace Library.API
 
             //call until data appears, API takes care of everything
             string? parsedJsonReply = null;
-            var pollRate = 1500;
+            var pollRate = 5000;
             var notReady = true;
             while (notReady)
             {

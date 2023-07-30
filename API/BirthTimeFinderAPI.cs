@@ -103,6 +103,8 @@ namespace API
                 //generate the needed charts
                 var chartList = new List<EventsChart>();
                 var eventTags = new List<EventTag> { EventTag.PD1, EventTag.PD2, EventTag.PD3, EventTag.PD4, EventTag.PD5, EventTag.Gochara };
+                var algorithmFuncsList = new List<AlgorithmFuncs>() { EventsChartManager.Algorithm.GetGeneralScore };
+                var summaryOptions = new ChartOptions(algorithmFuncsList);
 
                 //time range is preset to full life 100 years from birth
                 var start = foundPerson.BirthTime;
@@ -122,7 +124,7 @@ namespace API
                 {
                     //replace original birth time
                     var personAdjusted = foundPerson.ChangeBirthTime(possibleTime);
-                    var newChart = await Tools.GenerateNewChart(personAdjusted, timeRange, daysPerPixel, eventTags);
+                    var newChart = await Tools.GenerateNewChart(personAdjusted, timeRange, daysPerPixel, eventTags, summaryOptions);
                     var adjustedBirth = personAdjusted.BirthTimeString;
 
                     //place in group with time above the chart

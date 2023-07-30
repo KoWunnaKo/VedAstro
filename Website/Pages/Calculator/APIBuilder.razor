@@ -30,9 +30,11 @@
                 </select>
                 <label style="font-weight: 700; color: black;" for="celestialBodySelect">Category</label>
             </div>
-            
-            
-            <PlanetAPIPanel/>
+
+
+            <PlanetAPIBuilderPanel @ref="planetApiPanel" />
+
+            <HouseAPIBuilderPanel @ref="houseApiPanel" />
 
             @*ACCOUNT STUFF*@
             <div @ref="accountTaskSelector" style="display: none;" class="form-floating">
@@ -48,7 +50,6 @@
                     <span class="input-group-text" style="min-width: @GR.W97px;">Name</span>
                     <input @bind="AddPersonName" type="text" class="form-control" placeholder="Juliet">
                 </div>
-
                 <div class="input-group mb-3">
                     <label class="input-group-text" style="min-width: @GR.W97px;">Gender</label>
                     <select @bind="AddPersonGender" class="form-select">
@@ -86,73 +87,8 @@
             }
 
 
-            @*Planet Name*@
-            <div @ref="planetNameSelector" style="display: none;" class="form-floating">
-                <select @bind="SelectedPlanetName" class="form-select" id="planetNameSelector">
-                    <option value="" selected>Make a choice</option>
-                    <option value="All">All</option>
-                    <option value="Sun">Sun</option>
-                    <option value="Moon">Moon</option>
-                    <option value="Mars">Mars</option>
-                    <option value="Mercury">Mercury</option>
-                    <option value="Jupiter">Jupiter</option>
-                    <option value="Venus">Venus</option>
-                    <option value="Saturn">Saturn</option>
-                    <option value="Rahu">Rahu</option>
-                    <option value="Ketu">Ketu</option>
-                </select>
-                <label style="font-weight: 700; color: black;" for="planetNameSelector">Planet Name</label>
-            </div>
 
-            @*House Name*@
-            <div @ref="houseNameSelector" style="display: none;" class="form-floating">
-                <select @bind="SelectedHouseName" class="form-select" id="houseNameSelector" aria-label="House Name Select">
-                    <option value="" selected>Make a choice</option>
-                    <option value="All">All</option>
-                    <option value="House1">House 1</option>
-                    <option value="House2">House 2</option>
-                    <option value="House3">House 3</option>
-                    <option value="House4">House 4</option>
-                    <option value="House5">House 5</option>
-                    <option value="House6">House 6</option>
-                    <option value="House7">House 7</option>
-                    <option value="House8">House 8</option>
-                    <option value="House9">House 9</option>
-                    <option value="House10">House 10</option>
-                    <option value="House11">House 11</option>
-                    <option value="House12">House 12</option>
-                </select>
-                <label style="font-weight: 700; color: black;" for="houseNameSelector">House Name</label>
-            </div>
-
-            @*Planet Property*@
-            <div @ref="planetPropertySelector" style="display: none;" class="form-floating">
-                <select @bind="selectedPlanetProperty" class="form-select" id="planetPropertySelector" aria-label="Data Property Select">
-                    <option value="" selected>Make a choice</option>
-                    <option value="All">All</option>
-                    @*make a dynamic selection of all available calls*@
-                    @foreach (var dataProperty in PlanetCallList)
-                    {
-                        <option value="@dataProperty.Name">@(Format.FormatName(dataProperty.Name))</option>
-                    }
-                </select>
-                <label style="font-weight: 700; color: black;" for="planetPropertySelector">Planet Property</label>
-            </div>
-
-            @*House Property*@
-            <div @ref="housePropertySelector" style="display: none;" class="form-floating">
-                <select @bind="selectedHouseProperty" class="form-select" id="housePropertySelector" aria-label="Data Property Select">
-                    <option value="" selected>Make a choice</option>
-                    <option value="All">All</option>
-                    @*make a dynamic selection of all available calls*@
-                    @foreach (var dataProperty in HouseCallList)
-                    {
-                        <option value="@dataProperty.Name">@(Format.FormatName(dataProperty.Name))</option>
-                    }
-                </select>
-                <label style="font-weight: 700; color: black;" for="housePropertySelector">House Property</label>
-            </div>
-
+            @* -------- BOTTOM BUTTONS --------*@
             <IconButton ButtonText="Generate" FullWidth="true" FontSize="17px" FontWeight="500" TextCenter="true" SmallSize="true" Color="success" IconName="flat-color-icons:flash-auto" OnClickCallback="@OnClickGenerateButton" />
 
             @*OUTPUT ARROW ICON*@
@@ -178,15 +114,19 @@
         @*GUIDE TEXT*@
         <div class="vstack gap-3">
             <ArticleBlock Title="Next Step" IconName="mdi:foot-print">
+                <ButtonRow>
+                    <IconButton SmallSize="true" ButtonText="Guide" IconName="logos:youtube-icon" OpenNewTab="true" ClickUrl="@URL.APIGuideNextStep" />
+                </ButtonRow>
                 <TextHTML>
-                    Make a <kbd>HTTP GET</kbd> request from your app or website. It can be in any language,
-                    PHP, JS, Python, even your browsers' URL. Design your app to cache the received data.
-                    Note, calls have been known to fail once in a <strong>blue moon</strong>, if and when that happens,
-                    just make sure your app just replays the same call again. Design your code to try
-                    HTTP call at least 2 times be reporting as failed. Even a small network issue on the
+                    Make a <kbd>HTTP GET</kbd> request from your app or website. It can be in any language
+                    <strong>JS, Python, C#, Java</strong> or even your browsers' URL. Design your app to cache the received data.
+                    <strong>If the call fails</strong>, just replay it again at least x2. Even a small network issue on the
                     client side may cause this.
                 </TextHTML>
             </ArticleBlock>
+            
+            @* LIST OF ALL API CALLS *@
+            <APICallList/>
 
             <ArticleBlock Title="Simple Response" IconName="bi:filetype-json">
                 <TextHTML>
@@ -195,7 +135,7 @@
                     error will be in <kbd>Payload</kbd> property. If call is successful, all the data you need will be alphabetically stored in <kbd>Payload</kbd> property.
                 </TextHTML>
             </ArticleBlock>
-            
+
             <ArticleBlock Title="No Manuals Needed" IconName="emojione:clamp">
                 <TextHTML>
                     Why a simple API builder using dropdown boxes? This will make it easy for any beginner to get started.
@@ -214,15 +154,15 @@
                     The API is designed to handle this, so don't worry about breaking it. Have fun.
                 </TextHTML>
             </ArticleBlock>
-            
-@*             <ArticleBlock Title="Library (coming soon)" IconName="clarity:thin-client-line">
-                <TextHTML>
-                    There are also client libraries to help you access the API even more easily. It simply wraps HTTP calls into easy to consume functions, that your app can use.
-                    Please note, these sub-projects is under <strong>prototype</strong> stage and much remains to be done. If you've created a library already please share it with the community.
-                    <BoldLink URL="@URL.VedAstroJS">JavaScript</BoldLink>, <BoldLink URL="@URL.VedAstroNuget">.NET NuGet</BoldLink> &amp; <BoldLink URL="@URL.VedAstroSwift">Swift iOS &amp; MacOS</BoldLink>.
-                </TextHTML>
+
+            @*             <ArticleBlock Title="Library (coming soon)" IconName="clarity:thin-client-line">
+            <TextHTML>
+            There are also client libraries to help you access the API even more easily. It simply wraps HTTP calls into easy to consume functions, that your app can use.
+            Please note, these sub-projects is under <strong>prototype</strong> stage and much remains to be done. If you've created a library already please share it with the community.
+            <BoldLink URL="@URL.VedAstroJS">JavaScript</BoldLink>, <BoldLink URL="@URL.VedAstroNuget">.NET NuGet</BoldLink> &amp; <BoldLink URL="@URL.VedAstroSwift">Swift iOS &amp; MacOS</BoldLink>.
+            </TextHTML>
             </ArticleBlock>
- *@
+            *@
 
             <ArticleBlock Title="Fair Usage Policy" IconName="flat-color-icons:like">
                 <TextHTML>
@@ -265,18 +205,9 @@
 
 
 @code {
+    PlanetAPIBuilderPanel planetApiPanel;
 
-    private string SelectedHouseName
-    {
-        get => selectedHouseName;
-        set
-        {
-            WebLogger.Data($"Selected House : {value}");
-            selectedHouseName = value;
-        }
-    }
-
-    private string selectedHouseName;
+    HouseAPIBuilderPanel houseApiPanel;
 
     private string AddPersonName { get; set; } = "Juliet";
 
@@ -292,17 +223,6 @@
 
             _addPersonOwnerId = value;
         }
-    }
-
-    private string SelectedPlanetName
-    {
-        get => selectedPlanetName;
-        set
-        {
-            WebLogger.Data($"Selected Planet : {value}");
-            selectedPlanetName = value;
-        }
-
     }
 
     private string SelectedTaskName
@@ -323,27 +243,14 @@
         }
     }
 
-    private string selectedPlanetName;
-
-    private string selectedPlanetProperty;
-
-    private string selectedHouseProperty;
-
     private ElementReference PostBodyElement;
-    private ElementReference houseNameSelector;
-    private ElementReference planetNameSelector;
     private ElementReference AddPersonMaker;
     private ElementReference accountTaskSelector;
-    private ElementReference housePropertySelector;
-    private ElementReference planetPropertySelector;
 
     TimeInputSimple _timeInput;
     private GeoLocationInput _geoLocationInput;
     private string _finalApiGetCall = "https://api.vedastro.org/Location/Singapore/Time/23:59/31/12/2000/+08:00/Planet/Sun/Sign/";
 
-    //done so that it is cached in memory
-    private static IEnumerable<Tools.APICallData> PlanetCallList = Tools.GetPlanetApiCallList<PlanetName, Time>();
-    private static IEnumerable<Tools.APICallData> HouseCallList = Tools.GetPlanetApiCallList<HouseName, Time>();
 
     /// <summary>
     /// Controls the showing and hiding of other dropdowns
@@ -362,39 +269,29 @@
             switch (value.ToLower())
             {
                 case "planet"://hide house & show planet
-                    _jsRuntime.Show(planetNameSelector);
-                    _jsRuntime.Hide(houseNameSelector);
-                    _jsRuntime.Show(planetPropertySelector);
-                    _jsRuntime.Hide(housePropertySelector);
+                    planetApiPanel.Show();
+                    houseApiPanel.Hide();
                     _jsRuntime.Hide(accountTaskSelector);
                     break;
                 case "house"://show house & hide planet
-                    _jsRuntime.Show(houseNameSelector);
-                    _jsRuntime.Hide(planetNameSelector);
-                    _jsRuntime.Show(housePropertySelector);
-                    _jsRuntime.Hide(planetPropertySelector);
+                    houseApiPanel.Show();
                     _jsRuntime.Hide(accountTaskSelector);
+                    planetApiPanel.Hide();
                     break;
                 case "skychart"://show house & hide planet
-                    _jsRuntime.Hide(houseNameSelector);
-                    _jsRuntime.Hide(planetNameSelector);
-                    _jsRuntime.Hide(housePropertySelector);
-                    _jsRuntime.Hide(planetPropertySelector);
+                    houseApiPanel.Hide();
                     _jsRuntime.Hide(accountTaskSelector);
+                    planetApiPanel.Hide();
                     break;
                 case "skychartgif"://show house & hide planet
-                    _jsRuntime.Hide(houseNameSelector);
-                    _jsRuntime.Hide(planetNameSelector);
-                    _jsRuntime.Hide(housePropertySelector);
-                    _jsRuntime.Hide(planetPropertySelector);
+                    houseApiPanel.Hide();
                     _jsRuntime.Hide(accountTaskSelector);
+                    planetApiPanel.Hide();
                     break;
                 case "account"://show house & hide planet
-                    _jsRuntime.Hide(houseNameSelector);
-                    _jsRuntime.Hide(planetNameSelector);
-                    _jsRuntime.Hide(housePropertySelector);
-                    _jsRuntime.Hide(planetPropertySelector);
+                    houseApiPanel.Hide();
                     _jsRuntime.Show(accountTaskSelector);
+                    planetApiPanel.Hide();
                     break;
             }
         }
@@ -547,9 +444,9 @@
         switch (SelectedCategory.ToLower())
         {
             case "planet":
-                return SelectedPlanetName;
+                return planetApiPanel.SelectedName;
             case "house":
-                return SelectedHouseName;
+                return houseApiPanel.SelectedName;
         }
 
         //if not specified than not needed, return empty
@@ -561,9 +458,9 @@
         switch (SelectedCategory.ToLower())
         {
             case "planet":
-                return selectedPlanetProperty;
+                return planetApiPanel.SelectedProperty;
             case "house":
-                return selectedHouseProperty;
+                return houseApiPanel.SelectedProperty;
         }
 
         //if not specified than not needed, return empty

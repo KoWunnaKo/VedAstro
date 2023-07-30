@@ -50,6 +50,7 @@ export class EventsChart {
 
         //use chart ID find the element on page
         //note: we make sure here that only the elements inside this specific SVG chart will be manipulated
+        this.$EventsChartSvgHolder = $(EventsChartSvgHolder);
         this.$SvgChartElm = $(`#${chartId}`);
         this.Id = chartId;
         this.$CursorLine = this.$SvgChartElm.find(ID.CursorLine);
@@ -68,6 +69,7 @@ export class EventsChart {
 
         //add chart to public list of charts after brought to live
         //create new if 1st chart on page
+        window.EventsChartLoaded = this;
         if (typeof window.EventsChartList === 'undefined') { window.EventsChartList = []; }
         window.EventsChartList.push(this);
 
@@ -89,6 +91,109 @@ export class EventsChart {
 
         //setup to auto update every 1 minute
         setInterval(() => EventsChart.updateNowLine(this), 60 * 1000); // 60 seconds
+    }
+
+    //highlights all events rects in chart by
+    //the inputed keyword in the event name
+    highlightByEventName(keyword) {
+
+        //find all rects representing the keyword based event
+        //note keyword will be planet name or house name
+        this.AllEventRects.each(function (index) {
+            //get parsed time from rect
+            var svgEventRect = this;
+            var eventName = svgEventRect.getAttribute("eventname");
+            //check if event name contains keyword
+            var foundEvent = eventName.toLowerCase().includes(keyword.toLowerCase());
+
+            //if event is related to planet, highlight the rect
+            if (foundEvent) {
+
+                //save original color for later return
+                var oriColor = svgEventRect.getAttribute("fill");
+                svgEventRect.setAttribute("fillORI", oriColor);
+
+                //set new highlight color
+                var highlightColor = EventsChart.getHighlightColor(keyword);
+                svgEventRect.setAttribute("fill", highlightColor);
+            }
+
+        });
+
+    }
+
+    unhighlightByEventName(keyword) {
+
+        //find all rects representing the keyword based event
+        this.AllEventRects.each(function (index) {
+            //get parsed time from rect
+            var svgEventRect = this;
+            var eventName = svgEventRect.getAttribute("eventname");
+            //check if event name contains keyword
+            var foundEvent = eventName.toLowerCase().includes(keyword.toLowerCase());
+
+            //if event is related to planet, highlight the rect
+            if (foundEvent) {
+
+                //save original color for later return
+                var oriColor = svgEventRect.getAttribute("fillORI");
+
+                //ori will be null if never highlighted before
+                oriColor = oriColor === null ? svgEventRect.getAttribute("fill") : oriColor;
+
+                //set original color if changed, else same color
+                svgEventRect.setAttribute("fill", oriColor);
+            }
+
+        });
+
+    }
+
+
+    //-----------------------------STATIC----------------------------------------
+
+    //for highlighting events by name
+    static getHighlightColor(keyword) {
+
+        switch (keyword.toLowerCase()) {
+            //planets
+            case "sun": return "#FFA500";  //orange #FFA500
+            case "moon": return "#7A7A7A"; //silver #7A7A7A
+            case "mars": return "#DC143C"; //crimson #DC143C
+            case "mercury": return "#00FF7F"; //springgreen #00FF7F
+            case "jupiter": return "#EEEE00"; //yellow #EEEE00
+            case "venus": return "#FF00FF";//magenta #FF00FF
+            case "saturn": return "#0000FF";//blue #0000FF
+            case "rahu": return "#FF7D40"; //flesh #FF7D40
+            case "ketu": return "#515151"; //grey #515151
+
+            //house
+            //colors is the full spectrum divided into 12
+            //done to have the most unique colors possible for each house
+            case "house 1": return "#ff0000"; //red
+            case "house 2": return "#ff7f0a"; //orange
+            case "house 3": return "#ffff00"; //yellow
+            case "house 4": return "#7fff00"; //chartreuse green
+            case "house 5": return "#00ff00"; //green
+            case "house 6": return "#00ff7f"; //spring green
+            case "house 7": return "#00ffff"; //cyan
+            case "house 8": return "#007fff"; //azure
+            case "house 9": return "#0000ff"; //blue
+            case "house 10": return "#7f00ff";//violet
+            case "house 11": return "#ff00ff";//magenta
+            case "house 12": return "#ff007f";//rose
+
+        }
+
+        //default to black so we know it was not accounted for
+        return "#000000";
+
+        //    var arrayValues = ["#ff60fa", "#ff60fa", "#ff60fa"];
+
+        //    var arrayMax = arrayValues.length - 1;
+        //    var randomIndex = Math.floor(Math.random() * arrayMax);
+
+        //    return arrayValues[randomIndex];
     }
 
 
@@ -149,7 +254,9 @@ export class EventsChart {
     static onMouseMoveHandler(mouse, instance) {
 
         //get relative position of mouse in Dasa view
-        var mousePosition = getMousePositionInElement(mouse);
+        //after zoom pixels on screen change, but when rendering
+        //SVG description box we need x, y before zoom (AI's code!)
+        var mousePosition = getMousePositionInElement(mouse); //todo no work in zoom
 
         //if cursor is out of chart view hide cursor and end here
         if (mousePosition === 0) { SVG(instance.$CursorLine[0]).hide(); return; }
@@ -165,33 +272,20 @@ export class EventsChart {
         //-------------------------LOCAL FUNCS--------------------------
 
         //Gets a mouses x axis relative inside the given element
-        //used to get mouse location on Dasa view
-        //returns 0 when mouse is out
+        //used to get mouse location on SVG chart, zoom auto corrected 
         function getMousePositionInElement(mouseEventData) {
-            //gets the measurements of the dasa view holder
-            //the element where cursor line will be moving
-            let chartMeasurements = instance.$SvgChartElm[0]?.getBoundingClientRect();
 
-            //if holder measurements invalid then end here
-            if (!chartMeasurements) { return 0; }
+            //get relative position of mouse in Dasa view
+            //after zoom pixels on screen change, but when rendering
+            //SVG description box we need x, y before zoom (AI's code!)
+            var holder = instance.$EventsChartSvgHolder[0]; //zoom is done on main holder in Blazor side
+            var zoom = parseFloat(getComputedStyle(holder).zoom);
+            var mousePosition = {
+                xAxis: mouse.originalEvent.offsetX / zoom,
+                yAxis: mouse.originalEvent.offsetY / zoom
+            };
 
-            //calculate mouse X relative to dasa view box
-            let relativeMouseX = mouseEventData.clientX - chartMeasurements.left;
-            let relativeMouseY = mouseEventData.clientY - chartMeasurements.top; //when mouse leaves top
-            let relativeMouseYb = mouseEventData.clientY - chartMeasurements.bottom; //when mouse leaves bottom
-
-            //if mouse out of element element, set 0 as indicator
-            let mouseOut = relativeMouseY < 0 || relativeMouseX < 0 || relativeMouseYb > 0;
-
-            if (mouseOut) {
-                return 0;
-            } else {
-                var mouse = {
-                    xAxis: relativeMouseX,
-                    yAxis: relativeMouseY
-                };
-                return mouse;
-            }
+            return mousePosition;
         }
 
         function autoMoveCursorLine(relativeMouseX) {
@@ -327,13 +421,12 @@ export class EventsChart {
                 //if mouse is in event's row then highlight that row
                 if (mouseWithinRow) {
                     //highlight event name row
-                    //var backgroundElm = SVG(newLegendRow.children("rect")[0]);
                     var $backgroundElm = newLegendRow.children("rect");
-                    $backgroundElm.css("fill", "#003e99");
-                    $backgroundElm.css("opacity", 1);//solid
-                    //textElm.css("fill", "#fff");
-                    $textElm.css('font-weight', '700');
-                    //SVG(textElm).font('weight', '700');
+
+                    $textElm.attr('font-weight', '700');
+                    $backgroundElm.attr("fill", "#0096FF"); //bright blue
+                    $backgroundElm.attr("opacity", 1);//solid
+
                     //if mouse within show description box
                     instance.showDescription = true;
                 }
